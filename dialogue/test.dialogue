@@ -1,0 +1,24 @@
+# Pipeline test: one opening, three choices, one of which leads to a second exchange.
+# Each choice changes GameState differently. tests/smoke_test.gd walks one branch.
+
+~ start
+Sam: Hi, I'm Sam. The client just moved the deadline up by a week.
+Sam: What should we do?
+- Cut scope and keep the new date.
+	do GameState.xp += 10
+	Sam: Fewer features, same date. Bold.
+- Hire a contractor to go faster.
+	do GameState.money -= 40
+	do GameState.xp += 5
+	Sam: That will eat into the budget.
+- Ask the client why the date moved.
+	do GameState.xp += 20
+	Sam: Good call. The date is soft if they see progress every week.
+	Sam: Shall I set up weekly demos?
+	- Yes, set them up.
+		do GameState.money += 30
+		Sam: Done. The client is happy.
+	- Not yet.
+		Sam: Okay. Let me know.
+Sam: Talk later!
+=> END
