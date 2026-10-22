@@ -47,7 +47,7 @@ Run from the project root. `godot` stands for the Godot binary (on macOS, `/Appl
 ```sh
 godot --headless --path . --import                   # import assets; must print no errors
 godot --headless --path . --quit-after 300           # run the main scene briefly
-godot --headless --path . -s tests/smoke_test.gd     # dialogue smoke test; exits 1 on failure
+godot --headless --path . -s tests/smoke_test.gd     # dialogue smoke test; exits 1 on failure, 2 on timeout
 ```
 
 ## Web build
@@ -55,7 +55,7 @@ godot --headless --path . -s tests/smoke_test.gd     # dialogue smoke test; exit
 The `Web` export preset is single-threaded, so the build runs from any static file server with no special headers. It needs the Godot 4.7.2 export templates (Editor > Manage Export Templates).
 
 ```sh
-mkdir -p build/web
+mkdir -p build/web && touch build/.gdignore      # keep Godot from importing the build
 godot --headless --path . --export-release Web build/web/index.html
 uv run python -m http.server -d build/web 8000
 ```
