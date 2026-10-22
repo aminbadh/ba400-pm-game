@@ -14,6 +14,9 @@ const EXPECTED_MONEY: int = 130
 const MAX_LINES: int = 50
 ## Exit 2 after this many seconds, in case the walk dies on an error and never quits.
 const TIMEOUT_SECONDS: float = 5.0
+## What [method _walk] returns when every check passed. Success must be explicit:
+## a coroutine that dies on a runtime error hands its caller an empty value.
+const PASSED: String = "passed"
 
 
 func _initialize() -> void:
@@ -22,18 +25,21 @@ func _initialize() -> void:
 
 
 func _main() -> void:
-	var failure: String = await _walk()
+	var result: String = await _walk()
 	# Let the Dialogue Manager's deferred signals flush, so nothing leaks at exit.
 	await process_frame
-	if failure.is_empty():
+	if result == PASSED:
 		print("PASS")
 		quit(0)
+	elif result.is_empty():
+		printerr("FAIL: the walk stopped on a script error")
+		quit(1)
 	else:
-		printerr("FAIL: " + failure)
+		printerr("FAIL: " + result)
 		quit(1)
 
 
-## Walk the dialogue and return what went wrong, or an empty string.
+## Walk the dialogue and return what went wrong, or [constant PASSED].
 func _walk() -> String:
 	# Autoloads are looked up at run time, since this script compiles before they exist.
 	var game_state: Node = root.get_node_or_null("GameState")
@@ -72,7 +78,7 @@ func _walk() -> String:
 		return "dialogue ended before all choices were made"
 	if xp != EXPECTED_XP or money != EXPECTED_MONEY:
 		return "expected xp=%d money=%d" % [EXPECTED_XP, EXPECTED_MONEY]
-	return ""
+	return PASSED
 
 
 func _on_timeout() -> void:
