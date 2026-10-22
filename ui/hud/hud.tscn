@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/hud/hud.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+bg_color = Color(0.0666667, 0.0666667, 0.0666667, 0.8)
+
+[sub_resource type="Theme" id="Theme_hud"]
+default_font_size = 8
+HBoxContainer/constants/separation = 8
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Hud" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_script")
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+offset_left = 4.0
+offset_top = 4.0
+mouse_filter = 2
+theme = SubResource("Theme_hud")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer"]
+layout_mode = 2
+
+[node name="XpLabel" type="Label" parent="PanelContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "XP 0"
+
+[node name="MoneyLabel" type="Label" parent="PanelContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "$0"
