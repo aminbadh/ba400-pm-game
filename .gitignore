@@ -4,3 +4,11 @@
 export/
 *.translation
 .DS_Store
+
+# Web build output
+build/
+
+# Claude Code
+CLAUDE.local.md
+.worktreeinclude
+.claude/
