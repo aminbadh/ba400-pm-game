@@ -12,9 +12,12 @@ const EXPECTED_XP: int = 20
 const EXPECTED_MONEY: int = 130
 ## Give up after this many lines, in case the dialogue loops.
 const MAX_LINES: int = 50
+## Exit 2 after this many seconds, in case the walk dies on an error and never quits.
+const TIMEOUT_SECONDS: float = 5.0
 
 
 func _initialize() -> void:
+	create_timer(TIMEOUT_SECONDS).timeout.connect(_on_timeout)
 	_main.call_deferred()
 
 
@@ -33,9 +36,13 @@ func _main() -> void:
 ## Walk the dialogue and return what went wrong, or an empty string.
 func _walk() -> String:
 	# Autoloads are looked up at run time, since this script compiles before they exist.
-	var game_state: Node = root.get_node("GameState")
-	var dialogue_manager: Node = root.get_node("DialogueManager")
-	var resource: DialogueResource = load(DIALOGUE_PATH)
+	var game_state: Node = root.get_node_or_null("GameState")
+	var dialogue_manager: Node = root.get_node_or_null("DialogueManager")
+	if game_state == null or dialogue_manager == null:
+		return "the GameState or DialogueManager autoload is missing"
+	var resource: DialogueResource = load(DIALOGUE_PATH) as DialogueResource
+	if resource == null:
+		return "could not load " + DIALOGUE_PATH
 	game_state.call(&"reset")
 
 	var choices: Array[int] = CHOICES.duplicate()
@@ -49,7 +56,10 @@ func _walk() -> String:
 		else:
 			if choices.is_empty():
 				return "more choices than expected at: %s" % line.text
-			var response: DialogueResponse = line.responses[choices.pop_front()]
+			var choice: int = choices.pop_front()
+			if choice < 0 or choice >= line.responses.size():
+				return "no response %d at: %s" % [choice, line.text]
+			var response: DialogueResponse = line.responses[choice]
 			print("  %s: %s\n  -> %s" % [line.character, line.text, response.text])
 			line = await dialogue_manager.call(&"get_next_dialogue_line", resource, response.next_id)
 
@@ -63,3 +73,8 @@ func _walk() -> String:
 	if xp != EXPECTED_XP or money != EXPECTED_MONEY:
 		return "expected xp=%d money=%d" % [EXPECTED_XP, EXPECTED_MONEY]
 	return ""
+
+
+func _on_timeout() -> void:
+	printerr("FAIL: timed out after %.0f seconds" % TIMEOUT_SECONDS)
+	quit(2)
