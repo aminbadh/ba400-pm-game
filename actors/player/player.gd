@@ -5,16 +5,19 @@ extends CharacterBody2D
 
 ## Walking speed in pixels per second.
 const SPEED: float = 64.0
-## How far in front of the player's centre it can reach an NPC.
+## How far the probe sweeps beyond its start in front of the player's feet.
 const REACH: float = 10.0
+## How deep the probe box is along [member facing].
+const PROBE_DEPTH: float = 4.0
 
 ## The direction the player last moved in, one of the four unit vectors.
 var facing: Vector2 = Vector2.DOWN
 
 var _is_talking: bool = false
 
-## Sweeps a small box from the player's centre towards [member facing].
+## Sweeps a small box from just in front of the player's feet towards [member facing].
 @onready var _talk_probe: ShapeCast2D = $TalkProbe
+@onready var _feet: CollisionShape2D = $CollisionShape2D
 
 
 func _ready() -> void:
@@ -60,6 +63,14 @@ func _read_direction() -> Vector2:
 
 
 func _npc_in_reach() -> Npc:
+	# Fit the probe just past the feet on the facing side, and narrower than the
+	# feet across it, so an NPC touching the player from behind or beside is not
+	# picked up.
+	var feet_size: Vector2 = (_feet.shape as RectangleShape2D).size
+	var across: Vector2 = Vector2(absf(facing.y), absf(facing.x))
+	var probe_size: Vector2 = across * (feet_size - Vector2(2.0, 2.0)) + facing.abs() * PROBE_DEPTH
+	(_talk_probe.shape as RectangleShape2D).size = probe_size
+	_talk_probe.position = _feet.position + facing * ((feet_size + probe_size) / 2.0 + Vector2.ONE)
 	_talk_probe.target_position = facing * REACH
 	_talk_probe.force_shapecast_update()
 	for i: int in _talk_probe.get_collision_count():
