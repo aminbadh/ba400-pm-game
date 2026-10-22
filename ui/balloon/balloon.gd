@@ -222,6 +222,9 @@ func _on_balloon_gui_input(event: InputEvent) -> void:
 
 
 func _on_responses_menu_response_selected(response: DialogueResponse) -> void:
+	# Hide the menu first, so a second quick press cannot pick a response again
+	# before the next line arrives.
+	responses_menu.hide()
 	next(response.next_id)
 
 
