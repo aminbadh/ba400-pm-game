@@ -7,11 +7,11 @@ extends RefCounted
 
 ## The nine-slice pixel frame drawn by tools/draw_ui.py.
 const FRAME_PATH: String = "res://art/ui/frame.png"
-## How many pixels of each side of the frame stay unstretched.
-const FRAME_MARGIN: int = 6
+## How many pixels of each side of the frame stay unstretched: its border.
+const FRAME_MARGIN: int = 5
 
 
-## The near-opaque pixel frame for a panel, with [param padding] inside its border.
+## The opaque pixel frame for a panel, with [param padding] inside its border.
 static func frame(padding: int = 2) -> StyleBoxTexture:
 	var style: StyleBoxTexture = StyleBoxTexture.new()
 	style.texture = load(FRAME_PATH) as Texture2D
@@ -19,7 +19,7 @@ static func frame(padding: int = 2) -> StyleBoxTexture:
 	style.texture_margin_top = FRAME_MARGIN
 	style.texture_margin_right = FRAME_MARGIN
 	style.texture_margin_bottom = FRAME_MARGIN
-	style.set_content_margin_all(FRAME_MARGIN - 2 + padding)
+	style.set_content_margin_all(FRAME_MARGIN + padding)
 	return style
 
 

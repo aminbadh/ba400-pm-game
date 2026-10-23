@@ -85,9 +85,9 @@ const STEEL_DARK: Color = Color("5f6d7a")
 
 #region The UI colours
 
-## The panel every text box sits on, near-opaque.
+## The panel every text box sits on, opaque, so nothing on the map shows through.
 const PANEL: Color = Color("1d2433")
-const PANEL_ALPHA: float = 0.95
+const PANEL_ALPHA: float = 1.0
 ## A lighter panel, behind the selected row of a list.
 const PANEL_RAISED: Color = Color("2a3346")
 ## Body text on a panel.

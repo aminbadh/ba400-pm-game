@@ -31,6 +31,12 @@ const STORY_OVER: int = 11
 ## ending goes instead of leaving its title on screen.
 const DEBRIEF_CUE: String = "debrief"
 const LAST_SCREEN_CUE: String = "last_screen"
+## Each speaking character's three portraits, side by side, in [constant EXPRESSIONS] order.
+const PORTRAIT_PATH: String = "res://art/portraits/%s.png"
+const PORTRAIT_SIZE: int = 48
+## The expressions a dialogue line can ask for with a tag, such as [#worried];
+## a line with none shows the first.
+const EXPRESSIONS: Array[String] = ["neutral", "worried", "pleased"]
 
 ## The nine concept cards, in order, as in cards.json.
 var cards: Array[Dictionary] = []
@@ -60,6 +66,9 @@ var shown_cards: Array[int] = []
 
 ## True while a scene's dialogue is running.
 var in_scene: bool = false
+## Whether lines play their speaker's voice while they type. A presenter's
+## setting, off by default and kept across restarts; the pause menu switches it.
+var voice_blips: bool = false
 
 var _running_scene: int = -1
 var _running_dialogue: DialogueResource = null
@@ -293,6 +302,36 @@ func debrief_line(card: Dictionary) -> String:
 ## A character's display name, or the id if it has none.
 func character_name(character: String) -> String:
 	return characters.get(character, {}).get("name", character)
+
+
+## The id of the character whose display name is [param display_name], or an
+## empty string for a speaker who is not a character, such as "The press".
+func character_id(display_name: String) -> String:
+	for id: String in characters:
+		if characters[id].name == display_name:
+			return id
+	return ""
+
+
+## A character's colour from content/scenes.json, or the panel colour.
+func character_color(character: String) -> Color:
+	return Color(characters.get(character, {}).get("color", Palette.PANEL_RAISED.to_html(false)) as String)
+
+
+## Character [param character]'s portrait in the expression named by one of
+## [param tags], or neutral; null for a speaker with no portrait.
+func portrait(character: String, tags: PackedStringArray) -> Texture2D:
+	var path: String = PORTRAIT_PATH % character
+	if character.is_empty() or not ResourceLoader.exists(path):
+		return null
+	var index: int = 0
+	for tag: String in tags:
+		if tag in EXPRESSIONS:
+			index = EXPRESSIONS.find(tag)
+	var atlas: AtlasTexture = AtlasTexture.new()
+	atlas.atlas = load(path) as Texture2D
+	atlas.region = Rect2(index * PORTRAIT_SIZE, 0, PORTRAIT_SIZE, PORTRAIT_SIZE)
+	return atlas
 
 
 func _load_content() -> void:
