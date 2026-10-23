@@ -44,6 +44,7 @@ var _card: Dictionary = {}
 var _page: int = 0
 
 var _checklist_labels: Array[Label] = []
+var _flashes: Array[Tween] = []
 var _candidate_count_label: Label
 var _candidate_name_label: Label
 var _candidate_shows_label: Label
@@ -117,6 +118,9 @@ func inspect_candidate(index: int, inspection: Dictionary) -> bool:
 	var candidate: Dictionary = candidates[index]
 	if _checklist_labels.is_empty():
 		_fill_checklist(inspection)
+	for flash: Tween in _flashes:
+		flash.kill()
+	_flashes.clear()
 	for label: Label in _checklist_labels:
 		label.add_theme_color_override(&"font_color", CardView.INK)
 	_candidate_count_label.text = "%d of %d" % [index + 1, candidates.size()]
@@ -208,6 +212,7 @@ func _show_card_page() -> void:
 
 func _flash(label: Label) -> void:
 	var tween: Tween = create_tween()
+	_flashes.append(tween)
 	for i: int in 3:
 		tween.tween_property(label, "theme_override_colors/font_color", MISS_COLOR, 0.15)
 		tween.tween_property(label, "theme_override_colors/font_color", CardView.INK, 0.15)
