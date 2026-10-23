@@ -78,7 +78,7 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
 [sub_resource type="Theme" id="Theme_qq3yp"]
-default_font_size = 8
+default_font_size = 10
 Button/styles/disabled = SubResource("StyleBoxFlat_235ry")
 Button/styles/focus = SubResource("StyleBoxFlat_ufjut")
 Button/styles/hover = SubResource("StyleBoxFlat_fcbqo")
@@ -130,7 +130,7 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -71.0
+offset_top = -84.0
 grow_horizontal = 2
 grow_vertical = 0
 
@@ -183,7 +183,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_bottom = -71.0
+offset_bottom = -88.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -196,9 +196,11 @@ script = ExtResource("3_1j1j0")
 response_template = NodePath("ResponseTemplate")
 
 [node name="ResponseTemplate" type="Button" parent="Balloon/CenterContainer/ResponsesMenu" unique_id=1555320070]
+custom_minimum_size = Vector2(296, 0)
 layout_mode = 2
 text = "A   Response"
 alignment = 0
+autowrap_mode = 3
 
 [connection signal="gui_input" from="Balloon" to="." method="_on_balloon_gui_input"]
 [connection signal="response_selected" from="Balloon/CenterContainer/ResponsesMenu" to="." method="_on_responses_menu_response_selected"]

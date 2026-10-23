@@ -1,30 +1,331 @@
 class_name Stage
-extends CanvasLayer
+extends Node
+## The full-screen moments of the story: concept cards, exhibits (the charter
+## and the charts), scene 4's gate inspection, and the backdrop behind the
+## ending. Each waits for the presenter before the dialogue goes on.
+##
+## The dialogue reaches it through the Story autoload, where it registers itself.
 
 
-func present_card(_card: Dictionary) -> void:
-	pass
+## Ignore presses for this long after a page opens, so a double press on the
+## line before it cannot skip a card the room has not seen.
+const INPUT_GUARD_MSEC: int = 300
+## What the footer says while a page waits for the presenter.
+const NEXT_HINT: String = "E  next"
+## Draw order: the backdrop sits under the dashboard, the rest over everything
+## but the dialogue balloon's vote.
+const BACKDROP_LAYER: int = 15
+const FRONT_LAYER: int = 60
+const BACKDROP_COLOR: Color = Color("10141c")
+const RIGHT_CALL_COLOR: Color = Color("2e7d32")
+const MISS_COLOR: Color = Color("c62828")
 
 
-func present_exhibit(_name: String, _exhibit: Dictionary, _variant: String) -> void:
-	pass
+## A single wait for the presenter. Each page gets its own, so a cancelled
+## page's wait is simply dropped and the dialogue that awaited it never resumes.
+class Waiter:
+	extends RefCounted
+	signal done(value: Variant)
 
 
-func inspect_candidate(_index: int, _inspection: Dictionary) -> bool:
-	return true
+var _front: CanvasLayer
+var _backdrop: CanvasLayer
+var _card_view: CardView
+var _exhibit_view: ExhibitView
+var _inspection_view: Control
+var _backdrop_title: Label
+var _backdrop_body: Label
+
+var _waiter: Waiter = null
+## What the current wait accepts: "next", or "admit_or_stop".
+var _wait_kind: String = ""
+var _opened_at: int = 0
+var _card: Dictionary = {}
+var _page: int = 0
+
+var _checklist_labels: Array[Label] = []
+var _candidate_count_label: Label
+var _candidate_name_label: Label
+var _candidate_shows_label: Label
+var _result_label: Label
+var _after_label: Label
+var _prompt_label: Label
 
 
-func show_inspection_result(_index: int, _inspection: Dictionary, _right: bool) -> void:
-	pass
+func _ready() -> void:
+	_build()
+	Story.stage = self
+
+
+func _exit_tree() -> void:
+	if Story.stage == self:
+		Story.stage = null
+
+
+func _input(event: InputEvent) -> void:
+	if _waiter == null or get_tree().paused:
+		return
+	if Time.get_ticks_msec() - _opened_at < INPUT_GUARD_MSEC:
+		if event.is_action_pressed(&"interact") or event.is_action_pressed(&"choice_1") or event.is_action_pressed(&"choice_2"):
+			get_viewport().set_input_as_handled()
+		return
+	match _wait_kind:
+		"next":
+			if event.is_action_pressed(&"interact"):
+				get_viewport().set_input_as_handled()
+				_next_page()
+		"admit_or_stop":
+			if event.is_action_pressed(&"choice_1") or event.is_action_pressed(&"choice_2"):
+				get_viewport().set_input_as_handled()
+				_resolve(event.is_action_pressed(&"choice_1"))
+
+
+#region Calls from Story
+
+
+## Show a concept card page by page until the presenter has read the last one.
+func present_card(card: Dictionary) -> void:
+	_card = card
+	_page = 0
+	_show_card_page()
+	_card_view.show()
+	await _wait("next")
+	_card_view.hide()
+
+
+## Show an exhibit: one with pages (the charter) like a card, a chart drawn.
+func present_exhibit(exhibit_name: String, exhibit: Dictionary, variant: String) -> void:
+	if exhibit.has("pages"):
+		_card = { "number": "", "title": exhibit.title, "slides": "", "pages": exhibit.pages }
+		_page = 0
+		_show_card_page()
+		_card_view.show()
+		await _wait("next")
+		_card_view.hide()
+		return
+	_exhibit_view.show_exhibit(exhibit_name, exhibit, variant, NEXT_HINT)
+	_exhibit_view.show()
+	_card = {}
+	await _wait("next")
+	_exhibit_view.hide()
+
+
+## Show candidate [param index] at the gate; returns true when the presenter
+## presses 1 to admit, false for 2 to stop.
+func inspect_candidate(index: int, inspection: Dictionary) -> bool:
+	var candidates: Array = inspection.candidates
+	var candidate: Dictionary = candidates[index]
+	if _checklist_labels.is_empty():
+		_fill_checklist(inspection)
+	for label: Label in _checklist_labels:
+		label.add_theme_color_override(&"font_color", CardView.INK)
+	_candidate_count_label.text = "%d of %d" % [index + 1, candidates.size()]
+	_candidate_name_label.text = candidate.name
+	_candidate_shows_label.text = candidate.shows
+	_result_label.text = ""
+	_after_label.text = ""
+	_prompt_label.text = "1  Admit    2  Stop"
+	_inspection_view.show()
+	var admit: Variant = await _wait("admit_or_stop")
+	return admit as bool
+
+
+## Say whether the call was right, with its effect, and flash the checklist
+## lines that cover it when it was missed.
+func show_inspection_result(index: int, inspection: Dictionary, right: bool) -> void:
+	var candidate: Dictionary = inspection.candidates[index]
+	var effects: Dictionary = inspection.correct if right else inspection.miss
+	var effect_texts: PackedStringArray = []
+	for meter: String in effects:
+		effect_texts.append("%s %+d" % [meter.capitalize(), int(effects[meter])])
+	_result_label.text = ", ".join(effect_texts)
+	_result_label.add_theme_color_override(&"font_color", RIGHT_CALL_COLOR if right else MISS_COLOR)
+	var after: String = candidate.get("after", "")
+	if candidate.has("after_if_room12_fixed") and GameState.has_flag("room12_fixed"):
+		after = (after + " " + candidate.after_if_room12_fixed).strip_edges()
+	_after_label.text = after
+	_prompt_label.text = NEXT_HINT
+	if not right:
+		for line: Variant in candidate.lines:
+			_flash(_checklist_labels[int(line)])
+	await _wait("next")
 
 
 func end_inspection() -> void:
-	pass
+	_inspection_view.hide()
 
 
-func set_backdrop(_title: String, _body: String) -> void:
-	pass
+## Show the backdrop with a title and body; both empty hides it.
+func set_backdrop(title: String, body: String) -> void:
+	_backdrop_title.text = title
+	_backdrop_body.text = body
+	_backdrop.visible = not (title.is_empty() and body.is_empty())
 
 
+## Close whatever is showing and drop its wait, for a skipped scene.
 func cancel() -> void:
-	pass
+	_waiter = null
+	_wait_kind = ""
+	_card_view.hide()
+	_exhibit_view.hide()
+	_inspection_view.hide()
+
+
+#endregion
+
+
+func _wait(kind: String) -> Variant:
+	var waiter: Waiter = Waiter.new()
+	_waiter = waiter
+	_wait_kind = kind
+	_opened_at = Time.get_ticks_msec()
+	return await waiter.done
+
+
+func _resolve(value: Variant) -> void:
+	var waiter: Waiter = _waiter
+	_waiter = null
+	_wait_kind = ""
+	waiter.done.emit(value)
+
+
+func _next_page() -> void:
+	var pages: Array = _card.get("pages", [])
+	if _page < pages.size() - 1:
+		_page += 1
+		_opened_at = Time.get_ticks_msec()
+		_show_card_page()
+		return
+	_resolve(null)
+
+
+func _show_card_page() -> void:
+	var pages: Array = _card.pages
+	# Card numbers come from JSON as floats; exhibits with pages have none.
+	var number: String = "" if typeof(_card.number) == TYPE_STRING else str(int(_card.number))
+	_card_view.show_page(number, _card.title, _card.slides, pages[_page], _page, pages.size(), NEXT_HINT)
+
+
+func _flash(label: Label) -> void:
+	var tween: Tween = create_tween()
+	for i: int in 3:
+		tween.tween_property(label, "theme_override_colors/font_color", MISS_COLOR, 0.15)
+		tween.tween_property(label, "theme_override_colors/font_color", CardView.INK, 0.15)
+	tween.tween_property(label, "theme_override_colors/font_color", MISS_COLOR, 0.15)
+
+
+#region Building the screens
+
+
+func _build() -> void:
+	_backdrop = CanvasLayer.new()
+	_backdrop.layer = BACKDROP_LAYER
+	_backdrop.visible = false
+	add_child(_backdrop)
+	var shade: ColorRect = ColorRect.new()
+	shade.color = BACKDROP_COLOR
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_backdrop.add_child(shade)
+	_backdrop_title = _label(Color("f3efe2"), HORIZONTAL_ALIGNMENT_CENTER)
+	_backdrop_title.add_theme_font_size_override(&"font_size", 20)
+	_backdrop_title.position = Vector2(10, 64)
+	_backdrop_title.size = Vector2(300, 24)
+	_backdrop.add_child(_backdrop_title)
+	_backdrop_body = _label(Color("f3efe2"), HORIZONTAL_ALIGNMENT_CENTER)
+	_backdrop_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_backdrop_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_backdrop_body.position = Vector2(20, 40)
+	_backdrop_body.size = Vector2(280, 100)
+	_backdrop.add_child(_backdrop_body)
+
+	_front = CanvasLayer.new()
+	_front.layer = FRONT_LAYER
+	add_child(_front)
+	_card_view = CardView.new()
+	_card_view.hide()
+	_front.add_child(_card_view)
+	_exhibit_view = ExhibitView.new()
+	_exhibit_view.hide()
+	_front.add_child(_exhibit_view)
+	_build_inspection()
+
+
+func _build_inspection() -> void:
+	_inspection_view = Control.new()
+	_inspection_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_inspection_view.hide()
+	_front.add_child(_inspection_view)
+	var paper: ColorRect = ColorRect.new()
+	paper.color = CardView.PAPER
+	paper.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_inspection_view.add_child(paper)
+	var bar: ColorRect = ColorRect.new()
+	bar.color = CardView.ACCENT
+	bar.size = Vector2(4, 180)
+	_inspection_view.add_child(bar)
+
+	var checklist: VBoxContainer = VBoxContainer.new()
+	checklist.name = "Checklist"
+	checklist.position = Vector2(CardView.MARGIN, 22)
+	checklist.size = Vector2(194, 150)
+	checklist.add_theme_constant_override(&"separation", 2)
+	_inspection_view.add_child(checklist)
+	var heading: Label = _label(CardView.ACCENT)
+	heading.name = "Heading"
+	heading.position = Vector2(CardView.MARGIN, 6)
+	_inspection_view.add_child(heading)
+
+	var divider: ColorRect = ColorRect.new()
+	divider.color = CardView.FAINT
+	divider.position = Vector2(210, 8)
+	divider.size = Vector2(1, 164)
+	_inspection_view.add_child(divider)
+
+	var right: VBoxContainer = VBoxContainer.new()
+	right.position = Vector2(216, 6)
+	right.size = Vector2(98, 140)
+	right.add_theme_constant_override(&"separation", 4)
+	_inspection_view.add_child(right)
+	_candidate_count_label = _label(CardView.FAINT)
+	right.add_child(_candidate_count_label)
+	_candidate_name_label = _label(CardView.ACCENT)
+	right.add_child(_candidate_name_label)
+	_candidate_shows_label = _wrapping_label(CardView.INK, 98)
+	right.add_child(_candidate_shows_label)
+	_result_label = _label(RIGHT_CALL_COLOR)
+	right.add_child(_result_label)
+	_after_label = _wrapping_label(CardView.INK, 98)
+	right.add_child(_after_label)
+
+	_prompt_label = _label(CardView.ACCENT, HORIZONTAL_ALIGNMENT_RIGHT)
+	_prompt_label.position = Vector2(196, 180 - CardView.FOOTER_HEIGHT - 2)
+	_prompt_label.size = Vector2(118, CardView.FOOTER_HEIGHT)
+	_inspection_view.add_child(_prompt_label)
+
+
+func _fill_checklist(inspection: Dictionary) -> void:
+	(_inspection_view.get_node("Heading") as Label).text = inspection.title
+	var checklist: Node = _inspection_view.get_node("Checklist")
+	for line: String in inspection.checklist:
+		var label: Label = _wrapping_label(CardView.INK, 194)
+		label.text = "- " + line
+		checklist.add_child(label)
+		_checklist_labels.append(label)
+
+
+func _label(color: Color, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+	var label: Label = Label.new()
+	label.add_theme_color_override(&"font_color", color)
+	label.horizontal_alignment = align
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
+
+
+func _wrapping_label(color: Color, width: float) -> Label:
+	var label: Label = _label(color)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size = Vector2(width, 0)
+	return label
+
+
+#endregion
