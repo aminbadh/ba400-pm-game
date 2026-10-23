@@ -23,12 +23,30 @@ const BACKDROP_COLOR: Color = Palette.PAPER
 ## between the dashboard and the dialogue box.
 const BACKDROP_MARGIN: int = 6
 const BACKDROP_TITLE_LINES: int = 1
-## The band a backdrop title sits in, 4 px clear of the dashboard above (its
-## panel's bottom at 63) and of the speaker's name plate below (its top at 111).
-const BACKDROP_TITLE_TOP: int = 67
-const BACKDROP_TITLE_HEIGHT: int = 40
-## The body of the last screen, below the dashboard.
+## The band a backdrop title sits in, [constant UiStyle.GAP] clear of the
+## dashboard above (its panel's bottom at 64) and of the speaker's name plate
+## below (its top at [constant Balloon.NAME_PLATE_TOP], 110).
+const BACKDROP_TITLE_TOP: int = 68
+const BACKDROP_TITLE_HEIGHT: int = int(Balloon.NAME_PLATE_TOP) - UiStyle.GAP - BACKDROP_TITLE_TOP
+## The body of the last screen, below the dashboard, and the room it keeps
+## from the slide's sides and bottom.
 const BACKDROP_BODY_TOP: int = 64
+const BACKDROP_BODY_SIDE: int = 20
+const BACKDROP_BODY_BOTTOM: int = 12
+## The backdrop title's size, and its leading: lines 4 px closer than the font's.
+const BACKDROP_TITLE_SIZE: int = 20
+const BACKDROP_TITLE_LEADING: int = -4
+## The gate inspection's layout on its slide: the checklist on the left, the
+## candidate on the right of a divider.
+const INSPECTION_HEADING_TOP: int = 6
+const CHECKLIST_TOP: int = 22
+const CHECKLIST_SIZE: Vector2 = Vector2(172, 150)
+const DIVIDER_RECT: Rect2 = Rect2(186, 8, 1, 164)
+const CANDIDATE_RECT: Rect2 = Rect2(192, 6, 122, 140)
+const PROMPT_LEFT: int = 196
+const PROMPT_WIDTH: int = 118
+## Wrapped text on a slide: lines 2 px closer than the font's.
+const WRAPPED_LEADING: int = -2
 const RIGHT_CALL_COLOR: Color = Palette.RIGHT_CALL
 const MISS_COLOR: Color = Palette.MISS
 
@@ -260,18 +278,18 @@ func _build() -> void:
 	backdrop_root.add_child(shade)
 	CardView.add_border(backdrop_root)
 	_backdrop_title = _label(CardView.ACCENT, HORIZONTAL_ALIGNMENT_CENTER)
-	_backdrop_title.add_theme_font_size_override(&"font_size", 20)
-	_backdrop_title.add_theme_constant_override(&"line_spacing", -4)
+	_backdrop_title.add_theme_font_size_override(&"font_size", BACKDROP_TITLE_SIZE)
+	_backdrop_title.add_theme_constant_override(&"line_spacing", BACKDROP_TITLE_LEADING)
 	_backdrop_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_backdrop_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_backdrop_title.position = Vector2(BACKDROP_MARGIN, BACKDROP_TITLE_TOP)
-	_backdrop_title.size = Vector2(320 - 2 * BACKDROP_MARGIN, BACKDROP_TITLE_HEIGHT)
+	_backdrop_title.size = Vector2(CardView.SCREEN.x - 2 * BACKDROP_MARGIN, BACKDROP_TITLE_HEIGHT)
 	_backdrop.add_child(_backdrop_title)
 	_backdrop_body = _label(CardView.INK, HORIZONTAL_ALIGNMENT_CENTER)
 	_backdrop_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_backdrop_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_backdrop_body.position = Vector2(20, BACKDROP_BODY_TOP)
-	_backdrop_body.size = Vector2(280, 180 - BACKDROP_BODY_TOP - 12)
+	_backdrop_body.position = Vector2(BACKDROP_BODY_SIDE, BACKDROP_BODY_TOP)
+	_backdrop_body.size = Vector2(CardView.SCREEN.x - 2 * BACKDROP_BODY_SIDE, CardView.SCREEN.y - BACKDROP_BODY_TOP - BACKDROP_BODY_BOTTOM)
 	_backdrop.add_child(_backdrop_body)
 
 	_front = CanvasLayer.new()
@@ -298,46 +316,46 @@ func _build_inspection() -> void:
 	CardView.add_border(_inspection_view)
 	var bar: ColorRect = ColorRect.new()
 	bar.color = CardView.ACCENT
-	bar.position = Vector2(3, 3)
-	bar.size = Vector2(4, 174)
+	bar.position = Vector2.ONE * CardView.BORDER.size()
+	bar.size = Vector2(CardView.ACCENT_BAR_WIDTH, CardView.SCREEN.y - 2 * CardView.BORDER.size())
 	_inspection_view.add_child(bar)
 
 	var checklist: VBoxContainer = VBoxContainer.new()
 	checklist.name = "Checklist"
-	checklist.position = Vector2(CardView.MARGIN, 22)
-	checklist.size = Vector2(172, 150)
-	checklist.add_theme_constant_override(&"separation", 2)
+	checklist.position = Vector2(CardView.MARGIN, CHECKLIST_TOP)
+	checklist.size = CHECKLIST_SIZE
+	checklist.add_theme_constant_override(&"separation", UiStyle.TIGHT)
 	_inspection_view.add_child(checklist)
 	var heading: Label = _label(CardView.ACCENT)
 	heading.name = "Heading"
-	heading.position = Vector2(CardView.MARGIN, 6)
+	heading.position = Vector2(CardView.MARGIN, INSPECTION_HEADING_TOP)
 	_inspection_view.add_child(heading)
 
 	var divider: ColorRect = ColorRect.new()
 	divider.color = CardView.FAINT
-	divider.position = Vector2(186, 8)
-	divider.size = Vector2(1, 164)
+	divider.position = DIVIDER_RECT.position
+	divider.size = DIVIDER_RECT.size
 	_inspection_view.add_child(divider)
 
 	var right: VBoxContainer = VBoxContainer.new()
-	right.position = Vector2(192, 6)
-	right.size = Vector2(122, 140)
-	right.add_theme_constant_override(&"separation", 4)
+	right.position = CANDIDATE_RECT.position
+	right.size = CANDIDATE_RECT.size
+	right.add_theme_constant_override(&"separation", UiStyle.GAP)
 	_inspection_view.add_child(right)
 	_candidate_count_label = _label(CardView.FAINT)
 	right.add_child(_candidate_count_label)
 	_candidate_name_label = _label(CardView.ACCENT)
 	right.add_child(_candidate_name_label)
-	_candidate_shows_label = _wrapping_label(CardView.INK, 122)
+	_candidate_shows_label = _wrapping_label(CardView.INK, CANDIDATE_RECT.size.x)
 	right.add_child(_candidate_shows_label)
 	_result_label = _label(RIGHT_CALL_COLOR)
 	right.add_child(_result_label)
-	_after_label = _wrapping_label(CardView.INK, 122)
+	_after_label = _wrapping_label(CardView.INK, CANDIDATE_RECT.size.x)
 	right.add_child(_after_label)
 
 	_prompt_label = _label(CardView.ACCENT, HORIZONTAL_ALIGNMENT_RIGHT)
-	_prompt_label.position = Vector2(196, 180 - CardView.FOOTER_HEIGHT - 4)
-	_prompt_label.size = Vector2(118, CardView.FOOTER_HEIGHT)
+	_prompt_label.position = Vector2(PROMPT_LEFT, CardView.SCREEN.y - CardView.FOOTER_HEIGHT - CardView.FOOTER_BOTTOM)
+	_prompt_label.size = Vector2(PROMPT_WIDTH, CardView.FOOTER_HEIGHT)
 	_inspection_view.add_child(_prompt_label)
 
 
@@ -345,7 +363,7 @@ func _fill_checklist(inspection: Dictionary) -> void:
 	(_inspection_view.get_node("Heading") as Label).text = inspection.title
 	var checklist: Node = _inspection_view.get_node("Checklist")
 	for line: String in inspection.checklist:
-		var label: Label = _wrapping_label(CardView.INK, 172)
+		var label: Label = _wrapping_label(CardView.INK, CHECKLIST_SIZE.x)
 		label.text = "- " + line
 		checklist.add_child(label)
 		_checklist_labels.append(label)
@@ -363,7 +381,7 @@ func _wrapping_label(color: Color, width: float) -> Label:
 	var label: Label = _label(color)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(width, 0)
-	label.add_theme_constant_override(&"line_spacing", -2)
+	label.add_theme_constant_override(&"line_spacing", WRAPPED_LEADING)
 	return label
 
 

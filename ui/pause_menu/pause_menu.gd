@@ -12,6 +12,8 @@ const TEXT: Color = Palette.TEXT
 const FOCUS: Color = Palette.FOCUS
 const HINT: String = "Up/Down  choose    E  select    Esc  resume"
 const PANEL_SIZE: Vector2 = Vector2(176, 124)
+const SCREEN: Vector2 = Vector2(320, 180)
+const HEADING_SIZE: int = 20
 
 @export var binder: Binder
 
@@ -88,33 +90,42 @@ func _select(index: int) -> void:
 		_labels[i].add_theme_stylebox_override(&"normal", UiStyle.flat(Palette.PANEL_RAISED if i == _selected else Palette.PANEL))
 
 
+# The menu's panel, centred in the room above the hint bar at the bottom.
 func _build() -> void:
 	var panel: PanelContainer = PanelContainer.new()
-	panel.add_theme_stylebox_override(&"panel", UiStyle.frame(4))
+	panel.add_theme_stylebox_override(&"panel", UiStyle.frame())
 	panel.custom_minimum_size = PANEL_SIZE
-	panel.position = ((Vector2(320, 180) - PANEL_SIZE) / 2.0).round()
 	add_child(panel)
 	var column: VBoxContainer = VBoxContainer.new()
-	column.add_theme_constant_override(&"separation", 1)
+	column.add_theme_constant_override(&"separation", UiStyle.GAP)
 	panel.add_child(column)
 	var heading: Label = UiStyle.label(FOCUS, HORIZONTAL_ALIGNMENT_CENTER)
 	heading.text = "Paused"
-	heading.add_theme_font_size_override(&"font_size", 20)
+	heading.add_theme_font_size_override(&"font_size", HEADING_SIZE)
 	column.add_child(heading)
+	var items: VBoxContainer = VBoxContainer.new()
+	items.add_theme_constant_override(&"separation", UiStyle.TIGHT)
+	column.add_child(items)
 	for option: String in OPTIONS:
 		var label: Label = UiStyle.label()
-		column.add_child(label)
+		items.add_child(label)
 		_labels.append(label)
 	var hint_panel: PanelContainer = PanelContainer.new()
-	hint_panel.add_theme_stylebox_override(&"panel", UiStyle.frame(0))
+	hint_panel.add_theme_stylebox_override(&"panel", UiStyle.frame())
 	hint_panel.anchor_left = 0.5
 	hint_panel.anchor_right = 0.5
 	hint_panel.anchor_top = 1.0
 	hint_panel.anchor_bottom = 1.0
 	hint_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	hint_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	hint_panel.offset_bottom = -4
+	hint_panel.offset_bottom = -UiStyle.EDGE
 	add_child(hint_panel)
 	var hint: Label = UiStyle.label(Palette.DIM)
 	hint.text = HINT
 	hint_panel.add_child(hint)
+
+	# The options' text sets the panel's size.
+	_select(0)
+	var panel_size: Vector2 = panel.get_combined_minimum_size()
+	var room_bottom: float = SCREEN.y - UiStyle.EDGE - hint_panel.get_combined_minimum_size().y - UiStyle.GAP
+	panel.position = (Vector2(SCREEN.x - panel_size.x, UiStyle.EDGE + room_bottom - panel_size.y) / 2.0).floor()

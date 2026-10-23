@@ -5,8 +5,8 @@ extends Control
 ## below-right for the 3D look of the printed letters. Fills its card's height.
 
 
-## How far in from the card's border the tile sits.
-const INSET: float = 2.0
+## The card's border, which the tile sits just inside.
+const BORDER: int = 2
 const WIDTH: float = 26.0
 const LETTER_SIZE: int = 20
 
@@ -19,10 +19,10 @@ var card: Dictionary = {}
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	anchor_bottom = 1.0
-	offset_left = INSET
-	offset_top = INSET
-	offset_right = INSET + WIDTH
-	offset_bottom = -INSET
+	offset_left = BORDER
+	offset_top = BORDER
+	offset_right = BORDER + WIDTH
+	offset_bottom = -BORDER
 
 
 func _draw() -> void:

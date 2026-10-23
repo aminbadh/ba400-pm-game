@@ -23,7 +23,8 @@ const ICONS_PATH: String = "res://art/ui/icons.png"
 const ICON_ORDER: Array[String] = ["integrity", "fairness", "team", "budget"]
 const ICON_SIZE: int = 9
 const BAR_SIZE: Vector2 = Vector2(36, 5)
-const EDGE: float = 3.0
+## The dark outline around each bar.
+const TRACK_BORDER: int = 1
 ## The height of the strip at the bottom; world/centre.tscn's camera keeps it clear.
 const HINT_HEIGHT: int = 14
 const GOOD: Color = Palette.METER_GOOD
@@ -36,7 +37,7 @@ var _bars: Dictionary[String, ColorRect] = {}
 var _values: Dictionary[String, Label] = {}
 var _names: Dictionary[String, Label] = {}
 var _icons: Dictionary[String, TextureRect] = {}
-var _hint_panel: PanelContainer
+var _hint_panel: Panel
 var _hint_label: Label
 
 
@@ -88,15 +89,21 @@ func _refresh() -> void:
 
 
 func _build() -> void:
+	# INSET inside the frame and TIGHT between the meters would make the panel
+	# 84 px tall, too tall for the ending's titles between it and the dialogue
+	# box, so for now the meters sit on the frame's border, their rows 2 px
+	# into each other's line height.
 	_panel = PanelContainer.new()
-	_panel.add_theme_stylebox_override(&"panel", UiStyle.frame(0))
-	_panel.position = Vector2(EDGE, EDGE)
+	var frame: StyleBoxTexture = UiStyle.frame()
+	frame.set_content_margin_all(UiStyle.FRAME_MARGIN)  # spacing: pending; INSET leaves no room for the ending's titles
+	_panel.add_theme_stylebox_override(&"panel", frame)
+	_panel.position = Vector2(UiStyle.EDGE, UiStyle.EDGE)
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_panel)
 	var grid: GridContainer = GridContainer.new()
 	grid.columns = 4
-	grid.add_theme_constant_override(&"h_separation", 4)
-	grid.add_theme_constant_override(&"v_separation", -2)
+	grid.add_theme_constant_override(&"h_separation", UiStyle.GAP)
+	grid.add_theme_constant_override(&"v_separation", -2)  # spacing: pending; TIGHT leaves no room for the ending's titles
 	_panel.add_child(grid)
 	var icons: Texture2D = load(ICONS_PATH) as Texture2D
 	for meter: String in GameState.METERS:
@@ -118,12 +125,12 @@ func _build() -> void:
 		# The bar in a dark outlined track.
 		var track: ColorRect = ColorRect.new()
 		track.color = Palette.OUTLINE
-		track.custom_minimum_size = BAR_SIZE + Vector2(2, 2)
+		track.custom_minimum_size = BAR_SIZE + Vector2.ONE * 2 * TRACK_BORDER
 		track.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		grid.add_child(track)
 		var inner: ColorRect = ColorRect.new()
 		inner.color = Palette.METER_TRACK
-		inner.position = Vector2.ONE
+		inner.position = Vector2.ONE * TRACK_BORDER
 		inner.size = BAR_SIZE
 		track.add_child(inner)
 		var bar: ColorRect = ColorRect.new()
@@ -136,8 +143,9 @@ func _build() -> void:
 		_values[meter] = value_label
 
 	# Who to talk to next, in the strip at the bottom, where the dialogue box
-	# goes once they talk.
-	_hint_panel = PanelContainer.new()
+	# goes once they talk. The strip keeps its height whatever the plate's
+	# padding, so the camera's clearance stays right: its line is centred in it.
+	_hint_panel = Panel.new()
 	_hint_panel.add_theme_stylebox_override(&"panel", UiStyle.plate())
 	_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hint_panel.anchor_left = 0.0
@@ -148,4 +156,5 @@ func _build() -> void:
 	add_child(_hint_panel)
 	_hint_label = UiStyle.label(Palette.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 	_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hint_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_hint_panel.add_child(_hint_label)

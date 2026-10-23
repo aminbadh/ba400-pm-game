@@ -32,10 +32,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		(_short if _full.has_focus() else _full).grab_focus()
 
 
-# The frame and the palette's colours on every part of the screen.
+# The frame, the spacing and the palette's colours on every part of the screen.
+# The keys sit EDGE above the screen's bottom, the panel GAP above them.
 func _style() -> void:
-	(%Panel as Control).add_theme_stylebox_override(&"panel", UiStyle.frame(4))
-	(%KeysPanel as Control).add_theme_stylebox_override(&"panel", UiStyle.frame(0))
+	var panel: Control = %Panel
+	var keys: Control = %KeysPanel
+	panel.add_theme_stylebox_override(&"panel", UiStyle.frame())
+	keys.add_theme_stylebox_override(&"panel", UiStyle.frame())
+	(%Column as Control).add_theme_constant_override(&"separation", UiStyle.GAP)
+	(%Buttons as Control).add_theme_constant_override(&"separation", UiStyle.TIGHT)
+	keys.offset_bottom = -UiStyle.EDGE
+	panel.offset_bottom = -(UiStyle.EDGE + keys.get_combined_minimum_size().y + UiStyle.GAP)
 	(%Heading as Label).add_theme_color_override(&"font_color", Palette.FOCUS)
 	(%Subtitle as Label).add_theme_color_override(&"font_color", Palette.TEXT)
 	(%Keys as Label).add_theme_color_override(&"font_color", Palette.DIM)
@@ -43,10 +50,10 @@ func _style() -> void:
 		var normal: StyleBoxFlat = UiStyle.flat(Palette.PANEL)
 		normal.border_color = Palette.DIM
 		normal.set_border_width_all(1)
-		normal.content_margin_left = 6
-		normal.content_margin_right = 6
-		normal.content_margin_top = 2
-		normal.content_margin_bottom = 2
+		normal.content_margin_left = UiStyle.INSET
+		normal.content_margin_right = UiStyle.INSET
+		normal.content_margin_top = UiStyle.TIGHT
+		normal.content_margin_bottom = UiStyle.TIGHT
 		var focus: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
 		focus.bg_color = Palette.PANEL_RAISED
 		focus.border_color = Palette.FOCUS

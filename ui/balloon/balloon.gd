@@ -43,15 +43,25 @@ const VOICES: Dictionary[String, String] = {
 	"lassaad": "res://art/ninja_adventure/Audio/Sounds/Voice/Voice8.wav",
 }
 const RESPONSES_MENU_SCRIPT: Script = preload("res://addons/dialogue_manager/nodes/responses_menu/dialogue_responses_menu.gd")
-## The layout, in base pixels.
+## The layout, in base pixels. Spacing comes from [UiStyle].
 const SCREEN: Vector2 = Vector2(320, 180)
-const EDGE: float = 4.0
 const BOX_HEIGHT: float = 58.0
-const PORTRAIT_SIZE: float = 48.0
-const CARD_LETTER_WIDTH: float = 26.0
+## The portrait drawn in the box, inside its 1 px outline.
+const PORTRAIT_SHOWN: float = 46.0
+## The height of a line of text in the game's font.
+const LINE_HEIGHT: float = 14.0
+## The speaker's name plate: a line of text with [constant UiStyle.PLATE_Y] above and below.
+const NAME_PLATE_HEIGHT: float = LINE_HEIGHT + 2.0 * UiStyle.PLATE_Y
+## The triangle in the box's corner that says the page waits for a press.
+const PROGRESS_SIZE: Vector2 = Vector2(6, 3)
+## A vote card: its coloured border, its height on one line of text, and the
+## letter tile at its left end.
+const CARD_BORDER: int = VoteLetter.BORDER
+const CARD_HEIGHT: float = 26.0
+const CARD_LETTER_WIDTH: float = VoteLetter.WIDTH
 const BAR_HEIGHT: float = 5.0
-## The top of the speaker's name plate, which sits on the box's top edge.
-const NAME_PLATE_TOP: float = SCREEN.y - EDGE - BOX_HEIGHT - 7.0
+## The top of the speaker's name plate, centred on the box's top edge.
+const NAME_PLATE_TOP: float = SCREEN.y - UiStyle.EDGE - BOX_HEIGHT - NAME_PLATE_HEIGHT / 2.0
 
 ## The dialogue resource to show.
 @export var dialogue_resource: DialogueResource
@@ -239,14 +249,16 @@ func _type_page() -> void:
 
 
 # The portrait, the name plate and the text's width for the line's speaker.
+# The text sits [constant UiStyle.INSET] inside the frame, or [constant
+# UiStyle.GAP] after the portrait when there is one.
 func _show_speaker() -> void:
 	var speaker: String = dialogue_line.character
 	var character: String = Story.character_id(speaker)
 	var portrait: Texture2D = Story.portrait(character, dialogue_line.tags)
 	_portrait_back.visible = portrait != null
 	_portrait.texture = portrait
-	var text_left: float = EDGE + UiStyle.FRAME_MARGIN + (PORTRAIT_SIZE + 4.0 if portrait != null else 1.0)
-	dialogue_label.custom_minimum_size.x = SCREEN.x - EDGE - UiStyle.FRAME_MARGIN - text_left
+	var text_left: float = UiStyle.EDGE + UiStyle.FRAME_MARGIN + UiStyle.INSET + (PORTRAIT_SHOWN + UiStyle.GAP if portrait != null else 0.0)
+	dialogue_label.custom_minimum_size.x = SCREEN.x - UiStyle.EDGE - UiStyle.FRAME_MARGIN - UiStyle.INSET - text_left
 	dialogue_label.add_theme_color_override(&"default_color", Palette.TEXT if not speaker.is_empty() else Palette.NARRATION)
 	_set_name_plate(_name_plate, speaker, character)
 	_name_plate.position = Vector2(text_left, NAME_PLATE_TOP)
@@ -322,11 +334,11 @@ func _card_style(border: Color, background: Color) -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = background
 	style.border_color = border
-	style.set_border_width_all(2)
-	style.content_margin_left = CARD_LETTER_WIDTH + 8.0
-	style.content_margin_right = 6.0
-	style.content_margin_top = 3.0
-	style.content_margin_bottom = 4.0
+	style.set_border_width_all(CARD_BORDER)
+	style.content_margin_left = CARD_BORDER + CARD_LETTER_WIDTH + UiStyle.GAP
+	style.content_margin_right = CARD_BORDER + UiStyle.GAP
+	style.content_margin_top = CARD_BORDER + UiStyle.TIGHT
+	style.content_margin_bottom = CARD_BORDER + UiStyle.TIGHT
 	return style
 
 
@@ -364,26 +376,30 @@ func _build() -> void:
 	balloon.theme = Theme.new()
 	balloon.theme.default_font_size = Story.FONT_SIZE
 
-	# The line's box.
+	# The line's box. Three lines of text (42 px) and the portrait (46 px) do
+	# not fit [constant UiStyle.INSET] above and below in its 48 px inside, so
+	# for now they keep only the frame's border there, centred in the 48 px.
 	_box = PanelContainer.new()
-	_box.add_theme_stylebox_override(&"panel", UiStyle.frame(0))
-	_box.position = Vector2(EDGE, SCREEN.y - EDGE - BOX_HEIGHT)
-	_box.size = Vector2(SCREEN.x - 2.0 * EDGE, BOX_HEIGHT)
+	var frame: StyleBoxTexture = UiStyle.frame()
+	frame.content_margin_top = UiStyle.FRAME_MARGIN  # spacing: pending; INSET does not fit three lines
+	frame.content_margin_bottom = UiStyle.FRAME_MARGIN  # spacing: pending; INSET does not fit three lines
+	_box.add_theme_stylebox_override(&"panel", frame)
+	_box.position = Vector2(UiStyle.EDGE, SCREEN.y - UiStyle.EDGE - BOX_HEIGHT)
+	_box.size = Vector2(SCREEN.x - 2.0 * UiStyle.EDGE, BOX_HEIGHT)
 	_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	balloon.add_child(_box)
 	var row: HBoxContainer = HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 3)
+	row.add_theme_constant_override(&"separation", UiStyle.GAP)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_box.add_child(row)
 	_portrait_back = PanelContainer.new()
 	var back: StyleBoxFlat = UiStyle.plate(Palette.SKY_LIGHT)
-	back.set_content_margin_all(0)
+	back.set_content_margin_all(0)  # spacing: not spacing; the picture fills its plate under the outline
 	_portrait_back.add_theme_stylebox_override(&"panel", back)
 	_portrait_back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_portrait_back.offset_left = -1
 	row.add_child(_portrait_back)
 	_portrait = TextureRect.new()
-	_portrait.custom_minimum_size = Vector2(PORTRAIT_SIZE - 2.0, PORTRAIT_SIZE - 2.0)
+	_portrait.custom_minimum_size = Vector2(PORTRAIT_SHOWN, PORTRAIT_SHOWN)
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
 	_portrait.clip_contents = true
@@ -401,15 +417,17 @@ func _build() -> void:
 
 	_progress = Polygon2D.new()
 	_progress.color = Palette.FOCUS
-	_progress.polygon = PackedVector2Array([Vector2(0, 0), Vector2(6, 0), Vector2(3, 3)])
-	_progress.position = Vector2(SCREEN.x - EDGE - 12.0, SCREEN.y - EDGE - 8.0)
+	_progress.polygon = PackedVector2Array([Vector2.ZERO, Vector2(PROGRESS_SIZE.x, 0), Vector2(PROGRESS_SIZE.x / 2.0, PROGRESS_SIZE.y)])
+	# In the box's bottom-right corner, INSET from the frame's side and, like
+	# the text, on the frame's bottom border.
+	_progress.position = SCREEN - Vector2(UiStyle.EDGE + UiStyle.FRAME_MARGIN + UiStyle.INSET, UiStyle.EDGE + UiStyle.FRAME_MARGIN) - PROGRESS_SIZE
 	balloon.add_child(_progress)
 
 	_build_vote()
 
 	_chosen_label = UiStyle.label(Palette.FOCUS, HORIZONTAL_ALIGNMENT_CENTER)
 	_chosen_label.add_theme_font_size_override(&"font_size", Story.FONT_SIZE * 2)
-	_chosen_label.add_theme_stylebox_override(&"normal", UiStyle.frame(4))
+	_chosen_label.add_theme_stylebox_override(&"normal", UiStyle.frame())
 	_chosen_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_chosen_label.anchor_left = 0.5
 	_chosen_label.anchor_right = 0.5
@@ -432,16 +450,16 @@ func _build_vote() -> void:
 	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	balloon.add_child(centre)
 	_vote = VBoxContainer.new()
-	_vote.custom_minimum_size.x = SCREEN.x - 2.0 * EDGE
-	_vote.add_theme_constant_override(&"separation", 3)
+	_vote.custom_minimum_size.x = SCREEN.x - 2.0 * UiStyle.EDGE
+	_vote.add_theme_constant_override(&"separation", UiStyle.GAP)
 	_vote.hide()
 	centre.add_child(_vote)
 
 	var question_panel: PanelContainer = PanelContainer.new()
-	question_panel.add_theme_stylebox_override(&"panel", UiStyle.frame(1))
+	question_panel.add_theme_stylebox_override(&"panel", UiStyle.frame())
 	_vote.add_child(question_panel)
 	var question_column: VBoxContainer = VBoxContainer.new()
-	question_column.add_theme_constant_override(&"separation", 1)
+	question_column.add_theme_constant_override(&"separation", UiStyle.TIGHT)
 	question_panel.add_child(question_column)
 	_question_name = UiStyle.label()
 	_question_name.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
@@ -454,11 +472,11 @@ func _build_vote() -> void:
 	var column: VBoxContainer = VBoxContainer.new()
 	column.set_script(RESPONSES_MENU_SCRIPT)
 	responses_menu = column as Object as DialogueResponsesMenu
-	responses_menu.add_theme_constant_override(&"separation", 3)
+	responses_menu.add_theme_constant_override(&"separation", UiStyle.GAP)
 	var template: Button = Button.new()
 	template.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	template.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	template.custom_minimum_size = Vector2(SCREEN.x - 2.0 * EDGE, 26.0)
+	template.custom_minimum_size = Vector2(SCREEN.x - 2.0 * UiStyle.EDGE, CARD_HEIGHT)
 	template.add_theme_color_override(&"font_color", Palette.TEXT)
 	template.add_theme_color_override(&"font_hover_color", Palette.TEXT)
 	template.add_theme_color_override(&"font_focus_color", Palette.FOCUS)
