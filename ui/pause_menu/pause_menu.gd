@@ -1,14 +1,17 @@
 class_name PauseMenu
 extends CanvasLayer
-## The presenter's menu, on Escape: resume, open the binder, skip to the next
-## scene, or restart from the title. The game is paused while it is open.
+## The presenter's menu, on Escape: resume, open the binder, switch the
+## characters' voices on or off, skip to the next scene, or restart from the
+## title. The game is paused while it is open.
 
 
-const OPTIONS: Array[String] = ["Resume", "Binder", "Skip to next scene", "Restart to title"]
-const PANEL_COLOR: Color = Color(0.06, 0.07, 0.1, 0.97)
-const TEXT: Color = Color("f3efe2")
-const FOCUS: Color = Color("ffd75e")
+const OPTIONS: Array[String] = ["Resume", "Binder", "Voices", "Skip to next scene", "Restart to title"]
+## How the Voices option reads, with the voices off and on.
+const VOICES_TEXT: Array[String] = ["Voices: off", "Voices: on"]
+const TEXT: Color = Palette.TEXT
+const FOCUS: Color = Palette.FOCUS
 const HINT: String = "Up/Down  choose    E  select    Esc  resume"
+const PANEL_SIZE: Vector2 = Vector2(176, 124)
 
 @export var binder: Binder
 
@@ -65,6 +68,9 @@ func _choose(index: int) -> void:
 				binder.open()
 				await binder.closed
 				show()
+		"Voices":
+			Story.voice_blips = not Story.voice_blips
+			_select(index)
 		"Skip to next scene":
 			_resume()
 			Story.skip_scene()
@@ -76,32 +82,39 @@ func _choose(index: int) -> void:
 func _select(index: int) -> void:
 	_selected = wrapi(index, 0, OPTIONS.size())
 	for i: int in _labels.size():
-		_labels[i].text = ("> " if i == _selected else "  ") + OPTIONS[i]
+		var option: String = VOICES_TEXT[int(Story.voice_blips)] if OPTIONS[i] == "Voices" else OPTIONS[i]
+		_labels[i].text = ("> " if i == _selected else "  ") + option
 		_labels[i].add_theme_color_override(&"font_color", FOCUS if i == _selected else TEXT)
+		_labels[i].add_theme_stylebox_override(&"normal", UiStyle.flat(Palette.PANEL_RAISED if i == _selected else Palette.PANEL))
 
 
 func _build() -> void:
-	var shade: ColorRect = ColorRect.new()
-	shade.color = PANEL_COLOR
-	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(shade)
-	var heading: Label = Label.new()
+	var panel: PanelContainer = PanelContainer.new()
+	panel.add_theme_stylebox_override(&"panel", UiStyle.frame(4))
+	panel.custom_minimum_size = PANEL_SIZE
+	panel.position = ((Vector2(320, 180) - PANEL_SIZE) / 2.0).round()
+	add_child(panel)
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override(&"separation", 1)
+	panel.add_child(column)
+	var heading: Label = UiStyle.label(FOCUS, HORIZONTAL_ALIGNMENT_CENTER)
 	heading.text = "Paused"
 	heading.add_theme_font_size_override(&"font_size", 20)
-	heading.add_theme_color_override(&"font_color", FOCUS)
-	heading.position = Vector2(110, 30)
-	add_child(heading)
-	var column: VBoxContainer = VBoxContainer.new()
-	column.position = Vector2(110, 64)
-	add_child(column)
+	column.add_child(heading)
 	for option: String in OPTIONS:
-		var label: Label = Label.new()
+		var label: Label = UiStyle.label()
 		column.add_child(label)
 		_labels.append(label)
-	var hint: Label = Label.new()
+	var hint_panel: PanelContainer = PanelContainer.new()
+	hint_panel.add_theme_stylebox_override(&"panel", UiStyle.frame(0))
+	hint_panel.anchor_left = 0.5
+	hint_panel.anchor_right = 0.5
+	hint_panel.anchor_top = 1.0
+	hint_panel.anchor_bottom = 1.0
+	hint_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	hint_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	hint_panel.offset_bottom = -4
+	add_child(hint_panel)
+	var hint: Label = UiStyle.label(Palette.DIM)
 	hint.text = HINT
-	hint.add_theme_color_override(&"font_color", Color("6f7682"))
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.position = Vector2(0, 160)
-	hint.size = Vector2(320, 12)
-	add_child(hint)
+	hint_panel.add_child(hint)

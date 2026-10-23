@@ -8,12 +8,14 @@ extends Control
 ## page no taller than [constant BODY_SIZE].
 
 
-## The slide's colours.
-const PAPER: Color = Color("f3efe2")
-const INK: Color = Color("222831")
-const ACCENT: Color = Color("1f5f99")
-const TERM: Color = Color("b5502a")
-const FAINT: Color = Color("8a8577")
+## The slide's colours, from [Palette]; each passes 7:1 on the paper.
+const PAPER: Color = Palette.PAPER
+const INK: Color = Palette.INK
+const ACCENT: Color = Palette.SLIDE_ACCENT
+const TERM: Color = Palette.TERM
+const FAINT: Color = Palette.FAINT
+## The pixel border around the slide, outside the text margins.
+const BORDER: Array[Color] = [Palette.OUTLINE, Palette.SAND, Palette.WALL_CREAM]
 ## Space between the screen's edge and the slide's text.
 const MARGIN: int = 10
 ## Where the body text starts, below the number, title and rule.
@@ -41,9 +43,12 @@ func _init() -> void:
 	paper.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(paper)
 
+	add_border(self)
+
 	var accent_bar: ColorRect = ColorRect.new()
 	accent_bar.color = ACCENT
-	accent_bar.size = Vector2(4, 180)
+	accent_bar.position = Vector2(BORDER.size(), BORDER.size())
+	accent_bar.size = Vector2(4, 180 - 2 * BORDER.size())
 	add_child(accent_bar)
 
 	_number_label = _make_label(ACCENT)
@@ -82,7 +87,7 @@ func _init() -> void:
 
 	_footer_label = _make_label(FAINT)
 	_footer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_footer_label.position = Vector2(MARGIN, 180 - FOOTER_HEIGHT - 2)
+	_footer_label.position = Vector2(MARGIN, 180 - FOOTER_HEIGHT - 4)
 	_footer_label.size = Vector2(BODY_SIZE.x, FOOTER_HEIGHT)
 	add_child(_footer_label)
 
@@ -100,6 +105,18 @@ func show_page(number: String, title: String, slides: String, body: String, page
 	_body_label.text = to_bbcode(body)
 	var page_text: String = "" if pages <= 1 else "%d/%d   " % [page + 1, pages]
 	_footer_label.text = page_text + footer
+
+
+## Ring [param parent], a full-screen control, with the slide's pixel border.
+static func add_border(parent: Control) -> void:
+	for i: int in BORDER.size():
+		for side: Rect2 in [Rect2(i, i, 320 - 2 * i, 1), Rect2(i, 179 - i, 320 - 2 * i, 1), Rect2(i, i, 1, 180 - 2 * i), Rect2(319 - i, i, 1, 180 - 2 * i)]:
+			var line: ColorRect = ColorRect.new()
+			line.color = BORDER[i]
+			line.position = side.position
+			line.size = side.size
+			line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			parent.add_child(line)
 
 
 ## Body text with **terms** turned into the accent colour, and any square

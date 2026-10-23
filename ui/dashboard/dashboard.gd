@@ -1,11 +1,12 @@
 class_name Dashboard
 extends CanvasLayer
-## The project dashboard, top-left: Integrity, Fairness, Team and Budget.
-## Hidden until scene 3 puts it on screen; meters the chosen metrics do not
-## light stay greyed out. With metrics_passrate it shows every meter green and
-## full until the ending reveals the real values.
+## The project dashboard, top-left: Integrity, Fairness, Team and Budget, each
+## with an icon, a label, a bar and a number, so no meter is read by colour
+## alone. Hidden until scene 3 puts it on screen; meters the chosen metrics do
+## not light stay greyed out. With metrics_passrate it shows every meter green
+## and full until the ending reveals the real values.
 ##
-## Top-right, a line says who to talk to next.
+## At the bottom, while the player walks, a line says who to talk to next.
 
 
 const METER_NAMES: Dictionary[String, String] = {
@@ -14,18 +15,22 @@ const METER_NAMES: Dictionary[String, String] = {
 	"team": "Team",
 	"budget": "Budget",
 }
+## The meter icons, 9x9 each in this order, drawn by tools/draw_ui.py.
+const ICONS_PATH: String = "res://art/ui/icons.png"
+const ICON_ORDER: Array[String] = ["integrity", "fairness", "team", "budget"]
+const ICON_SIZE: int = 9
 const BAR_SIZE: Vector2 = Vector2(36, 5)
-const GOOD: Color = Color("43a047")
-const WARN: Color = Color("f9a825")
-const BAD: Color = Color("e53935")
-const GREY: Color = Color("5a5f66")
-const TEXT: Color = Color("f3efe2")
-const PANEL: Color = Color(0.067, 0.067, 0.067, 0.85)
+const EDGE: float = 3.0
+const GOOD: Color = Palette.METER_GOOD
+const WARN: Color = Palette.METER_WARN
+const BAD: Color = Palette.METER_BAD
+const GREY: Color = Palette.METER_OFF
 
 var _panel: PanelContainer
 var _bars: Dictionary[String, ColorRect] = {}
 var _values: Dictionary[String, Label] = {}
 var _names: Dictionary[String, Label] = {}
+var _icons: Dictionary[String, TextureRect] = {}
 var _hint_panel: PanelContainer
 var _hint_label: Label
 
@@ -53,6 +58,11 @@ static func display(meter: String) -> Dictionary:
 	return { "fill": scaled / 100.0, "color": color, "text": text, "lit": lit }
 
 
+## The screen area the dashboard covers, so nothing else is drawn under it.
+func panel_rect() -> Rect2:
+	return _panel.get_rect()
+
+
 func _refresh() -> void:
 	_panel.visible = GameState.dashboard_shown or GameState.scene > 3
 	for meter: String in GameState.METERS:
@@ -60,8 +70,10 @@ func _refresh() -> void:
 		_bars[meter].size.x = roundf(BAR_SIZE.x * float(shown.fill))
 		_bars[meter].color = shown.color
 		_values[meter].text = shown.text
-		_values[meter].modulate = Color.WHITE if shown.lit else Color(1, 1, 1, 0.45)
-		_names[meter].modulate = _values[meter].modulate
+		var text_color: Color = Palette.TEXT if shown.lit else Palette.DIM
+		_values[meter].add_theme_color_override(&"font_color", text_color)
+		_names[meter].add_theme_color_override(&"font_color", text_color)
+		_icons[meter].modulate = Color.WHITE if shown.lit else Color(0.55, 0.55, 0.6)
 
 	var scene: Dictionary = Story.current_scene()
 	var character: String = scene.get("character", "")
@@ -71,51 +83,64 @@ func _refresh() -> void:
 
 
 func _build() -> void:
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = PANEL
-	style.set_content_margin_all(3)
-
 	_panel = PanelContainer.new()
-	_panel.add_theme_stylebox_override(&"panel", style)
-	_panel.position = Vector2(3, 3)
+	_panel.add_theme_stylebox_override(&"panel", UiStyle.frame(0))
+	_panel.position = Vector2(EDGE, EDGE)
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_panel)
 	var grid: GridContainer = GridContainer.new()
-	grid.columns = 3
+	grid.columns = 4
 	grid.add_theme_constant_override(&"h_separation", 4)
-	grid.add_theme_constant_override(&"v_separation", 0)
+	grid.add_theme_constant_override(&"v_separation", -2)
 	_panel.add_child(grid)
+	var icons: Texture2D = load(ICONS_PATH) as Texture2D
 	for meter: String in GameState.METERS:
-		var name_label: Label = Label.new()
+		var icon: TextureRect = TextureRect.new()
+		var region: AtlasTexture = AtlasTexture.new()
+		region.atlas = icons
+		region.region = Rect2(ICON_ORDER.find(meter) * ICON_SIZE, 0, ICON_SIZE, ICON_SIZE)
+		icon.texture = region
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		grid.add_child(icon)
+		_icons[meter] = icon
+
+		var name_label: Label = UiStyle.label()
 		name_label.text = METER_NAMES[meter]
-		name_label.add_theme_color_override(&"font_color", TEXT)
 		grid.add_child(name_label)
 		_names[meter] = name_label
 
+		# The bar in a dark outlined track.
 		var track: ColorRect = ColorRect.new()
-		track.color = Color(0.2, 0.2, 0.2)
-		track.custom_minimum_size = BAR_SIZE
+		track.color = Palette.OUTLINE
+		track.custom_minimum_size = BAR_SIZE + Vector2(2, 2)
 		track.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		grid.add_child(track)
+		var inner: ColorRect = ColorRect.new()
+		inner.color = Palette.METER_TRACK
+		inner.position = Vector2.ONE
+		inner.size = BAR_SIZE
+		track.add_child(inner)
 		var bar: ColorRect = ColorRect.new()
 		bar.size = BAR_SIZE
-		track.add_child(bar)
+		inner.add_child(bar)
 		_bars[meter] = bar
 
-		var value_label: Label = Label.new()
-		value_label.add_theme_color_override(&"font_color", TEXT)
+		var value_label: Label = UiStyle.label(Palette.TEXT, HORIZONTAL_ALIGNMENT_RIGHT)
 		grid.add_child(value_label)
 		_values[meter] = value_label
 
+	# Who to talk to next, at the bottom, where the dialogue box goes once they talk.
 	_hint_panel = PanelContainer.new()
-	_hint_panel.add_theme_stylebox_override(&"panel", style)
+	_hint_panel.add_theme_stylebox_override(&"panel", UiStyle.frame(0))
 	_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hint_panel.anchor_left = 1.0
-	_hint_panel.anchor_right = 1.0
-	_hint_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	_hint_panel.offset_right = -3
-	_hint_panel.offset_top = 3
+	_hint_panel.anchor_left = 0.5
+	_hint_panel.anchor_right = 0.5
+	_hint_panel.anchor_top = 1.0
+	_hint_panel.anchor_bottom = 1.0
+	_hint_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_hint_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_hint_panel.offset_bottom = -EDGE
 	add_child(_hint_panel)
-	_hint_label = Label.new()
-	_hint_label.add_theme_color_override(&"font_color", TEXT)
+	_hint_label = UiStyle.label(Palette.TEXT)
 	_hint_panel.add_child(_hint_label)

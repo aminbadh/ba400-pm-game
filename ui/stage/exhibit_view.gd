@@ -34,10 +34,12 @@ func show_exhibit(kind: String, exhibit: Dictionary, variant: String, footer: St
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), CardView.PAPER)
-	draw_rect(Rect2(0, 0, 4, size.y), CardView.ACCENT)
+	for i: int in CardView.BORDER.size():
+		draw_rect(Rect2(i + 0.5, i + 0.5, size.x - 2 * i - 1, size.y - 2 * i - 1), CardView.BORDER[i], false, 1.0)
+	draw_rect(Rect2(3, 3, 4, size.y - 6), CardView.ACCENT)
 	_text(Vector2(LEFT, 6), _exhibit.get("title", ""), CardView.ACCENT)
 	draw_rect(Rect2(LEFT, 20, WIDTH, 1), CardView.ACCENT)
-	_text(Vector2(LEFT, size.y - 14), _footer, CardView.FAINT, WIDTH, HORIZONTAL_ALIGNMENT_RIGHT)
+	_text(Vector2(LEFT, size.y - 16), _footer, CardView.FAINT, WIDTH, HORIZONTAL_ALIGNMENT_RIGHT)
 	match _kind:
 		"org_chart":
 			_draw_org_chart()
@@ -81,7 +83,7 @@ func _draw_org_chart() -> void:
 			var x: float = roundf(LEFT + slot * i + (slot - box_width) / 2.0)
 			var box: Rect2 = Rect2(x, roundf(y + (box_height - height) / 2.0), roundf(box_width), height)
 			centres[node.id] = box
-			draw_rect(box, Color.WHITE)
+			draw_rect(box, Palette.WHITE)
 			draw_rect(box, CardView.INK, false, 1.0)
 			for l: int in lines.size():
 				_text(Vector2(x, box.position.y + 1.0 + l * LINE_HEIGHT), lines[l], CardView.INK, box_width, HORIZONTAL_ALIGNMENT_CENTER)

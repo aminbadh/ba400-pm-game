@@ -16,13 +16,20 @@ const NEXT_HINT: String = "E  next"
 ## but the dialogue balloon's vote.
 const BACKDROP_LAYER: int = 15
 const FRONT_LAYER: int = 60
-const BACKDROP_COLOR: Color = Color("10141c")
+## The backdrop is a bright slide, like the cards.
+const BACKDROP_COLOR: Color = Palette.PAPER
 ## Backdrop titles keep this far from the screen's sides, and wrap onto at
 ## most this many lines rather than shrink.
 const BACKDROP_MARGIN: int = 8
 const BACKDROP_TITLE_LINES: int = 2
-const RIGHT_CALL_COLOR: Color = Color("2e7d32")
-const MISS_COLOR: Color = Color("c62828")
+## The band a backdrop title sits in: below the dashboard (top-left, 59 px
+## tall) and above the dialogue box (its top at 118, its name plate at 111).
+const BACKDROP_TITLE_TOP: int = 62
+const BACKDROP_TITLE_HEIGHT: int = 46
+## The body of the last screen, below the dashboard.
+const BACKDROP_BODY_TOP: int = 64
+const RIGHT_CALL_COLOR: Color = Palette.RIGHT_CALL
+const MISS_COLOR: Color = Palette.MISS
 
 
 ## A single wait for the presenter. Each page gets its own, so a cancelled
@@ -237,22 +244,28 @@ func _build() -> void:
 	_backdrop.layer = BACKDROP_LAYER
 	_backdrop.visible = false
 	add_child(_backdrop)
+	var backdrop_root: Control = Control.new()
+	backdrop_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	backdrop_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_backdrop.add_child(backdrop_root)
 	var shade: ColorRect = ColorRect.new()
 	shade.color = BACKDROP_COLOR
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_backdrop.add_child(shade)
-	_backdrop_title = _label(Color("f3efe2"), HORIZONTAL_ALIGNMENT_CENTER)
+	backdrop_root.add_child(shade)
+	CardView.add_border(backdrop_root)
+	_backdrop_title = _label(CardView.ACCENT, HORIZONTAL_ALIGNMENT_CENTER)
 	_backdrop_title.add_theme_font_size_override(&"font_size", 20)
+	_backdrop_title.add_theme_constant_override(&"line_spacing", -4)
 	_backdrop_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_backdrop_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_backdrop_title.position = Vector2(BACKDROP_MARGIN, 52)
-	_backdrop_title.size = Vector2(320 - 2 * BACKDROP_MARGIN, 48)
+	_backdrop_title.position = Vector2(BACKDROP_MARGIN, BACKDROP_TITLE_TOP)
+	_backdrop_title.size = Vector2(320 - 2 * BACKDROP_MARGIN, BACKDROP_TITLE_HEIGHT)
 	_backdrop.add_child(_backdrop_title)
-	_backdrop_body = _label(Color("f3efe2"), HORIZONTAL_ALIGNMENT_CENTER)
+	_backdrop_body = _label(CardView.INK, HORIZONTAL_ALIGNMENT_CENTER)
 	_backdrop_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_backdrop_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_backdrop_body.position = Vector2(20, 40)
-	_backdrop_body.size = Vector2(280, 100)
+	_backdrop_body.position = Vector2(20, BACKDROP_BODY_TOP)
+	_backdrop_body.size = Vector2(280, 180 - BACKDROP_BODY_TOP - 12)
 	_backdrop.add_child(_backdrop_body)
 
 	_front = CanvasLayer.new()
@@ -276,9 +289,11 @@ func _build_inspection() -> void:
 	paper.color = CardView.PAPER
 	paper.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_inspection_view.add_child(paper)
+	CardView.add_border(_inspection_view)
 	var bar: ColorRect = ColorRect.new()
 	bar.color = CardView.ACCENT
-	bar.size = Vector2(4, 180)
+	bar.position = Vector2(3, 3)
+	bar.size = Vector2(4, 174)
 	_inspection_view.add_child(bar)
 
 	var checklist: VBoxContainer = VBoxContainer.new()
@@ -315,7 +330,7 @@ func _build_inspection() -> void:
 	right.add_child(_after_label)
 
 	_prompt_label = _label(CardView.ACCENT, HORIZONTAL_ALIGNMENT_RIGHT)
-	_prompt_label.position = Vector2(196, 180 - CardView.FOOTER_HEIGHT - 2)
+	_prompt_label.position = Vector2(196, 180 - CardView.FOOTER_HEIGHT - 4)
 	_prompt_label.size = Vector2(118, CardView.FOOTER_HEIGHT)
 	_inspection_view.add_child(_prompt_label)
 

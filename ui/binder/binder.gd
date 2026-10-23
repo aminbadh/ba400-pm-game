@@ -12,12 +12,14 @@ extends CanvasLayer
 signal closed
 
 ## The height the debrief rows have on one page.
-const DEBRIEF_PAGE_HEIGHT: int = 140
-const ROW_WIDTH: int = 296
-const PANEL_COLOR: Color = Color("1b2230")
-const TEXT: Color = Color("f3efe2")
-const DIM: Color = Color("6f7682")
-const FOCUS: Color = Color("ffd75e")
+const DEBRIEF_PAGE_HEIGHT: int = 128
+const ROW_WIDTH: int = 290
+## Where the framed panel sits, leaving a little of the map around it.
+const EDGE: int = 4
+const LEFT: int = 14
+const TEXT: Color = Palette.TEXT
+const DIM: Color = Palette.DIM
+const FOCUS: Color = Palette.FOCUS
 const HEADING: String = "Planning binder"
 const DEBRIEF_HEADING: String = "Debrief"
 const LIST_HINT: String = "Up/Down  choose    E  open    B  close"
@@ -198,7 +200,10 @@ func _render_list() -> void:
 		label.text = "%s %d  %s" % [">" if i == _selected else " ", int(card.number), card.title]
 		var color: Color = TEXT if collected else DIM
 		if i == _selected:
-			color = FOCUS if collected else DIM.lightened(0.3)
+			color = FOCUS if collected else TEXT
+			var plate: StyleBoxFlat = UiStyle.flat(Palette.PANEL_RAISED)
+			plate.content_margin_left = 0
+			label.add_theme_stylebox_override(&"normal", plate)
 		label.add_theme_color_override(&"font_color", color)
 		_rows.add_child(label)
 
@@ -256,29 +261,27 @@ func _build() -> void:
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_root)
-	var panel: ColorRect = ColorRect.new()
-	panel.color = PANEL_COLOR
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var panel: Panel = Panel.new()
+	panel.add_theme_stylebox_override(&"panel", UiStyle.frame())
+	panel.position = Vector2(EDGE, EDGE)
+	panel.size = Vector2(320 - 2 * EDGE, 180 - 2 * EDGE)
 	_root.add_child(panel)
-	_heading = Label.new()
-	_heading.add_theme_color_override(&"font_color", FOCUS)
-	_heading.position = Vector2(12, 5)
+	_heading = UiStyle.label(FOCUS)
+	_heading.position = Vector2(LEFT, 9)
 	_root.add_child(_heading)
 	var rule: ColorRect = ColorRect.new()
 	rule.color = FOCUS
-	rule.position = Vector2(12, 19)
-	rule.size = Vector2(296, 1)
+	rule.position = Vector2(LEFT, 23)
+	rule.size = Vector2(ROW_WIDTH, 1)
 	_root.add_child(rule)
 	_rows = VBoxContainer.new()
-	_rows.position = Vector2(12, 23)
+	_rows.position = Vector2(LEFT, 26)
 	_rows.size = Vector2(ROW_WIDTH, DEBRIEF_PAGE_HEIGHT)
-	_rows.add_theme_constant_override(&"separation", 1)
+	_rows.add_theme_constant_override(&"separation", 0)
 	_root.add_child(_rows)
-	_hint = Label.new()
-	_hint.add_theme_color_override(&"font_color", DIM)
-	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_hint.position = Vector2(12, 180 - 14)
-	_hint.size = Vector2(296, 12)
+	_hint = UiStyle.label(DIM, HORIZONTAL_ALIGNMENT_RIGHT)
+	_hint.position = Vector2(LEFT, 180 - EDGE - 19)
+	_hint.size = Vector2(ROW_WIDTH, 12)
 	_root.add_child(_hint)
 	_card_view = CardView.new()
 	_card_view.hide()

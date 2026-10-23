@@ -1,40 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://ui/title/title.gd" id="1_script"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_normal"]
-content_margin_left = 8.0
-content_margin_top = 3.0
-content_margin_right = 8.0
-content_margin_bottom = 3.0
-bg_color = Color(0.105882, 0.133333, 0.188235, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.435294, 0.462745, 0.509804, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_focus"]
-content_margin_left = 8.0
-content_margin_top = 3.0
-content_margin_right = 8.0
-content_margin_bottom = 3.0
-bg_color = Color(0.121569, 0.372549, 0.6, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(1, 0.843137, 0.368627, 1)
+[ext_resource type="Texture2D" path="res://art/ui/title.png" id="2_picture"]
 
 [sub_resource type="Theme" id="Theme_title"]
-Button/colors/font_color = Color(0.952941, 0.937255, 0.886275, 1)
-Button/colors/font_focus_color = Color(1, 0.843137, 0.368627, 1)
-Button/colors/font_hover_color = Color(0.952941, 0.937255, 0.886275, 1)
-Button/styles/focus = SubResource("StyleBoxFlat_focus")
-Button/styles/hover = SubResource("StyleBoxFlat_normal")
-Button/styles/normal = SubResource("StyleBoxFlat_normal")
-Button/styles/pressed = SubResource("StyleBoxFlat_focus")
-Label/colors/font_color = Color(0.952941, 0.937255, 0.886275, 1)
 
 [node name="Title" type="Control"]
 layout_mode = 3
@@ -46,67 +15,80 @@ grow_vertical = 2
 theme = SubResource("Theme_title")
 script = ExtResource("1_script")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Picture" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0627451, 0.0784314, 0.109804, 1)
+texture = ExtResource("2_picture")
 
-[node name="Column" type="VBoxContainer" parent="."]
+[node name="Panel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 28.0
-offset_bottom = -12.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -84.0
+offset_top = -60.0
+offset_right = 84.0
+offset_bottom = 46.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 4
 
-[node name="Heading" type="Label" parent="Column"]
+[node name="Column" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.843137, 0.368627, 1)
+theme_override_constants/separation = 3
+
+[node name="Heading" type="Label" parent="Panel/Column"]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Bac 2026, Centre 26"
 horizontal_alignment = 1
 
-[node name="Subtitle" type="Label" parent="Column"]
+[node name="Subtitle" type="Label" parent="Panel/Column"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Lycée Ennakhla"
 horizontal_alignment = 1
 
-[node name="Gap" type="Control" parent="Column"]
-custom_minimum_size = Vector2(0, 14)
-layout_mode = 2
-
-[node name="Buttons" type="VBoxContainer" parent="Column"]
+[node name="Buttons" type="VBoxContainer" parent="Panel/Column"]
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
-[node name="Full" type="Button" parent="Column/Buttons"]
+[node name="Full" type="Button" parent="Panel/Column/Buttons"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "1  Full     about 30 min"
 alignment = 0
 
-[node name="Short" type="Button" parent="Column/Buttons"]
+[node name="Short" type="Button" parent="Panel/Column/Buttons"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "2  Short    about 20 min"
 alignment = 0
 
-[node name="Spacer" type="Control" parent="Column"]
-layout_mode = 2
-size_flags_vertical = 3
+[node name="KeysPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 0
 
-[node name="Keys" type="Label" parent="Column"]
+[node name="Keys" type="Label" parent="KeysPanel"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.435294, 0.462745, 0.509804, 1)
 text = "Move WASD   Talk E   Binder B   Menu Esc"
 horizontal_alignment = 1

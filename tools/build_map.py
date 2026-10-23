@@ -14,7 +14,8 @@ from the pack's tilesets in art/ninja_adventure/. Then:
 - writes the atlas to art/tiles/centre.png,
 - writes the TileSet, with collision on walls and solid props, to world/centre_tiles.tres,
 - fills the map's tile layers in world/centre.tscn from the layout below,
-- checks every scene spot and character can be reached from the player's start.
+- checks every scene spot and character can be reached from the player's start,
+- paints the title screen's picture of the lycée to art/ui/title.png.
 
 Run from the project root: uv run tools/build_map.py
 """
@@ -39,6 +40,7 @@ ATLAS_PATH = ROOT / "art" / "tiles" / "centre.png"
 TILESET_PATH = ROOT / "world" / "centre_tiles.tres"
 MAP_PATH = ROOT / "world" / "centre.tscn"
 ATLAS_COLUMNS = 16
+TITLE_PATH = ROOT / "art" / "ui" / "title.png"
 
 C = load_palette()
 O = C["OUTLINE"]
@@ -981,6 +983,7 @@ def build() -> None:
     atlas.image().save(ATLAS_PATH)
     write_tileset(atlas)
     write_layers(layers)
+    title_backdrop().image().save(TITLE_PATH)
     print(f"atlas: {len(atlas.tiles)} tiles in {ATLAS_PATH.relative_to(ROOT)}")
     print(f"layers: " + ", ".join(f"{k} {len(v)} cells" for k, v in layers.items()))
 
@@ -993,6 +996,54 @@ def _merge(under: Canvas, over: Canvas) -> Canvas:
     out = under.crop(0, 0, under.width, under.height)
     out.blit(over, 0, 0)
     return out
+
+
+def title_backdrop() -> Canvas:
+    """The title screen's picture: the lycée's front under a bright sky, from the map's pieces."""
+    w, h = 320, 180
+    c = Canvas(w, h)
+    # Sky, lighter towards the horizon, with a few clouds.
+    for y in range(80):
+        c.hline(0, y, w, C["SKY"] if y < 30 else (C["SKY_LIGHT"] if y < 62 else C["MIST"]))
+    for cx, cy, r in [(40, 18, 7), (52, 16, 9), (64, 19, 6), (250, 28, 8), (262, 25, 10), (276, 29, 7)]:
+        c.disc(cx, cy, r, C["WHITE"])
+    # The front wall: white render, a roof edge, a blue dado, windows and the gate's door.
+    top, bottom = 60, 128
+    c.rect(0, top, w, bottom - top, C["WALL_WHITE"])
+    c.rect(0, top, w, 5, C["WALL_CREAM"])
+    c.hline(0, top, w, O)
+    c.hline(0, top + 5, w, O)
+    c.hline(0, top + 6, w, C["WALL_SHADE"])
+    c.rect(0, bottom - 12, w, 11, C["DOOR_BLUE"])
+    c.hline(0, bottom - 12, w, C["DOOR_BLUE_LIGHT"])
+    c.hline(0, bottom - 2, w, C["DOOR_BLUE_DARK"])
+    c.hline(0, bottom - 1, w, O)
+    for x in list(range(8, 120, 26)) + list(range(208, 312, 26)):
+        c.blit(window(), x, top + 14)
+        c.blit(window(), x, top + 34)
+    # A tall blue double door with a lintel, and the flag over it.
+    door_x = 136
+    c.rect(door_x - 4, top + 8, 56, 4, C["DOOR_BLUE_DARK"])
+    c.rect(door_x, top + 12, 48, bottom - top - 12, C["DOOR_BLUE"])
+    c.vline(door_x + 24, top + 12, bottom - top - 12, O)
+    for px in (door_x + 4, door_x + 28):
+        c.frame(px, top + 18, 16, 18, C["DOOR_BLUE_DARK"])
+        c.frame(px, top + 40, 16, 20, C["DOOR_BLUE_DARK"])
+        c.vline(px + 1, top + 19, 16, C["DOOR_BLUE_LIGHT"])
+    c.frame(door_x - 1, top + 11, 50, bottom - top - 11, O)
+    pole = flagpole()
+    c.blit(pole.crop(0, 0, T, 2 * T), door_x + 16, top - 30)
+    # Paving in front, palms and olive trees either side.
+    for y in range(bottom, h, T):
+        for x in range(0, w, T):
+            c.blit(paving(True, True, True, True, (x // T + y // T) % 2), x, y)
+    c.blit(palm_tree(), 6, bottom - 40)
+    c.blit(palm_tree(), w - 38, bottom - 40)
+    c.blit(olive_tree(), 70, bottom - 22)
+    c.blit(olive_tree(), w - 102, bottom - 22)
+    c.blit(bench(), 40, bottom + 20)
+    c.blit(bench(), w - 72, bottom + 20)
+    return c
 
 
 def check_reachable(solid: set[tuple[int, int]]) -> None:
