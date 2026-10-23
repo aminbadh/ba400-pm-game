@@ -50,6 +50,8 @@ const BOX_HEIGHT: float = 58.0
 const PORTRAIT_SIZE: float = 48.0
 const CARD_LETTER_WIDTH: float = 26.0
 const BAR_HEIGHT: float = 5.0
+## The top of the speaker's name plate, which sits on the box's top edge.
+const NAME_PLATE_TOP: float = SCREEN.y - EDGE - BOX_HEIGHT - 7.0
 
 ## The dialogue resource to show.
 @export var dialogue_resource: DialogueResource
@@ -230,7 +232,7 @@ func _show_speaker() -> void:
 	dialogue_label.custom_minimum_size.x = SCREEN.x - EDGE - UiStyle.FRAME_MARGIN - text_left
 	dialogue_label.add_theme_color_override(&"default_color", Palette.TEXT if not speaker.is_empty() else Palette.NARRATION)
 	_set_name_plate(_name_plate, speaker, character)
-	_name_plate.position = Vector2(text_left, SCREEN.y - EDGE - BOX_HEIGHT - 7.0)
+	_name_plate.position = Vector2(text_left, NAME_PLATE_TOP)
 	_voice.stream = load(VOICES[character]) as AudioStream if VOICES.has(character) else null
 
 

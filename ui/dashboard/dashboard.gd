@@ -6,7 +6,10 @@ extends CanvasLayer
 ## not light stay greyed out. With metrics_passrate it shows every meter green
 ## and full until the ending reveals the real values.
 ##
-## At the bottom, while the player walks, a line says who to talk to next.
+## At the bottom, while the player walks, a line says who to talk to next, in a
+## strip as wide as the screen. The map's camera stops [constant HINT_HEIGHT]
+## pixels past the map's bottom edge, so the strip never hides any of the map
+## the camera can show: room and name plates scroll under it as off the screen.
 
 
 const METER_NAMES: Dictionary[String, String] = {
@@ -21,6 +24,8 @@ const ICON_ORDER: Array[String] = ["integrity", "fairness", "team", "budget"]
 const ICON_SIZE: int = 9
 const BAR_SIZE: Vector2 = Vector2(36, 5)
 const EDGE: float = 3.0
+## The height of the strip at the bottom; world/centre.tscn's camera keeps it clear.
+const HINT_HEIGHT: int = 14
 const GOOD: Color = Palette.METER_GOOD
 const WARN: Color = Palette.METER_WARN
 const BAD: Color = Palette.METER_BAD
@@ -130,17 +135,17 @@ func _build() -> void:
 		grid.add_child(value_label)
 		_values[meter] = value_label
 
-	# Who to talk to next, at the bottom, where the dialogue box goes once they talk.
+	# Who to talk to next, in the strip at the bottom, where the dialogue box
+	# goes once they talk.
 	_hint_panel = PanelContainer.new()
-	_hint_panel.add_theme_stylebox_override(&"panel", UiStyle.frame(0))
+	_hint_panel.add_theme_stylebox_override(&"panel", UiStyle.plate())
 	_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hint_panel.anchor_left = 0.5
-	_hint_panel.anchor_right = 0.5
+	_hint_panel.anchor_left = 0.0
+	_hint_panel.anchor_right = 1.0
 	_hint_panel.anchor_top = 1.0
 	_hint_panel.anchor_bottom = 1.0
-	_hint_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_hint_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_hint_panel.offset_bottom = -EDGE
+	_hint_panel.offset_top = -HINT_HEIGHT
 	add_child(_hint_panel)
-	_hint_label = UiStyle.label(Palette.TEXT)
+	_hint_label = UiStyle.label(Palette.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+	_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hint_panel.add_child(_hint_label)

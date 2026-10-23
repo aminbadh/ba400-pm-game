@@ -2,8 +2,9 @@ extends SceneTree
 ## Checks the content files against the dialogue: every card and exhibit the
 ## dialogue shows exists, every vote has its three debrief lines, every flag is
 ## one the story uses, every scene's dialogue starts at its cue, every card
-## page fits on screen at the base resolution, and every backdrop title fits
-## inside the screen's margins. Exits non-zero on failure.
+## page fits on screen at the base resolution, every backdrop title fits
+## inside the screen's margins and clear of the dashboard and the dialogue box,
+## and the map's camera keeps the strip at the bottom clear. Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/content_test.gd
 
@@ -19,6 +20,10 @@ const FLAGS: Array[String] = [
 const VOTE_SCENES: Array[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 const OPTIONS: Array[String] = ["A", "B", "C"]
 const TIMEOUT_SECONDS: float = 20.0
+const BALLOON_SCRIPT: String = "res://ui/balloon/balloon.gd"
+## How far a backdrop title keeps from the dashboard and the dialogue box, in pixels.
+const TITLE_CLEARANCE: float = 4.0
+const TILE_SIZE: int = 16
 
 var _problems: PackedStringArray = []
 var _story: Node
@@ -170,15 +175,36 @@ func _check_map(sources: Dictionary) -> void:
 			_problems.append("scene %d's character %s is not on the map" % [int(scene.number), scene.character])
 		if not scene.spot.is_empty() and map.get_node_or_null("Spots/" + scene.spot) == null:
 			_problems.append("scene %d's spot %s is not on the map" % [int(scene.number), scene.spot])
-	await _check_backdrop_titles(sources, _story.get(&"stage"))
+	_check_hint_strip(map)
+	await _check_backdrop_titles(sources, _story.get(&"stage"), map.get_node("Dashboard"))
 	map.queue_free()
 	await process_frame
 
 
-# Every title the dialogue puts on the backdrop wraps inside the screen's margins.
-func _check_backdrop_titles(sources: Dictionary, stage: Object) -> void:
-	if stage == null:
+# The camera stops past the map's bottom edge by the height of the strip at the
+# bottom of the screen, so the strip covers nothing on the map, and the strip
+# is that tall.
+func _check_hint_strip(map: Node) -> void:
+	var dashboard: Node = map.get_node("Dashboard")
+	var strip_height: int = dashboard.get(&"HINT_HEIGHT")
+	var drawn: float = (dashboard.get(&"_hint_panel") as Control).size.y
+	var map_bottom: int = (map.get_node("Floor") as TileMapLayer).get_used_rect().end.y * TILE_SIZE
+	var camera_bottom: int = (map.get_node("Actors/Player/Camera2D") as Camera2D).limit_bottom
+	print("hint strip: %d px tall, drawn %d px; the camera stops %d px past the map's bottom" % [strip_height, drawn, camera_bottom - map_bottom])
+	if camera_bottom - map_bottom != strip_height:
+		_problems.append("the camera stops %d px past the map's bottom, but the strip at the bottom is %d px tall" % [camera_bottom - map_bottom, strip_height])
+	if drawn != strip_height:
+		_problems.append("the strip at the bottom is drawn %d px tall, not %d" % [drawn, strip_height])
+
+
+# Every title the dialogue puts on the backdrop fits inside the screen's
+# margins, and its rendered rect stays [constant TITLE_CLEARANCE] px clear of the
+# dashboard above and of the dialogue box's name plate below.
+func _check_backdrop_titles(sources: Dictionary, stage: Object, dashboard: Object) -> void:
+	if stage == null or dashboard == null:
 		return
+	var dashboard_bottom: float = (dashboard.call(&"panel_rect") as Rect2).end.y
+	var box_top: float = (load(BALLOON_SCRIPT) as Script).get_script_constant_map()[&"NAME_PLATE_TOP"]
 	var calls: RegEx = RegEx.create_from_string("Story\\.backdrop\\(\"([^\"]+)\"")
 	for path: String in sources:
 		for found: RegExMatch in calls.search_all(sources[path]):
@@ -186,9 +212,15 @@ func _check_backdrop_titles(sources: Dictionary, stage: Object) -> void:
 			stage.call(&"set_backdrop", title, "")
 			await process_frame
 			var fits: bool = stage.call(&"backdrop_title_fits")
-			print("backdrop title \"%s\": %s" % [title, "fits" if fits else "does not fit"])
+			var rect: Rect2 = stage.call(&"backdrop_title_rect")
+			print("backdrop title \"%s\": %s, y %d to %d, between the dashboard at %d and the box at %d"
+				% [title, "fits" if fits else "does not fit", rect.position.y, rect.end.y, dashboard_bottom, box_top])
 			if not fits:
-				_problems.append("backdrop title \"%s\" does not fit on two lines inside the margins" % title)
+				_problems.append("backdrop title \"%s\" does not fit on one line inside the margins" % title)
+			if rect.position.y < dashboard_bottom + TITLE_CLEARANCE:
+				_problems.append("backdrop title \"%s\" starts at y %d, within %d px of the dashboard's bottom at %d" % [title, rect.position.y, TITLE_CLEARANCE, dashboard_bottom])
+			if rect.end.y > box_top - TITLE_CLEARANCE:
+				_problems.append("backdrop title \"%s\" ends at y %d, within %d px of the dialogue box's name plate at %d" % [title, rect.end.y, TITLE_CLEARANCE, box_top])
 	stage.call(&"set_backdrop", "", "")
 
 

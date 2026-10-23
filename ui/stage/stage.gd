@@ -18,14 +18,15 @@ const BACKDROP_LAYER: int = 15
 const FRONT_LAYER: int = 60
 ## The backdrop is a bright slide, like the cards.
 const BACKDROP_COLOR: Color = Palette.PAPER
-## Backdrop titles keep this far from the screen's sides, and wrap onto at
-## most this many lines rather than shrink.
-const BACKDROP_MARGIN: int = 8
-const BACKDROP_TITLE_LINES: int = 2
-## The band a backdrop title sits in: below the dashboard (top-left, 59 px
-## tall) and above the dialogue box (its top at 118, its name plate at 111).
-const BACKDROP_TITLE_TOP: int = 62
-const BACKDROP_TITLE_HEIGHT: int = 46
+## Backdrop titles keep this far from the screen's sides, clear of its 3 px
+## border, and stay on one line: two lines at this size (56 px) do not fit
+## between the dashboard and the dialogue box.
+const BACKDROP_MARGIN: int = 6
+const BACKDROP_TITLE_LINES: int = 1
+## The band a backdrop title sits in, 4 px clear of the dashboard above (its
+## panel's bottom at 63) and of the speaker's name plate below (its top at 111).
+const BACKDROP_TITLE_TOP: int = 67
+const BACKDROP_TITLE_HEIGHT: int = 40
 ## The body of the last screen, below the dashboard.
 const BACKDROP_BODY_TOP: int = 64
 const RIGHT_CALL_COLOR: Color = Palette.RIGHT_CALL
@@ -181,6 +182,11 @@ func set_backdrop(title: String, body: String) -> void:
 ## [constant BACKDROP_TITLE_LINES] lines. For the content check.
 func backdrop_title_fits() -> bool:
 	return _backdrop_title.get_line_count() <= BACKDROP_TITLE_LINES
+
+
+## The screen area the backdrop's title takes, grown to its text. For the content check.
+func backdrop_title_rect() -> Rect2:
+	return _backdrop_title.get_global_rect()
 
 
 ## Close whatever is showing and drop its wait, for a skipped scene.

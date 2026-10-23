@@ -155,7 +155,7 @@ position = Vector2(200, 232)
 limit_left = 0
 limit_top = 0
 limit_right = 576
-limit_bottom = 352
+limit_bottom = 366
 
 [node name="Dashboard" type="CanvasLayer" parent="."]
 script = ExtResource("5_dashboard")
