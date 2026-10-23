@@ -1,13 +1,15 @@
 extends SceneTree
-## Plays the whole story through the Dialogue Manager API three times with fixed
-## votes, one run per ending, and checks the final meters, flags, ending, the
-## cards shown again after wrong answers, and the debrief. Exits non-zero on failure.
+## Plays the whole story through the Dialogue Manager API with fixed votes, one
+## run per ending plus one that skips scene 8, and checks the final meters, flags,
+## ending, the cards shown again after wrong answers, the debrief, and lines that
+## must not show. Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/story_test.gd
 
 
-## Each run: the mode, the room's vote per scene, the gate inspection calls
-## (true admits), and what the state must be at the end.
+## Each run: the mode, the room's vote per scene, the scenes skipped (not played
+## at all, as the pause menu's skip leaves them), the gate inspection calls (true
+## admits), what the state must be at the end, and speakers whose lines must not show.
 const RUNS: Array[Dictionary] = [
 	{
 		"name": "smooth, Full mode",
@@ -41,6 +43,20 @@ const RUNS: Array[Dictionary] = [
 		"cards": [1, 2, 2, 3, 4, 5, 5, 6, 7, 8, 9],
 		"ending": "news",
 	},
+	{
+		"name": "scene 8 skipped, Full mode",
+		"short": false,
+		"votes": { 0: "B", 1: "B", 2: "A", 3: "B", 5: "B", 6: "A", 7: "A" },
+		"skip": [8],
+		"inspection": [true, false, false, true, false],
+		"integrity": 95, "fairness": 75, "team": 80, "budget": 2400,
+		"flags": ["room12_fixed", "metrics_exam", "raci_clear", "staff_borrowed"],
+		"cards": [1, 2, 3, 4, 5, 6, 7, 8],
+		"inspection_debrief": "You made 5 of 5 calls right against the checklist. It catches what memory misses.",
+		"ending": "smooth",
+		# Scene 9's 10:15 beat shows only when scene 8 set a flag.
+		"absent_speakers": ["10:15, an incident"],
+	},
 ]
 const LETTERS: String = "ABC"
 const METERS: Array[String] = ["integrity", "fairness", "team", "budget"]
@@ -55,6 +71,8 @@ const PASSED: String = "passed"
 var _game_state: Node
 var _story: Node
 var _dialogue_manager: Node
+## Every speaker whose line showed in the current run.
+var _speakers: Array[String] = []
 
 
 func _initialize() -> void:
@@ -109,9 +127,14 @@ func _play(run: Dictionary) -> String:
 	calls.assign(run.inspection)
 	_story.set(&"scripted_inspection", calls)
 
+	_speakers.clear()
 	var scenes: Array = _story.get(&"scenes")
 	for scene: Dictionary in scenes:
 		var number: int = int(scene.number)
+		if number in run.get("skip", []):
+			print("  (scene %d skipped)" % number)
+			_game_state.set(&"scene", number + 1)
+			continue
 		var result: String = await _play_scene(number, scene.dialogue, run.votes.get(number, ""))
 		if result != PASSED:
 			return "scene %d: %s" % [number, "a script error stopped it" if result.is_empty() else result]
@@ -130,6 +153,7 @@ func _play_scene(number: int, path: String, vote: String) -> String:
 	while line != null and count < MAX_LINES:
 		count += 1
 		if line.responses.is_empty():
+			_speakers.append(line.character)
 			print("  %s%s" % ["" if line.character.is_empty() else line.character + ": ", line.text])
 			line = await _dialogue_manager.call(&"get_next_dialogue_line", resource, line.next_id)
 			continue
@@ -175,8 +199,18 @@ func _check(run: Dictionary) -> String:
 		problems.append("flags are %s, expected %s" % [flags, expected_flags])
 	if cards != run.cards:
 		problems.append("cards shown are %s, expected %s" % [cards, run.cards])
-	if (_game_state.get(&"cards") as Array).size() != 9:
-		problems.append("the binder does not hold all nine cards")
+	var collected: Array = (_game_state.get(&"cards") as Array).duplicate()
+	collected.sort()
+	var expected_collected: Array = []
+	for number: int in run.cards:
+		if number not in expected_collected:
+			expected_collected.append(number)
+	expected_collected.sort()
+	if collected != expected_collected:
+		problems.append("the binder holds cards %s, expected %s" % [collected, expected_collected])
+	for speaker: String in run.get("absent_speakers", []):
+		if speaker in _speakers:
+			problems.append("a line from \"%s\" showed" % speaker)
 
 	# The debrief: each card's line follows the room's vote, or says it was not voted.
 	var not_voted: String = _story.get(&"not_voted_text")

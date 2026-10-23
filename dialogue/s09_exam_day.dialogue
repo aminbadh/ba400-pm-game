@@ -25,7 +25,8 @@ elif GameState.has_flag("rooms_crowded")
 	8:30, the rooms: Nour's quiet desk is gone; she finishes, but the doors bang.
 elif GameState.has_flag("staff_borrowed")
 	8:30, the rooms: The borrowed teachers arrive with sandwiches from the region. Everyone is in place.
-if not GameState.short_mode or GameState.has_flag("staff_trained") or GameState.has_flag("staff_protected") or GameState.has_flag("bought_tech")
+# The incident shows only when scene 8 set a flag, in both modes.
+if GameState.has_flag("staff_trained") or GameState.has_flag("staff_protected") or GameState.has_flag("bought_tech")
 	10:15, an incident: A candidate is found with an earpiece.
 if GameState.has_flag("staff_trained")
 	do GameState.integrity += 5

@@ -29,7 +29,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `art/placeholder/` | Flat-coloured stand-ins: the tile atlas, the player, one sprite per character |
 | `fonts/` | Ark Pixel 10 px and its licence |
 | `addons/dialogue_manager/` | [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager) v4.1.0, vendored |
-| `tests/` | `story_test.gd` plays the story three times; `content_test.gd` checks the content files |
+| `tests/` | `story_test.gd` plays the story to each ending and with scene 8 skipped; `flow_test.gd` drives restart and skip; `content_test.gd` checks the content files |
 | `export_presets.cfg` | The `Web` export preset (single-threaded) |
 
 ## Controls
