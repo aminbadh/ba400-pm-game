@@ -276,14 +276,16 @@ func card_by_number(number: int) -> Dictionary:
 	return {}
 
 
-## The debrief line for a card: the line for the room's vote in its scene, or
-## [member not_voted_text].
+## The debrief line for a card: the line for the room's vote in its scene, the
+## count of right calls for scene 4's inspection, or [member not_voted_text].
 func debrief_line(card: Dictionary) -> String:
 	var scene: int = int(card.scene)
 	var vote: String = GameState.votes.get(scene, "")
 	if vote.is_empty():
 		if scene == 4 and not GameState.inspection_calls.is_empty():
-			return card.debrief_inspection
+			var right: int = GameState.inspection_calls.values().count(true)
+			var total: int = (inspection.candidates as Array).size()
+			return (card.debrief_inspection as String).format({ "right": right, "total": total })
 		return not_voted_text
 	return card.debrief[vote]
 

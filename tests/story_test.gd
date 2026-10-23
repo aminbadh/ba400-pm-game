@@ -17,6 +17,7 @@ const RUNS: Array[Dictionary] = [
 		"integrity": 100, "fairness": 75, "team": 100, "budget": 2400,
 		"flags": ["room12_fixed", "metrics_exam", "raci_clear", "staff_borrowed", "staff_protected"],
 		"cards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+		"inspection_debrief": "You made 5 of 5 calls right against the checklist. It catches what memory misses.",
 		"ending": "smooth",
 	},
 	{
@@ -27,6 +28,7 @@ const RUNS: Array[Dictionary] = [
 		"integrity": 40, "fairness": 75, "team": 75, "budget": 2700,
 		"flags": ["room12_fixed", "metrics_people", "raci_double", "staff_thin", "staff_trained"],
 		"cards": [1, 1, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9],
+		"inspection_debrief": "You made 3 of 5 calls right against the checklist. It catches what memory misses.",
 		"ending": "strained",
 	},
 	{
@@ -183,7 +185,7 @@ func _check(run: Dictionary) -> String:
 		var vote: String = run.votes.get(int(card.scene), "")
 		var expected: String = not_voted if vote.is_empty() else card.debrief[vote]
 		if run.short == false and int(card.scene) == 4:
-			expected = card.debrief_inspection
+			expected = run.inspection_debrief
 		if line != expected:
 			problems.append("debrief for card %d is \"%s\", expected \"%s\"" % [int(card.number), line, expected])
 		print("  debrief %d: %s" % [int(card.number), line])

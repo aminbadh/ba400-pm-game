@@ -70,7 +70,7 @@
 				"B": "Weather isn't a checklist item; devices were.",
 				"C": "'The supervisors will notice' is exactly what a checklist replaces."
 			},
-			"debrief_inspection": "[TBD: story.md has no debrief line for the Full-mode inspection]"
+			"debrief_inspection": "You made {right} of {total} calls right against the checklist. It catches what memory misses."
 		},
 		{
 			"number": 6,

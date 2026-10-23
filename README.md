@@ -67,7 +67,7 @@ Story text lives in the `.dialogue` files under `dialogue/`, in Dialogue Manager
 | `do Story.show_card(7)` | Show a card full screen until the presenter presses E, and add it to the binder |
 | `do Story.show_exhibit("raci")` | Show the charter or a chart from `content/exhibits.json` |
 
-Card text lives in `content/cards.json`. Each card has a number, title, slide range, one or more `pages` of body text, and its vote's `debrief` line for A, B and C. Mark a key term as `**term**` to draw it in the accent colour; `\n` starts a new paragraph. If a page is too long, `tests/content_test.gd` fails and names it: split its text into two pages rather than shortening a definition.
+Card text lives in `content/cards.json`. Each card has a number, title, slide range, one or more `pages` of body text, and its vote's `debrief` line for A, B and C. Card 5 also has `debrief_inspection`, the line for Full mode's gate inspection, where `{right}` and `{total}` become the count of right calls. Mark a key term as `**term**` to draw it in the accent colour; `\n` starts a new paragraph. If a page is too long, `tests/content_test.gd` fails and names it: split its text into two pages rather than shortening a definition.
 
 ## Open in the editor
 
