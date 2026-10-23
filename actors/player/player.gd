@@ -1,6 +1,7 @@
 class_name Player
 extends CharacterBody2D
 ## The project manager. Walks in four directions and talks to the NPC it faces.
+## Stands still while a scene plays.
 
 
 ## Walking speed in pixels per second.
@@ -13,19 +14,13 @@ const PROBE_DEPTH: float = 4.0
 ## The direction the player last moved in, one of the four unit vectors.
 var facing: Vector2 = Vector2.DOWN
 
-var _is_talking: bool = false
-
 ## Sweeps a small box from just in front of the player's feet towards [member facing].
 @onready var _talk_probe: ShapeCast2D = $TalkProbe
 @onready var _feet: CollisionShape2D = $CollisionShape2D
 
 
-func _ready() -> void:
-	DialogueManager.dialogue_ended.connect(_on_dialogue_ended)
-
-
 func _physics_process(_delta: float) -> void:
-	if _is_talking:
+	if Story.in_scene:
 		velocity = Vector2.ZERO
 		return
 
@@ -37,16 +32,12 @@ func _physics_process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _is_talking or not event.is_action_pressed(&"interact"):
+	if Story.in_scene or not event.is_action_pressed(&"interact"):
 		return
 
 	var npc: Npc = _npc_in_reach()
-	if npc == null or npc.dialogue_resource == null:
-		return
-
-	get_viewport().set_input_as_handled()
-	_is_talking = true
-	npc.talk()
+	if npc != null and npc.talk():
+		get_viewport().set_input_as_handled()
 
 
 # Collapse the input to one axis so the player only walks in four directions.
@@ -78,8 +69,3 @@ func _npc_in_reach() -> Npc:
 		if collider is Npc:
 			return collider as Npc
 	return null
-
-
-func _on_dialogue_ended(_resource: DialogueResource) -> void:
-	# Deferred, so the key press that closed the balloon cannot reopen it.
-	set_deferred(&"_is_talking", false)

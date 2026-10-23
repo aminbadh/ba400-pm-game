@@ -1,10 +1,16 @@
 [gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://actors/npc/npc.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://art/placeholder/npc.png" id="2_texture"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(12, 12)
+
+[sub_resource type="LabelSettings" id="LabelSettings_name"]
+font_size = 10
+font_color = Color(1, 1, 1, 1)
+shadow_size = 0
+shadow_color = Color(0, 0, 0, 0.85)
+shadow_offset = Vector2(1, 1)
 
 [node name="Npc" type="StaticBody2D"]
 collision_layer = 3
@@ -12,8 +18,21 @@ collision_mask = 0
 script = ExtResource("1_script")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("2_texture")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 2)
 shape = SubResource("RectangleShape2D_body")
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -40.0
+offset_top = -21.0
+offset_right = 40.0
+offset_bottom = -9.0
+text = "Name"
+label_settings = SubResource("LabelSettings_name")
+horizontal_alignment = 1
+
+[node name="Marker" type="Polygon2D" parent="."]
+position = Vector2(0, -26)
+color = Color(1, 0.843137, 0.368627, 1)
+polygon = PackedVector2Array(-4, -4, 4, -4, 0, 1)
