@@ -144,43 +144,34 @@ func _draw_histogram() -> void:
 	var available: int = int(_exhibit.available)
 	if _variant == "levelled":
 		needed[0] = available
-	var known_max: float = float(available)
+	var highest: float = float(available)
 	for value: Variant in needed:
-		if value != null:
-			known_max = maxf(known_max, float(value))
-	var top_value: float = known_max * 1.1
+		highest = maxf(highest, float(value))
+	var top_value: float = highest * 1.1
 	var chart_top: float = TOP + 10.0
 	var chart_bottom: float = size.y - 40.0
 	var chart_height: float = chart_bottom - chart_top
 	var left: float = LEFT + 18.0
 	var slot: float = (WIDTH - 18.0) / days.size()
 	var bar_width: float = slot - 12.0
+	var line_y: float = roundf(chart_bottom - chart_height * available / top_value)
 
 	draw_line(Vector2(left, chart_top), Vector2(left, chart_bottom), CardView.INK)
 	draw_line(Vector2(left, chart_bottom), Vector2(left + WIDTH - 18.0, chart_bottom), CardView.INK)
 	for i: int in days.size():
 		var x: float = left + slot * i + 6.0
-		var value: Variant = needed[i]
-		var known: bool = value != null
-		# A day with no figure gets a hatched placeholder column, marked unknown.
-		var height: float = chart_height * (float(value) / top_value if known else 0.55)
+		var value: int = int(needed[i])
+		var height: float = chart_height * value / top_value
 		var bar: Rect2 = Rect2(roundf(x), roundf(chart_bottom - height), roundf(bar_width), roundf(height))
-		if known:
-			draw_rect(bar, CardView.ACCENT)
-		else:
-			draw_rect(bar, CardView.FAINT, false, 1.0)
-			for stripe: float in range(int(bar.position.y) + 4, int(bar.end.y), 4):
-				draw_line(Vector2(bar.position.x, stripe), Vector2(bar.end.x, stripe), Color(CardView.FAINT, 0.5))
-		var label: String = str(int(value)) if known else _exhibit.unknown_label
-		_text(Vector2(x, bar.position.y - 12.0), label, CardView.INK if known else CardView.FAINT, bar_width, HORIZONTAL_ALIGNMENT_CENTER)
+		draw_rect(bar, CardView.ACCENT)
+		# Values go inside the bars, so none sits on the line for the supervisors we have.
+		_text(Vector2(x, bar.position.y + 1.0), str(value), CardView.PAPER, bar_width, HORIZONTAL_ALIGNMENT_CENTER)
 		_text(Vector2(x - 4.0, chart_bottom + 2.0), days[i], CardView.INK, bar_width + 8.0, HORIZONTAL_ALIGNMENT_CENTER)
 
 	# The line for the supervisors the centre has.
-	var line_y: float = roundf(chart_bottom - chart_height * available / top_value)
 	for dash: float in range(int(left), int(left + WIDTH - 18.0), 6):
 		draw_line(Vector2(dash, line_y), Vector2(dash + 3.0, line_y), CardView.TERM)
 	_text(Vector2(left, line_y - 12.0), _exhibit.available_label, CardView.TERM, WIDTH - 18.0, HORIZONTAL_ALIGNMENT_RIGHT)
-	_text(Vector2(LEFT, size.y - 26.0), _exhibit.unknown_note, CardView.FAINT)
 
 
 # Draw [param text] with its top-left at [param at], optionally aligned in [param width].
