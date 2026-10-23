@@ -7,8 +7,12 @@ extends Control
 
 const LEFT: float = CardView.MARGIN
 const WIDTH: float = CardView.BODY_SIZE.x
-## Where the chart starts, below the title.
+## Where the title, its rule and the chart start, and the footer's distance
+## from the screen's bottom.
+const TITLE_TOP: float = 6.0
+const RULE_TOP: float = 20.0
 const TOP: float = 24.0
+const FOOTER_BOTTOM: float = 16.0
 const FONT_SIZE: int = 10
 const LINE_HEIGHT: float = 13.0
 
@@ -36,10 +40,11 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), CardView.PAPER)
 	for i: int in CardView.BORDER.size():
 		draw_rect(Rect2(i + 0.5, i + 0.5, size.x - 2 * i - 1, size.y - 2 * i - 1), CardView.BORDER[i], false, 1.0)
-	draw_rect(Rect2(3, 3, 4, size.y - 6), CardView.ACCENT)
-	_text(Vector2(LEFT, 6), _exhibit.get("title", ""), CardView.ACCENT)
-	draw_rect(Rect2(LEFT, 20, WIDTH, 1), CardView.ACCENT)
-	_text(Vector2(LEFT, size.y - 16), _footer, CardView.FAINT, WIDTH, HORIZONTAL_ALIGNMENT_RIGHT)
+	var border: int = CardView.BORDER.size()
+	draw_rect(Rect2(border, border, CardView.ACCENT_BAR_WIDTH, size.y - 2 * border), CardView.ACCENT)
+	_text(Vector2(LEFT, TITLE_TOP), _exhibit.get("title", ""), CardView.ACCENT)
+	draw_rect(Rect2(LEFT, RULE_TOP, WIDTH, 1), CardView.ACCENT)
+	_text(Vector2(LEFT, size.y - FOOTER_BOTTOM), _footer, CardView.FAINT, WIDTH, HORIZONTAL_ALIGNMENT_RIGHT)
 	match _kind:
 		"org_chart":
 			_draw_org_chart()
