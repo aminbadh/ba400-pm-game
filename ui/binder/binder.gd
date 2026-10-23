@@ -8,7 +8,7 @@ extends CanvasLayer
 ## While it is open the game is paused.
 
 
-## Emitted when the binder closes.
+## Emitted when the binder closes, unless a skipped scene cancelled it.
 signal closed
 
 ## The height the debrief rows have on one page.
@@ -25,6 +25,9 @@ const CARD_HINT: String = "E  back"
 const DEBRIEF_HINT: String = "E  next"
 
 var _mode: String = ""
+# The story's wait while it shows the quest log or the debrief; dropped, never
+# resolved, when a skipped scene cancels it, so that scene's dialogue stays stopped.
+var _story_waiter: Stage.Waiter = null
 var _selected: int = 0
 var _debrief_page: int = 0
 # The debrief's pages, each a list of card indices that fit on it.
@@ -67,20 +70,28 @@ func open() -> void:
 
 ## Open the binder as the quest log and wait until the presenter closes it.
 func open_quest_log() -> void:
-	_open("browse")
-	await closed
+	await _open_for_story("browse")
 
 
 ## Open the debrief and wait until the presenter has paged through it.
 func open_debrief() -> void:
-	_open("debrief")
-	await closed
+	await _open_for_story("debrief")
 
 
 ## Close without waiting for the presenter, for a skipped scene.
 func cancel() -> void:
+	_story_waiter = null
 	if visible:
-		_close()
+		hide()
+		_card_view.hide()
+		get_tree().paused = _was_paused
+
+
+func _open_for_story(mode: String) -> void:
+	var waiter: Stage.Waiter = Stage.Waiter.new()
+	_story_waiter = waiter
+	_open(mode)
+	await waiter.done
 
 
 func _open(mode: String) -> void:
@@ -102,6 +113,10 @@ func _close() -> void:
 	_card_view.hide()
 	get_tree().paused = _was_paused
 	closed.emit()
+	if _story_waiter != null:
+		var waiter: Stage.Waiter = _story_waiter
+		_story_waiter = null
+		waiter.done.emit(null)
 
 
 func _input(event: InputEvent) -> void:
