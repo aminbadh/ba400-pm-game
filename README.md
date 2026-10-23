@@ -17,7 +17,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `content/inspection.json` | Scene 4's gate checklist and its five rehearsal candidates |
 | `content/scenes.json` | The scene order, who starts each scene and where, the characters' names and colours, the place names |
 | `ui/palette.gd` | Every colour: the pack's palette, the lycée's cream walls and blue doors, the UI colours and every text and background pair |
-| `ui/ui_style.gd` | The pixel frame, the dark name plates and labels every screen shares |
+| `ui/ui_style.gd` | The pixel frame, the dark name plates and labels every screen shares, and the spacing rule: `INSET` (6 px) inside every frame, `GAP` (4) between separate items, `TIGHT` (2) between the lines of a list, `EDGE` (4) from a panel to the screen's edge, `PLATE_X` and `PLATE_Y` (3, 1) inside the small plates |
 | `ui/title/` | The title screen: Full or Short |
 | `ui/balloon/` | The dialogue box: portrait, name plate, typed pages of three lines, optional voices; the votes as A/B/C cards with the 20-second bar, "The room chose B" |
 | `ui/stage/` | Full-screen moments: cards, charts, the gate inspection, the ending backdrop |
@@ -34,7 +34,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `tools/` | The art generators (Python, run with `uv`), the screenshot capture and its washed-out filter, the licence check |
 | `fonts/` | Ark Pixel 10 px and its licence |
 | `addons/dialogue_manager/` | [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager) v4.1.0, vendored |
-| `tests/` | `story_test.gd` plays the story to each ending and with scene 8 skipped; `flow_test.gd` drives restart and skip; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files; `contrast_test.gd` checks every text colour reaches 7:1 |
+| `tests/` | `story_test.gd` plays the story to each ending and with scene 8 skipped; `flow_test.gd` drives restart and skip; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files; `contrast_test.gd` checks every text colour reaches 7:1; `spacing_test.gd` checks every margin, separation and offset under `ui/` comes from `UiStyle`'s constants |
 | `export_presets.cfg` | The `Web` export preset (single-threaded) |
 
 ## Controls
@@ -114,6 +114,7 @@ godot --headless --path . -s tests/flow_test.gd      # restart, new game and ski
 godot --headless --path . --fixed-fps 60 -s tests/route_test.gd  # walk to each scene's character with the movement keys; exits 1 if the player stops short
 godot --headless --path . -s tests/content_test.gd   # cards, debrief lines, flags, page and title fit; exits 1 on failure
 godot --headless --path . -s tests/contrast_test.gd  # every text colour pair at 7:1 or more; exits 1 on failure
+godot --headless --path . -s tests/spacing_test.gd   # no number literal for a margin, separation or offset under ui/; exits 1 on failure
 ```
 
 ## Web build
