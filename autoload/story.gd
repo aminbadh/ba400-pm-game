@@ -27,6 +27,10 @@ const FONT_SIZE: int = 10
 const START_CUE: String = "start"
 ## The scene played after the last one, when the story is over.
 const STORY_OVER: int = 11
+## The ending's cues for the debrief and the last screen, where skipping the
+## ending goes instead of leaving its title on screen.
+const DEBRIEF_CUE: String = "debrief"
+const LAST_SCREEN_CUE: String = "last_screen"
 
 ## The nine concept cards, in order, as in cards.json.
 var cards: Array[Dictionary] = []
@@ -61,6 +65,8 @@ var _running_scene: int = -1
 var _running_dialogue: DialogueResource = null
 var _balloon: Node = null
 var _snapshot: Dictionary = {}
+## True once the ending has opened the debrief.
+var _debrief_started: bool = false
 
 
 func _ready() -> void:
@@ -94,21 +100,28 @@ func talk_to(character: String) -> bool:
 	return true
 
 
-## Start scene [param number]'s dialogue in the balloon.
-func start_scene(number: int) -> void:
+## Start scene [param number]'s dialogue in the balloon, from [param cue].
+func start_scene(number: int, cue: String = START_CUE) -> void:
 	var scene: Dictionary = scenes[number]
 	_snapshot = GameState.snapshot()
 	_running_scene = number
 	_running_dialogue = load(scene.dialogue) as DialogueResource
 	in_scene = true
-	_balloon = DialogueManager.show_dialogue_balloon(_running_dialogue, START_CUE)
+	_balloon = DialogueManager.show_dialogue_balloon(_running_dialogue, cue)
 	scene_changed.emit()
 
 
 ## Abandon the current scene, undoing its effects, and move to the next one.
-## Its vote stays unrecorded, so the debrief shows it as not voted.
+## Its vote stays unrecorded, so the debrief shows it as not voted. The ending
+## has no vote to undo: skipping it goes on to the debrief, then the last screen.
 func skip_scene() -> void:
 	if GameState.scene >= STORY_OVER:
+		return
+	if in_scene and _running_scene == STORY_OVER - 1:
+		var cue: String = LAST_SCREEN_CUE if _debrief_started else DEBRIEF_CUE
+		_close_dialogue()
+		backdrop("")
+		start_scene(_running_scene, cue)
 		return
 	if in_scene:
 		_close_dialogue()
@@ -119,18 +132,27 @@ func skip_scene() -> void:
 ## Back to the title screen with a fresh state.
 func restart() -> void:
 	_close_dialogue()
-	GameState.reset()
-	shown_cards.clear()
+	_reset_story()
 	get_tree().paused = false
 	get_tree().change_scene_to_file(TITLE_SCENE)
 
 
 ## Start a new game in Full or Short mode.
 func new_game(short_mode: bool) -> void:
+	_close_dialogue()
 	GameState.short_mode = short_mode
+	_reset_story()
+	get_tree().change_scene_to_file(MAP_SCENE)
+
+
+# Forget every scene in progress, so a new game starts from scene 0.
+func _reset_story() -> void:
 	GameState.reset()
 	shown_cards.clear()
-	get_tree().change_scene_to_file(MAP_SCENE)
+	_running_scene = -1
+	_running_dialogue = null
+	_snapshot = {}
+	_debrief_started = false
 
 
 func _close_dialogue() -> void:
@@ -236,6 +258,7 @@ func backdrop(title: String, body: String = "") -> void:
 
 ## Open the binder as the debrief until the presenter closes it.
 func open_debrief() -> void:
+	_debrief_started = true
 	if binder != null:
 		await binder.open_debrief()
 

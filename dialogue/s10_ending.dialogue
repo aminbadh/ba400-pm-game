@@ -1,7 +1,9 @@
 # Scene 10: June 2026, what really happened. Starts on its own after scene 9.
 # The ending for the meters, then the real Bac 2026 credited to the press, then
 # the debrief in the binder, then the last screen. Short mode keeps the ending
-# line, three real figures and the debrief.
+# line, three real figures, the flag payoffs, the debrief and the last screen.
+# Skipping the ending (pause menu) jumps to the debrief cue, or from the debrief
+# to the last screen.
 
 ~ start
 do GameState.reveal_dashboard()
@@ -26,6 +28,13 @@ if not GameState.short_mode
 The press: 35.67% passed the main session, the lowest in five years; 50.72% after the control session.
 if GameState.has_flag("metrics_passrate")
 	You chose the pass rate as your metric. Your centre didn't control it, and it arrived after your project ended. A metric has to measure your project's performance.
+=> debrief
+
+~ debrief
+do GameState.reveal_dashboard()
 do Story.open_debrief()
+=> last_screen
+
+~ last_screen
 do Story.backdrop("", "Your centre's quality plan and staffing plan are done. But who tells the parents? What could still go wrong? Who prints the papers? Over to Team 2.")
 => END

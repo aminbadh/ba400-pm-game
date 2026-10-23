@@ -52,7 +52,7 @@ On the title screen, press **1** for **Full** (about 30 minutes) or **2** for **
 
 Walk to the character with the marker over them and press E; the top-right line says who and where. Only that character answers. After scene 9 the ending starts on its own.
 
-Escape opens the pause menu. **Skip to next scene** abandons the current scene with no effect on the meters, and its vote shows as "Not voted" in the debrief. **Restart to title** starts over.
+Escape opens the pause menu. **Skip to next scene** abandons the current scene with no effect on the meters, and its vote shows as "Not voted" in the debrief. During the ending it goes straight to the debrief, then the last screen. **Restart to title** starts over.
 
 ## Changing the story
 
@@ -81,7 +81,8 @@ Run from the project root. `godot` stands for the Godot binary (on macOS, `/Appl
 godot --headless --path . --import                   # import assets; must print no errors
 godot --headless --path . --quit-after 300           # run the title screen briefly
 godot --headless --path . -s tests/story_test.gd     # play the story to each ending; exits 1 on failure, 2 on timeout
-godot --headless --path . -s tests/content_test.gd   # cards, debrief lines, flags and page fit; exits 1 on failure
+godot --headless --path . -s tests/flow_test.gd      # restart, new game and skip, and skipping the ending; exits 1 on failure
+godot --headless --path . -s tests/content_test.gd   # cards, debrief lines, flags, page and title fit; exits 1 on failure
 ```
 
 ## Web build
