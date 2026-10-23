@@ -14,9 +14,18 @@ signal closed
 ## The height the debrief rows have on one page.
 const DEBRIEF_PAGE_HEIGHT: int = 128
 const ROW_WIDTH: int = 290
-## Where the framed panel sits, leaving a little of the map around it.
-const EDGE: int = 4
-const LEFT: int = 14
+const SCREEN: Vector2i = Vector2i(320, 180)
+## Where the text starts: INSET inside the frame, which sits EDGE from the
+## screen's side.
+const LEFT: int = UiStyle.EDGE + UiStyle.FRAME_MARGIN + UiStyle.INSET
+## The tops of the heading, its rule, the rows and the hint. The nine rows do
+## not fit INSET below the frame's top with TIGHT between them, so for now
+## they keep these places and touch one another.
+const HEADING_TOP: int = 9
+const RULE_TOP: int = 23
+const ROWS_TOP: int = 26
+const HINT_TOP: int = 157
+const HINT_HEIGHT: int = 12
 const TEXT: Color = Palette.TEXT
 const DIM: Color = Palette.DIM
 const FOCUS: Color = Palette.FOCUS
@@ -201,9 +210,7 @@ func _render_list() -> void:
 		var color: Color = TEXT if collected else DIM
 		if i == _selected:
 			color = FOCUS if collected else TEXT
-			var plate: StyleBoxFlat = UiStyle.flat(Palette.PANEL_RAISED)
-			plate.content_margin_left = 0
-			label.add_theme_stylebox_override(&"normal", plate)
+			label.add_theme_stylebox_override(&"normal", UiStyle.flat(Palette.PANEL_RAISED))
 		label.add_theme_color_override(&"font_color", color)
 		_rows.add_child(label)
 
@@ -263,25 +270,25 @@ func _build() -> void:
 	add_child(_root)
 	var panel: Panel = Panel.new()
 	panel.add_theme_stylebox_override(&"panel", UiStyle.frame())
-	panel.position = Vector2(EDGE, EDGE)
-	panel.size = Vector2(320 - 2 * EDGE, 180 - 2 * EDGE)
+	panel.position = Vector2(UiStyle.EDGE, UiStyle.EDGE)
+	panel.size = Vector2(SCREEN.x - 2 * UiStyle.EDGE, SCREEN.y - 2 * UiStyle.EDGE)
 	_root.add_child(panel)
 	_heading = UiStyle.label(FOCUS)
-	_heading.position = Vector2(LEFT, 9)
+	_heading.position = Vector2(LEFT, HEADING_TOP)
 	_root.add_child(_heading)
 	var rule: ColorRect = ColorRect.new()
 	rule.color = FOCUS
-	rule.position = Vector2(LEFT, 23)
+	rule.position = Vector2(LEFT, RULE_TOP)
 	rule.size = Vector2(ROW_WIDTH, 1)
 	_root.add_child(rule)
 	_rows = VBoxContainer.new()
-	_rows.position = Vector2(LEFT, 26)
+	_rows.position = Vector2(LEFT, ROWS_TOP)
 	_rows.size = Vector2(ROW_WIDTH, DEBRIEF_PAGE_HEIGHT)
-	_rows.add_theme_constant_override(&"separation", 0)
+	_rows.add_theme_constant_override(&"separation", 0)  # spacing: pending; nine rows with TIGHT do not fit
 	_root.add_child(_rows)
 	_hint = UiStyle.label(DIM, HORIZONTAL_ALIGNMENT_RIGHT)
-	_hint.position = Vector2(LEFT, 180 - EDGE - 19)
-	_hint.size = Vector2(ROW_WIDTH, 12)
+	_hint.position = Vector2(LEFT, HINT_TOP)
+	_hint.size = Vector2(ROW_WIDTH, HINT_HEIGHT)
 	_root.add_child(_hint)
 	_card_view = CardView.new()
 	_card_view.hide()
