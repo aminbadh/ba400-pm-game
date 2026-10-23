@@ -17,6 +17,10 @@ const NEXT_HINT: String = "E  next"
 const BACKDROP_LAYER: int = 15
 const FRONT_LAYER: int = 60
 const BACKDROP_COLOR: Color = Color("10141c")
+## Backdrop titles keep this far from the screen's sides, and wrap onto at
+## most this many lines rather than shrink.
+const BACKDROP_MARGIN: int = 8
+const BACKDROP_TITLE_LINES: int = 2
 const RIGHT_CALL_COLOR: Color = Color("2e7d32")
 const MISS_COLOR: Color = Color("c62828")
 
@@ -166,6 +170,12 @@ func set_backdrop(title: String, body: String) -> void:
 	_backdrop.visible = not (title.is_empty() and body.is_empty())
 
 
+## True if the backdrop's title fits inside its margins on at most
+## [constant BACKDROP_TITLE_LINES] lines. For the content check.
+func backdrop_title_fits() -> bool:
+	return _backdrop_title.get_line_count() <= BACKDROP_TITLE_LINES
+
+
 ## Close whatever is showing and drop its wait, for a skipped scene.
 func cancel() -> void:
 	_waiter = null
@@ -233,8 +243,10 @@ func _build() -> void:
 	_backdrop.add_child(shade)
 	_backdrop_title = _label(Color("f3efe2"), HORIZONTAL_ALIGNMENT_CENTER)
 	_backdrop_title.add_theme_font_size_override(&"font_size", 20)
-	_backdrop_title.position = Vector2(10, 64)
-	_backdrop_title.size = Vector2(300, 24)
+	_backdrop_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_backdrop_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_backdrop_title.position = Vector2(BACKDROP_MARGIN, 52)
+	_backdrop_title.size = Vector2(320 - 2 * BACKDROP_MARGIN, 48)
 	_backdrop.add_child(_backdrop_title)
 	_backdrop_body = _label(Color("f3efe2"), HORIZONTAL_ALIGNMENT_CENTER)
 	_backdrop_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

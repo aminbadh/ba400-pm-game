@@ -1,8 +1,9 @@
 extends SceneTree
 ## Checks the content files against the dialogue: every card and exhibit the
 ## dialogue shows exists, every vote has its three debrief lines, every flag is
-## one the story uses, every scene's dialogue starts at its cue, and every card
-## page fits on screen at the base resolution. Exits non-zero on failure.
+## one the story uses, every scene's dialogue starts at its cue, every card
+## page fits on screen at the base resolution, and every backdrop title fits
+## inside the screen's margins. Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/content_test.gd
 
@@ -39,7 +40,7 @@ func _main() -> void:
 		_check_debriefs(sources)
 		_check_scenes()
 		await _check_pages_fit()
-		await _check_map()
+		await _check_map(sources)
 	if _problems.is_empty():
 		print("PASS: content checks")
 		quit(0)
@@ -148,7 +149,7 @@ func _check_pages_fit() -> void:
 
 
 # The map loads, and the stage and binder register with Story.
-func _check_map() -> void:
+func _check_map(sources: Dictionary) -> void:
 	var map: Node = (load("res://world/centre.tscn") as PackedScene).instantiate()
 	root.add_child(map)
 	current_scene = map
@@ -169,8 +170,26 @@ func _check_map() -> void:
 			_problems.append("scene %d's character %s is not on the map" % [int(scene.number), scene.character])
 		if not scene.spot.is_empty() and map.get_node_or_null("Spots/" + scene.spot) == null:
 			_problems.append("scene %d's spot %s is not on the map" % [int(scene.number), scene.spot])
+	await _check_backdrop_titles(sources, _story.get(&"stage"))
 	map.queue_free()
 	await process_frame
+
+
+# Every title the dialogue puts on the backdrop wraps inside the screen's margins.
+func _check_backdrop_titles(sources: Dictionary, stage: Object) -> void:
+	if stage == null:
+		return
+	var calls: RegEx = RegEx.create_from_string("Story\\.backdrop\\(\"([^\"]+)\"")
+	for path: String in sources:
+		for found: RegExMatch in calls.search_all(sources[path]):
+			var title: String = found.get_string(1)
+			stage.call(&"set_backdrop", title, "")
+			await process_frame
+			var fits: bool = stage.call(&"backdrop_title_fits")
+			print("backdrop title \"%s\": %s" % [title, "fits" if fits else "does not fit"])
+			if not fits:
+				_problems.append("backdrop title \"%s\" does not fit on two lines inside the margins" % title)
+	stage.call(&"set_backdrop", "", "")
 
 
 func _card_for_scene(scene: int) -> Dictionary:
