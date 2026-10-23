@@ -34,7 +34,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `tools/` | The art generators (Python, run with `uv`), the screenshot capture and its washed-out filter, the licence check |
 | `fonts/` | Ark Pixel 10 px and its licence |
 | `addons/dialogue_manager/` | [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager) v4.1.0, vendored |
-| `tests/` | `story_test.gd` plays the story to each ending and with scene 8 skipped; `flow_test.gd` drives restart and skip; `content_test.gd` checks the content files; `contrast_test.gd` checks every text colour reaches 7:1 |
+| `tests/` | `story_test.gd` plays the story to each ending and with scene 8 skipped; `flow_test.gd` drives restart and skip; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files; `contrast_test.gd` checks every text colour reaches 7:1 |
 | `export_presets.cfg` | The `Web` export preset (single-threaded) |
 
 ## Controls
@@ -82,13 +82,14 @@ Card text lives in `content/cards.json`. Each card has a number, title, slide ra
 The art is drawn in code and the PNGs are committed; run a generator again after changing it. Each is a standalone script run with [uv](https://docs.astral.sh/uv/), from the project root. Colours come from `ui/palette.gd`.
 
 ```sh
-uv run tools/build_map.py         # draw the tiles, write art/tiles/centre.png, world/centre_tiles.tres and the map's layers, check every spot is reachable
+uv run tools/build_map.py         # draw the tiles, write art/tiles/centre.png, world/centre_tiles.tres and the map's layers, check the map
+uv run tools/build_map.py --check # only check the map, writing nothing
 uv run tools/draw_characters.py   # draw the sprites and portraits
 uv run tools/draw_ui.py           # draw the frame and the meter icons
 uv run tools/check_licenses.py    # check art/LICENSES.md lists every file under art/
 ```
 
-The map's layout (rooms, beds, props, wall decorations) is the lists at the top of `tools/build_map.py`; edit them there rather than painting tiles in the editor, which the next run would overwrite.
+The map's layout (rooms, beds, props, wall decorations) is the lists at the top of `tools/build_map.py`; edit them there rather than painting tiles in the editor, which the next run would overwrite. The map check uses the player's collision box from `actors/player/` and every place a character can stand: each character can be reached and talked to, nowhere leaves the player stuck, a walkway two tiles wide joins the start to both sides of every door, and nothing stands within a tile of a doorway.
 
 **Projector check.** `tools/capture_screens.gd` plays through every kind of screen and saves each at 1920x1080 to `build/screens/`; `tools/washout.py` adds a washed-out copy of each (blacks lifted to 25%, contrast and saturation down 30%), as a worn projector shows them. The capture needs a window:
 
@@ -110,6 +111,7 @@ godot --headless --path . --import                   # import assets; must print
 godot --headless --path . --quit-after 300           # run the title screen briefly
 godot --headless --path . -s tests/story_test.gd     # play the story to each ending; exits 1 on failure, 2 on timeout
 godot --headless --path . -s tests/flow_test.gd      # restart, new game and skip, and skipping the ending; exits 1 on failure
+godot --headless --path . --fixed-fps 60 -s tests/route_test.gd  # walk to each scene's character with the movement keys; exits 1 if the player stops short
 godot --headless --path . -s tests/content_test.gd   # cards, debrief lines, flags, page and title fit; exits 1 on failure
 godot --headless --path . -s tests/contrast_test.gd  # every text colour pair at 7:1 or more; exits 1 on failure
 ```

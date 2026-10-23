@@ -14,10 +14,11 @@ from the pack's tilesets in art/ninja_adventure/. Then:
 - writes the atlas to art/tiles/centre.png,
 - writes the TileSet, with collision on walls and solid props, to world/centre_tiles.tres,
 - fills the map's tile layers in world/centre.tscn from the layout below,
-- checks every scene spot and character can be reached from the player's start,
+- checks the map can be walked (see check_map),
 - paints the title screen's picture of the lycée to art/ui/title.png.
 
 Run from the project root: uv run tools/build_map.py
+To check the map without writing anything: uv run tools/build_map.py --check
 """
 
 from __future__ import annotations
@@ -114,13 +115,13 @@ PROPS = [
     ("steel_cabinet", 31, 9), ("dresser", 25, 9), ("filing", 34, 9),
     ("envelope_table", 27, 15), ("office_desk", 25, 19),
     ("boxes", 33, 19), ("boxes", 34, 19), ("boxes", 34, 18), ("bin", 24, 20),
-    ("photocopier", 28, 9), ("boxes", 33, 9), ("plant", 34, 15),
+    ("photocopier", 24, 9), ("boxes", 33, 9), ("plant", 34, 15),
     # Courtyard: olive and palm trees in their beds, the flag, benches.
     ("olive", 20, 9), ("olive", 1, 14), ("palm", 20, 17), ("palm", 2, 18),
     ("flag", 11, 9), ("bench", 5, 11), ("bench", 16, 11),
     ("bush", 1, 9), ("bush_round", 4, 10), ("sunflower", 2, 9), ("bush", 22, 11),
     ("flower_red", 3, 16), ("bush_round", 18, 20), ("bush", 5, 20), ("bin", 22, 16),
-    ("plant", 7, 9), ("plant", 15, 9),
+    ("plant", 3, 9), ("plant", 15, 9),
     # The gate: the guard post.
     ("booth", 14, 17),
 ]
@@ -140,15 +141,14 @@ FLOOR_DECOR = [
     ("crack", 4, 12), ("pebbles", 20, 15),
 ]
 
-# Where the player starts, and the tiles that must stay free and reachable:
-# every scene spot and every character's start (from world/centre.tscn).
-PLAYER_START = (12, 14)
-MUST_REACH = {
-    "admin_desk": (3, 3), "admin_side": (8, 4), "room12_front": (17, 3),
-    "staff_front": (27, 5), "staff_chart": (32, 3), "gate_side": (9, 17),
-    "gate_post": (13, 19), "deposit_cabinet": (31, 12), "courtyard_bench": (6, 12),
-    "Nour": (21, 6), "Aziz": (9, 12), "Lassaad": (16, 20),
-}
+# The doorways' two tiles each, in the rooms' south walls ("v": walked through
+# north to south) and the deposit room's west wall ("h": west to east).
+DOOR_GAPS = [((5, 8), (6, 8), "v"), ((17, 8), (18, 8), "v"), ((28, 8), (29, 8), "v"), ((23, 13), (23, 14), "h")]
+
+# The player's start, the scene spots and the characters' starts are read from
+# world/centre.tscn, and the bodies' collision boxes from actors/player/ and actors/npc/.
+PLAYER_SCENE = ROOT / "actors" / "player" / "player.tscn"
+NPC_SCENE = ROOT / "actors" / "npc" / "npc.tscn"
 
 random.seed(26)
 
@@ -869,7 +869,7 @@ def paving(n: bool, e: bool, s: bool, w: bool, odd: int) -> Canvas:
     return c
 
 
-def build() -> None:
+def build(check_only: bool = False) -> None:
     atlas = Atlas()
     layers: dict[str, dict[tuple[int, int], tuple[int, int]]] = {"Floor": {}, "Shade": {}, "Walls": {}, "Decor": {}, "Props": {}}
     solid: set[tuple[int, int]] = set()
@@ -978,7 +978,9 @@ def build() -> None:
                 if atlas.meta[atlas.index[_key_at(atlas, coords)]]["solid"]:
                     solid.add(cell)
 
-    check_reachable(solid)
+    check_map(solid, set(layers["Props"]))
+    if check_only:
+        return
     ATLAS_PATH.parent.mkdir(parents=True, exist_ok=True)
     atlas.image().save(ATLAS_PATH)
     write_tileset(atlas)
@@ -1046,31 +1048,162 @@ def title_backdrop() -> Canvas:
     return c
 
 
-def check_reachable(solid: set[tuple[int, int]]) -> None:
-    """Every scene spot and character start is free and reachable from the
-    player's start, with a free tile beside it to talk from."""
-    seen = {PLAYER_START}
-    queue = deque([PLAYER_START])
+def read_box(scene: Path, shape_id: str) -> tuple[int, int, int, int]:
+    """A body's collision box from its scene: (offset x, offset y, width, height) in pixels."""
+    text = scene.read_text()
+    size = re.search(r'id="' + shape_id + r'"\]\nsize = Vector2\(([\d.]+), ([\d.]+)\)', text)
+    if size is None:
+        sys.exit(f"no box {shape_id} in {scene.relative_to(ROOT)}")
+    node = re.search(r'\[node name="CollisionShape2D"[^\]]*\]\n((?:\w.*\n)*)', text)
+    offset = re.search(r"position = Vector2\((-?[\d.]+), (-?[\d.]+)\)", node.group(1)) if node else None
+    ox, oy = (int(float(offset.group(1))), int(float(offset.group(2)))) if offset else (0, 0)
+    return ox, oy, int(float(size.group(1))), int(float(size.group(2)))
+
+
+def read_positions(parent: str) -> dict[str, tuple[int, int]]:
+    """The position of each node directly under [param parent] in the map, in pixels."""
+    found = {}
+    pattern = re.compile(r'\[node name="(\w+)"[^\]]*parent="' + parent + r'"[^\]]*\]\n((?:\w.*\n)*)')
+    for name, body in pattern.findall(MAP_PATH.read_text()):
+        pos = re.search(r"position = Vector2\((-?[\d.]+), (-?[\d.]+)\)", body)
+        if pos:
+            found[name] = (int(float(pos.group(1))), int(float(pos.group(2))))
+    return found
+
+
+def blocked_centres(rects: list[tuple[int, int, int, int]], box: tuple[int, int, int, int]) -> bytearray:
+    """For every pixel of the map, whether a box centred there overlaps any of
+    [param rects] (x0, y0, x1, y1). Touching is not overlapping, as in Godot."""
+    ox, oy, bw, bh = box
+    w, h = WIDTH * T, HEIGHT * T
+    grid = bytearray(w * h)
+    for x0, y0, x1, y1 in rects:
+        # The box spans [cx + ox - bw/2, cx + ox + bw/2]; it overlaps when that
+        # interval's inside meets the rect's inside on both axes.
+        cx0, cx1 = x0 - ox - bw // 2 + 1, x1 - ox + (bw + 1) // 2 - 1
+        cy0, cy1 = y0 - oy - bh // 2 + 1, y1 - oy + (bh + 1) // 2 - 1
+        for cy in range(max(cy0, 0), min(cy1, h - 1) + 1):
+            row = cy * w
+            for cx in range(max(cx0, 0), min(cx1, w - 1) + 1):
+                grid[row + cx] = 1
+    # Off the map counts as blocked.
+    for cy in range(h):
+        for cx in range(w):
+            if cx + ox - bw // 2 < 0 or cx + ox + (bw + 1) // 2 > w or cy + oy - bh // 2 < 0 or cy + oy + (bh + 1) // 2 > h:
+                grid[cy * w + cx] = 1
+    return grid
+
+
+def flood(start: int, can_step) -> bytearray:
+    """Every pixel the player's centre can reach from [param start], one pixel at a time."""
+    w, h = WIDTH * T, HEIGHT * T
+    seen = bytearray(w * h)
+    seen[start] = 1
+    queue = deque([start])
+    while queue:
+        i = queue.popleft()
+        x, y = i % w, i // w
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            if 0 <= x + dx < w and 0 <= y + dy < h:
+                j = i + dx + dy * w
+                if not seen[j] and can_step(i, j, dx != 0):
+                    seen[j] = 1
+                    queue.append(j)
+    return seen
+
+
+def check_map(solid: set[tuple[int, int]], prop_cells: set[tuple[int, int]]) -> None:
+    """Checks the map can be walked, with the player's real collision box and
+    every character standing at any place it can be (its start or a scene spot):
+
+    - every character's spot can be reached, with a tile beside it to talk from;
+    - nowhere the player can get to leaves it stuck: from every position its box
+      can reach, it can still move in some direction. A box exactly as tall as a
+      gap (a tile between a wall and a plant) fits in Godot but cannot slide along
+      it, so a move fails when the box touches something on both sides across it;
+    - a walkway two tiles wide joins the player's start to both sides of every door;
+    - nothing stands within a tile of a doorway, on either side.
+    """
+    player_box = read_box(PLAYER_SCENE, "RectangleShape2D_body")
+    npc_box = read_box(NPC_SCENE, "RectangleShape2D_body")
+    spots = read_positions("Spots")
+    actors = {name: pos for name, pos in read_positions("Actors").items() if name != "Player"}
+    player = read_positions("Actors")["Player"]
+    w = WIDTH * T
+
+    # Every place a character can stand is in the way: its start, and every spot.
+    stands = set(spots.values()) | set(actors.values())
+    nox, noy, nbw, nbh = npc_box
+    rects = [(x * T, y * T, (x + 1) * T, (y + 1) * T) for x, y in solid]
+    rects += [(sx + nox - nbw // 2, sy + noy - nbh // 2, sx + nox + nbw // 2, sy + noy + nbh // 2) for sx, sy in stands]
+
+    bw, bh = player_box[2], player_box[3]
+    body = blocked_centres(rects, player_box)
+    start = player[1] * w + player[0]
+    problems = []
+    if body[start]:
+        problems.append(f"the player's start {player} is blocked")
+
+    def pinched(i: int, horizontal: bool) -> bool:
+        # Touching something on both sides across the way of moving.
+        step = w if horizontal else 1
+        return body[i - step] and body[i + step]
+
+    def moves_freely(i: int, j: int, horizontal: bool) -> bool:
+        return not body[j] and not pinched(i, horizontal) and not pinched(j, horizontal)
+
+    can_reach = flood(start, lambda i, j, horizontal: not body[j])
+    walks = flood(start, moves_freely)
+
+    # Stuck: the box got somewhere it fits, but cannot move from there.
+    stuck_tiles: set[tuple[int, int]] = set()
+    for i, reached in enumerate(can_reach):
+        if not reached:
+            continue
+        x, y = i % w, i // w
+        if not any(0 <= x + dx < w and moves_freely(i, i + dx + dy * w, dx != 0) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+            stuck_tiles.add((x // T, y // T))
+    for tile in sorted(stuck_tiles):
+        problems.append(f"the player can get stuck at tile {tile}")
+
+    # Each spot and character: reachable, with a tile beside it to talk from.
+    for name, (sx, sy) in sorted({**spots, **actors}.items()):
+        sides = [(sx + dx * T, sy + dy * T) for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0))]
+        if not any(0 <= px < w and 0 <= py < HEIGHT * T and walks[py * w + px] for px, py in sides):
+            problems.append(f"{name} at tile {(sx // T, sy // T)} has no tile beside it the player can walk to")
+
+    # Two tiles wide: a 2x2 block of free tiles, moved a tile at a time.
+    stand_tiles = {(sx // T, sy // T) for sx, sy in stands}
+    in_way = solid | stand_tiles
+
+    def block_free(x: int, y: int) -> bool:
+        return all(0 <= x + a < WIDTH and 0 <= y + b < HEIGHT and (x + a, y + b) not in in_way for a in (0, 1) for b in (0, 1))
+
+    px, py = player[0] // T, player[1] // T
+    first = [(x, y) for x in (px - 1, px) for y in (py - 1, py) if block_free(x, y)]
+    seen = set(first)
+    queue = deque(first)
     while queue:
         x, y = queue.popleft()
         for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             nxt = (x + dx, y + dy)
-            if 0 <= nxt[0] < WIDTH and 0 <= nxt[1] < HEIGHT and nxt not in solid and nxt not in seen:
+            if nxt not in seen and block_free(*nxt):
                 seen.add(nxt)
                 queue.append(nxt)
-    problems = []
-    for name, cell in MUST_REACH.items():
-        if cell in solid:
-            problems.append(f"{name} at {cell} is blocked")
-        elif cell not in seen:
-            problems.append(f"{name} at {cell} cannot be reached")
-        else:
-            neighbours = [(cell[0] + dx, cell[1] + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
-            if not any(n in seen and n not in MUST_REACH.values() for n in neighbours):
-                problems.append(f"{name} at {cell} has no free tile to talk from")
+    for a, b, axis in DOOR_GAPS:
+        fronts = [(a[0], a[1] - 2), (a[0], a[1] + 1)] if axis == "v" else [(a[0] - 2, a[1]), (a[0] + 1, a[1])]
+        for front in fronts:
+            if front not in seen:
+                problems.append(f"no walkway two tiles wide from the start to the door at {a}, its side at {front}")
+        # Nothing within a tile of the doorway, on either side.
+        near = {(x, y) for x in range(a[0] - 1, b[0] + 2) for y in range(a[1] - 1, b[1] + 2)} - {a, b}
+        for cell in sorted(near & (prop_cells | stand_tiles)):
+            problems.append(f"something stands at {cell}, within a tile of the door at {a}")
+
     if problems:
         sys.exit("map check failed:\n  " + "\n  ".join(problems))
-    print(f"map check: all {len(MUST_REACH)} spots and characters reachable from {PLAYER_START}")
+    print(f"map check: the player's {bw}x{bh} box reaches all {len(spots) + len(actors)} spots and characters "
+          f"from {(px, py)} and cannot get stuck; every door has a walkway two tiles wide and a clear tile around it")
 
 
 def write_tileset(atlas: Atlas) -> None:
@@ -1116,4 +1249,4 @@ def write_layers(layers: dict[str, dict[tuple[int, int], tuple[int, int]]]) -> N
 
 
 if __name__ == "__main__":
-    build()
+    build(check_only="--check" in sys.argv[1:])
