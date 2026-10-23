@@ -1,0 +1,33 @@
+{
+	"characters": {
+		"jlassi": { "name": "M. Jlassi", "color": "#3b6fd8" },
+		"kchaou": { "name": "Mme Kchaou", "color": "#7a3fb0" },
+		"salma": { "name": "Mme Salma", "color": "#d8823b" },
+		"hedi": { "name": "Si Hédi", "color": "#5f7f3a" },
+		"aziz": { "name": "Aziz", "color": "#e0c23a" },
+		"fethi": { "name": "Agent Fethi", "color": "#2f3a4a" },
+		"nour": { "name": "Nour", "color": "#d84a8a" },
+		"lassaad": { "name": "Am Lassaad", "color": "#a8642e" }
+	},
+	"places": {
+		"admin": "Admin office",
+		"room12": "Room 12",
+		"staff": "Staff room",
+		"gate": "Gate",
+		"deposit": "Deposit room",
+		"courtyard": "Courtyard"
+	},
+	"scenes": [
+		{ "number": 0, "title": "The charter", "character": "jlassi", "spot": "admin_desk", "place": "admin", "dialogue": "res://dialogue/s00_charter.dialogue" },
+		{ "number": 1, "title": "Room 12", "character": "kchaou", "spot": "room12_front", "place": "room12", "dialogue": "res://dialogue/s01_room12.dialogue" },
+		{ "number": 2, "title": "The quality plan", "character": "salma", "spot": "admin_side", "place": "admin", "dialogue": "res://dialogue/s02_quality_plan.dialogue" },
+		{ "number": 3, "title": "The dashboard", "character": "jlassi", "spot": "admin_desk", "place": "admin", "dialogue": "res://dialogue/s03_dashboard.dialogue" },
+		{ "number": 4, "title": "The checklist rehearsal", "character": "hedi", "spot": "gate_side", "place": "gate", "dialogue": "res://dialogue/s04_checklist.dialogue" },
+		{ "number": 5, "title": "The org chart", "character": "salma", "spot": "staff_front", "place": "staff", "dialogue": "res://dialogue/s05_org_chart.dialogue" },
+		{ "number": 6, "title": "The sealed envelopes", "character": "fethi", "spot": "deposit_cabinet", "place": "deposit", "dialogue": "res://dialogue/s06_envelopes.dialogue" },
+		{ "number": 7, "title": "The staffing peak", "character": "salma", "spot": "staff_chart", "place": "staff", "dialogue": "res://dialogue/s07_staffing_peak.dialogue" },
+		{ "number": 8, "title": "The veteran's worry", "character": "hedi", "spot": "courtyard_bench", "place": "courtyard", "dialogue": "res://dialogue/s08_veterans_worry.dialogue" },
+		{ "number": 9, "title": "Exam day, 3 June", "character": "fethi", "spot": "gate_post", "place": "gate", "dialogue": "res://dialogue/s09_exam_day.dialogue" },
+		{ "number": 10, "title": "June 2026, what really happened", "character": "", "spot": "", "place": "", "dialogue": "res://dialogue/s10_ending.dialogue" }
+	]
+}

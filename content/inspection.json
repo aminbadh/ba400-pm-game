@@ -1,0 +1,50 @@
+{
+	"title": "Gate checklist",
+	"checklist": [
+		"Convocation shown",
+		"ID card matches the convocation",
+		"No phone, smartwatch or electronic pen on the person: possession alone, even switched off, is fraud (2026 rule)",
+		"Devices handed in at the deposit desk before entry",
+		"Special arrangements checked against the list"
+	],
+	"correct": { "integrity": 2 },
+	"miss": { "integrity": -3 },
+	"candidates": [
+		{
+			"name": "Candidate 1",
+			"shows": "Convocation and ID match.",
+			"answer": "admit",
+			"after": "",
+			"lines": [0, 1]
+		},
+		{
+			"name": "Candidate 2",
+			"shows": "ID doesn't match the convocation.",
+			"answer": "stop",
+			"after": "A cousin, sitting for her.",
+			"lines": [1]
+		},
+		{
+			"name": "Candidate 3",
+			"shows": "Phone switched off in a pocket.",
+			"answer": "stop",
+			"after": "\"It's off!\" \"Off still counts.\" Stopped at the gate and sent to the deposit desk.",
+			"lines": [2, 3]
+		},
+		{
+			"name": "Nour",
+			"shows": "Extra-time arrangement on the list.",
+			"answer": "admit",
+			"after": "",
+			"after_if_room12_fixed": "She goes to the quiet desk.",
+			"lines": [4]
+		},
+		{
+			"name": "Am Lassaad",
+			"shows": "Tries to walk in with his son. \"Ya weldi, el bac hedha wala lotto?\" (\"Son, is this the Bac or the lottery?\")",
+			"answer": "stop",
+			"after": "Not a candidate: stopped, kindly.",
+			"lines": [0]
+		}
+	]
+}

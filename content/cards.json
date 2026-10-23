@@ -1,0 +1,132 @@
+{
+	"not_voted": "Not voted",
+	"cards": [
+		{
+			"number": 1,
+			"title": "Planning, part II",
+			"slides": "Slides 1 to 5",
+			"scene": 0,
+			"pages": [
+				"Chapter 4 planned scope, time and cost. Chapter 5 plans the other knowledge areas: **quality, human resources, communications, risk and procurement**. Skipping them is a classic mistake: they matter as much to the project's success.\nOur part: **quality** (quality management plan, quality metrics, quality checklists) and **human resources** (the human resource management plan)."
+			],
+			"debrief": {
+				"A": "You called it operations. This centre's first session is temporary and unique: a project inside the national program.",
+				"B": "Project: temporary, with a unique result. The national Bac is the program around it.",
+				"C": "Budget has nothing to do with it: temporary and unique makes a project."
+			}
+		},
+		{
+			"number": 2,
+			"title": "What is quality?",
+			"slides": "Slides 6 and 7",
+			"scene": 1,
+			"pages": [
+				"**ISO:** quality is \"the degree to which a set of inherent characteristics fulfil requirements\".\n**Conformance to requirements:** the project's processes and products meet the written specifications.\n**Fitness for use:** the product can be used as it was intended.\n**The customer ultimately decides** whether the quality is acceptable."
+			],
+			"debrief": {
+				"A": "It did conform. What failed was fitness for use.",
+				"B": "Fitness for use: it met the rules but didn't work for the candidate. The customer decides.",
+				"C": "It conformed, but a candidate couldn't use it: fitness for use failed."
+			}
+		},
+		{
+			"number": 3,
+			"title": "The quality management plan",
+			"slides": "Slides 8 to 10",
+			"scene": 2,
+			"pages": [
+				"**Quality planning:** identify which quality standards are relevant to the project and how to satisfy them, designing quality into the products and into the processes that manage the project.\nA **quality management plan** typically covers: the **quality standards** that apply, the **metrics** used to measure them, **problem reporting and corrective action**, and **supplier quality**. Its size varies with the project."
+			],
+			"debrief": {
+				"A": "Problem reporting and corrective action, and supplier quality, completed the plan.",
+				"B": "Pens aside: the plan lacked problem reporting and supplier quality.",
+				"C": "Nothing missing? Problem reporting and supplier quality were."
+			}
+		},
+		{
+			"number": 4,
+			"title": "Quality metrics and the project dashboard",
+			"slides": "Slides 11 to 14",
+			"scene": 3,
+			"pages": [
+				"A **metric** is a standard of measurement. Metrics let an organisation measure performance and compare it over time or with others.\nA **project dashboard** is a graphical screen summarising the key project metrics.\n**Best practice:** the best-performing organisations use a project management toolbox, grow competent project leaders, streamline delivery processes, and install a sound set of project performance metrics."
+			],
+			"debrief": {
+				"A": "You measured people. The exam itself went unmeasured.",
+				"B": "You measured the exam itself: on time, incidents, fraud detected.",
+				"C": "The pass rate isn't yours to control, and it came after the project ended."
+			}
+		},
+		{
+			"number": 5,
+			"title": "Quality checklists",
+			"slides": "Slides 15 to 17",
+			"scene": 4,
+			"pages": [
+				"A **checklist** is a list of items to be noted or consulted. It helps the team verify that a set of required steps has been covered.\nOne project can have many: for interviewing team members, selecting suppliers, reviewing documents, **making sure a room is ready**."
+			],
+			"debrief": {
+				"A": "The device line closed the gap at the gate.",
+				"B": "Weather isn't a checklist item; devices were.",
+				"C": "'The supervisors will notice' is exactly what a checklist replaces."
+			},
+			"debrief_inspection": "[TBD: story.md has no debrief line for the Full-mode inspection]"
+		},
+		{
+			"number": 6,
+			"title": "Project HR management and the organisational chart",
+			"slides": "Slides 18 to 20",
+			"scene": 5,
+			"pages": [
+				"**Project human resource management** is about making effective use of the people involved in the project.\nIts main planning output is the **human resource management plan**: a **project organisational chart**, a **responsibility assignment matrix**, a **resource histogram** and a **staffing management plan**.\nA **project organisational chart** shows how authority and responsibility are distributed within the project. Its complexity follows the project's size."
+			],
+			"debrief": {
+				"A": "Straight to the region skips the chart, and nobody nearby acts.",
+				"B": "Deputy first: the chart shows who has authority.",
+				"C": "Nearest isn't a reporting line. The chart is."
+			}
+		},
+		{
+			"number": 7,
+			"title": "The responsibility assignment matrix and RACI",
+			"slides": "Slides 21 and 22",
+			"scene": 6,
+			"pages": [
+				"A **responsibility assignment matrix (RAM)** maps the work in the **WBS** to the people responsible for it.\nA **RACI chart** shows four roles per task: **Responsible** (does the task), **Accountable** (signs off, has the authority), **Consulted** (has the information needed), **Informed** (is told of the status or result)."
+			],
+			"debrief": {
+				"A": "One Accountable person: the envelopes were signed on time.",
+				"B": "Two Accountables meant nobody signed. Exactly one A per task.",
+				"C": "No Accountable person: the envelope sat unsigned."
+			}
+		},
+		{
+			"number": 8,
+			"title": "The resource histogram",
+			"slides": "Slides 23 and 24",
+			"scene": 7,
+			"pages": [
+				"A **resource histogram** is a column chart showing the number of resources needed for, or assigned to, a project over time.\nStacking the columns by skill shows the total needed each period; after assignment, it shows how each person's time is allocated."
+			],
+			"debrief": {
+				"A": "You levelled the peak by borrowing staff, at a cost in budget.",
+				"B": "You levelled the peak by crowding rooms, at a cost in fairness.",
+				"C": "You cut the peak by thinning supervision, at a cost in integrity."
+			}
+		},
+		{
+			"number": 9,
+			"title": "The staffing management plan",
+			"slides": "Slides 25 and 26",
+			"scene": 8,
+			"pages": [
+				"A **staffing management plan** describes **when and how people are added to and removed from** the project.\nIt covers the types and numbers of people needed over time, and how they are **acquired, trained, rewarded and reassigned** after the project."
+			],
+			"debrief": {
+				"A": "Training: supervisors spotted the earpiece.",
+				"B": "Protection: supervisors reported without fear.",
+				"C": "Equipment instead of people: it didn't catch the earpiece."
+			}
+		}
+	]
+}

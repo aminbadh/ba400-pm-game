@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://cb84fqon53h86"
+path="res://.godot/imported/s02_quality_plan.dialogue-25549ffdf16fb2f73508e8f5df7fcfd3.tres"
+
+[deps]
+
+source_file="res://dialogue/s02_quality_plan.dialogue"
+dest_files=["res://.godot/imported/s02_quality_plan.dialogue-25549ffdf16fb2f73508e8f5df7fcfd3.tres"]
+
+[params]
+
+defaults=true

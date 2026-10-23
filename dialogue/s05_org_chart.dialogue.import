@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://y7bg13vfgdbw"
+path="res://.godot/imported/s05_org_chart.dialogue-f7fe69ae2efb5f130b619020805e554e.tres"
+
+[deps]
+
+source_file="res://dialogue/s05_org_chart.dialogue"
+dest_files=["res://.godot/imported/s05_org_chart.dialogue-f7fe69ae2efb5f130b619020805e554e.tres"]
+
+[params]
+
+defaults=true

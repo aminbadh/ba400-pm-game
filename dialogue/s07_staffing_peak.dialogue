@@ -1,0 +1,28 @@
+# Scene 7: The staffing peak. The staff room, a chart on the wall.
+# Core; trade-off vote, paid off in scene 9.
+
+~ start
+Mme Salma: I've drawn how many supervisors we need each exam day. Look at day one.
+do Story.show_exhibit("histogram")
+do Story.show_card(8)
+Day one needs 120 supervisors; you have 95. How do you level it?
+- Borrow 25 from a neighbouring centre with a lighter day; the region pays their transport and lunch.
+	do GameState.record_vote(7, "A")
+	do GameState.budget -= 600
+	do GameState.team += 10
+	do GameState.set_flag("staff_borrowed")
+	do Story.show_exhibit("histogram", "levelled")
+	Mme Salma: Twenty-five more names. I'll add them to the lists.
+- Regroup candidates into fewer, fuller rooms for day one.
+	do GameState.record_vote(7, "B")
+	do GameState.fairness -= 10
+	do GameState.set_flag("rooms_crowded")
+	Fewer rooms, more desks per room.
+	if GameState.has_flag("room12_fixed")
+		Nour: I'll lose the quiet desk, won't I?
+- Run day one with fewer supervisors per room.
+	do GameState.record_vote(7, "C")
+	do GameState.integrity -= 15
+	do GameState.set_flag("staff_thin")
+	Si Hédi: One pair of eyes per forty candidates. They'll love that.
+=> END

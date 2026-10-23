@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://c4eaxlx4f1dks"
+path="res://.godot/imported/s06_envelopes.dialogue-96c87a7d3401da740b3c20ed644809f4.tres"
+
+[deps]
+
+source_file="res://dialogue/s06_envelopes.dialogue"
+dest_files=["res://.godot/imported/s06_envelopes.dialogue-96c87a7d3401da740b3c20ed644809f4.tres"]
+
+[params]
+
+defaults=true

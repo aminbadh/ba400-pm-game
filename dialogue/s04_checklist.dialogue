@@ -1,0 +1,29 @@
+# Scene 4: The checklist rehearsal. The gate, a week before exam day.
+# Agent Fethi at the gate; Si Hédi watching.
+# Core card. Full mode runs the gate inspection (content/inspection.json);
+# short mode runs the check vote instead.
+
+~ start
+Si Hédi: Thirty-one Bacs. Every year someone thinks they've invented a new trick. Every year it's a phone.
+Mme Salma: Here's the gate checklist. Let's run the rehearsal.
+do Story.show_card(5)
+if GameState.short_mode
+	The rehearsal shows candidates walking in with phones in their pockets. What's missing from the checklist?
+	- A line for devices handed in at the deposit desk before entry.
+		do GameState.record_vote(4, "A")
+		do GameState.integrity += 8
+	- A line for the weather.
+		do GameState.record_vote(4, "B")
+		=> wrong
+	- Nothing\: the supervisors will notice.
+		do GameState.record_vote(4, "C")
+		=> wrong
+else
+	do Story.run_inspection()
+=> END
+
+~ wrong
+do GameState.integrity -= 3
+Si Hédi: "The supervisors will notice." That's what everyone says the day before. Write it down.
+do Story.show_card(5)
+=> END

@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://ccbk07pjjssw6"
+path="res://.godot/imported/s09_exam_day.dialogue-0d8ec191397305e97681bdf9a9755212.tres"
+
+[deps]
+
+source_file="res://dialogue/s09_exam_day.dialogue"
+dest_files=["res://.godot/imported/s09_exam_day.dialogue-0d8ec191397305e97681bdf9a9755212.tres"]
+
+[params]
+
+defaults=true

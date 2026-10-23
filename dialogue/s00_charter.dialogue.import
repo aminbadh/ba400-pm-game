@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://0yc8yceeyl57"
+path="res://.godot/imported/s00_charter.dialogue-4b0f87e17e24df2777bf2538a6bb3422.tres"
+
+[deps]
+
+source_file="res://dialogue/s00_charter.dialogue"
+dest_files=["res://.godot/imported/s00_charter.dialogue-4b0f87e17e24df2777bf2538a6bb3422.tres"]
+
+[params]
+
+defaults=true

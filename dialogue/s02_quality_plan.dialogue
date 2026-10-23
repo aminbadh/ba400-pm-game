@@ -1,0 +1,25 @@
+# Scene 2: The quality plan. Admin office; Mme Salma with a folder.
+# Core card; the vote is optional and skipped in short mode.
+
+~ start
+Mme Salma: The region wants our quality management plan by Friday. I've started it.
+do Story.show_card(3)
+if not GameState.short_mode
+	Mme Salma's plan lists the ministry's exam rules and our metrics. What's missing?
+	- How a supervisor reports a problem, and who acts on it.
+		do GameState.record_vote(2, "A")
+		do GameState.integrity += 5
+		Mme Salma: Right. Supervisor to deputy, deputy to you, you to the region. Added. And the papers come from outside\: supplier quality. Added too.
+	- The colour of the candidates' pens.
+		do GameState.record_vote(2, "B")
+		=> wrong
+	- Nothing.
+		do GameState.record_vote(2, "C")
+		=> wrong
+=> END
+
+~ wrong
+# [TBD] story.md gives no meter cost for a wrong answer here.
+Mme Salma: Wait, what happens when a supervisor finds a problem? We need problem reporting and corrective action. And supplier quality, for the papers.
+do Story.show_card(3)
+=> END

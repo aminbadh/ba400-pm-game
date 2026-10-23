@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://djij7tlyof6n6"
+path="res://.godot/imported/s04_checklist.dialogue-82814dbef79e5703e6137244a6e56fd8.tres"
+
+[deps]
+
+source_file="res://dialogue/s04_checklist.dialogue"
+dest_files=["res://.godot/imported/s04_checklist.dialogue-82814dbef79e5703e6137244a6e56fd8.tres"]
+
+[params]
+
+defaults=true

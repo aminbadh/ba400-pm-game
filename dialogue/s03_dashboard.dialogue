@@ -1,0 +1,30 @@
+# Scene 3: The dashboard. Admin office; M. Jlassi, on speaker.
+# Core; trade-off vote. The dashboard stays on screen from here on.
+
+~ start
+M. Jlassi: The region tracks every centre on a dashboard during exam week. What will yours report?
+do GameState.show_dashboard()
+do Story.show_card(4)
+Which metrics feed your dashboard?
+- Supervisors present each day.
+	do GameState.record_vote(3, "A")
+	do GameState.team += 10
+	do GameState.set_flag("metrics_people")
+	do GameState.light_meter("team")
+	M. Jlassi: People count. But will you see a late paper on that?
+- Papers started on time, incidents logged, fraud cases detected.
+	do GameState.record_vote(3, "B")
+	do GameState.integrity += 10
+	do GameState.set_flag("metrics_exam")
+	do GameState.light_meter("integrity")
+	do GameState.light_meter("fairness")
+	M. Jlassi: That's what the region needs.
+- The centre's pass rate.
+	do GameState.record_vote(3, "C")
+	do GameState.set_flag("metrics_passrate")
+	do GameState.light_meter("integrity")
+	do GameState.light_meter("fairness")
+	do GameState.light_meter("team")
+	do GameState.light_meter("budget")
+	M. Jlassi: Fine, fine.
+=> END

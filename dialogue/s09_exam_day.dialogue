@@ -1,0 +1,43 @@
+# Scene 9: Exam day, 3 June. The centre at 7:00, a montage of short beats.
+# Each beat depends on earlier flags. Short mode keeps only the beats a flag sets.
+# Each beat's time is written where a character's name goes, so it shows as the speaker.
+
+~ start
+if GameState.has_flag("raci_clear")
+	7:00, envelopes: You sign. The cabinet locks. On time.
+elif GameState.has_flag("raci_double")
+	do GameState.integrity -= 10
+	7:00, envelopes: Mme Salma thought Agent Fethi signed; Agent Fethi thought Mme Salma did. Nobody did. The escort waits twenty minutes.
+elif GameState.has_flag("raci_none")
+	do GameState.integrity -= 10
+	7:00, envelopes: An envelope sits on a desk unsigned for ten minutes. Mme Kchaou sees it.
+# The device line was missing: scene 4's check vote, answered wrongly in short mode.
+if GameState.voted(4, "B") or GameState.voted(4, "C")
+	do GameState.integrity -= 5
+	8:00, the gate: Two phones get in.
+elif not GameState.short_mode
+	8:00, the gate: The checklist works as well as the rehearsal went.
+if GameState.has_flag("staff_thin")
+	do GameState.integrity -= 10
+	8:30, the rooms: A supervisor alone with forty candidates misses a smartwatch.
+elif GameState.has_flag("rooms_crowded")
+	do GameState.fairness -= 5
+	8:30, the rooms: Nour's quiet desk is gone; she finishes, but the doors bang.
+elif GameState.has_flag("staff_borrowed")
+	8:30, the rooms: The borrowed teachers arrive with sandwiches from the region. Everyone is in place.
+if not GameState.short_mode or GameState.has_flag("staff_trained") or GameState.has_flag("staff_protected") or GameState.has_flag("bought_tech")
+	10:15, an incident: A candidate is found with an earpiece.
+if GameState.has_flag("staff_trained")
+	do GameState.integrity += 5
+	10:15, an incident: Aziz spots it in the first ten minutes.
+elif GameState.has_flag("staff_protected")
+	do GameState.integrity += 5
+	do GameState.team += 5
+	10:15, an incident: Si Hédi reports it without hesitating, by the book.
+elif GameState.has_flag("bought_tech")
+	do GameState.integrity -= 5
+	10:15, an incident: The new equipment beeps at everyone's calculator. The earpiece goes unnoticed.
+if GameState.has_flag("metrics_passrate")
+	The dashboard: It shows green all day, whatever happened.
+	Mme Kchaou: Your dashboard says everything is fine. My notes don't.
+=> END

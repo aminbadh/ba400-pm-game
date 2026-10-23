@@ -1,0 +1,26 @@
+# Scene 5: The org chart. The staff room; the cast is gathered.
+# Core card; the vote is optional and skipped in short mode.
+
+~ start
+Mme Salma: One hundred and ten supervisors on the busy days. They need to know who answers to whom.
+do Story.show_exhibit("org_chart")
+do Story.show_card(6)
+if not GameState.short_mode
+	A supervisor finds a candidate with a phone. Who does she report to first?
+	- The regional office, directly.
+		do GameState.record_vote(5, "A")
+		=> wrong
+	- The deputy head, following the chart.
+		do GameState.record_vote(5, "B")
+		do GameState.team += 5
+		Aziz: Deputy first. Got it. Writing it on my hand.
+	- Whoever is nearest.
+		do GameState.record_vote(5, "C")
+		=> wrong
+=> END
+
+~ wrong
+# [TBD] story.md gives no meter cost for a wrong answer here.
+Mme Salma: Then the region hears it before I do, and nobody acts. The chart says\: to me first.
+do Story.show_card(6)
+=> END

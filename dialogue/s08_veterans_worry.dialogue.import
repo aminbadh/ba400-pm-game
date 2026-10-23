@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://m6euuioi8jxo"
+path="res://.godot/imported/s08_veterans_worry.dialogue-ebf6c88387a32b4a74fd11e4669331ac.tres"
+
+[deps]
+
+source_file="res://dialogue/s08_veterans_worry.dialogue"
+dest_files=["res://.godot/imported/s08_veterans_worry.dialogue-ebf6c88387a32b4a74fd11e4669331ac.tres"]
+
+[params]
+
+defaults=true

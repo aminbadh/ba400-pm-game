@@ -1,0 +1,28 @@
+# Scene 0: The charter. Admin office; M. Jlassi, phone in hand.
+# Core; the vote is optional and skipped in short mode.
+
+~ start
+M. Jlassi: Congratulations, and condolences. Lycée Ennakhla is an exam centre this year. You run it.
+M. Jlassi: Here's your charter. Sponsor, dates, success criteria, signed. The WBS is attached. Your colleagues in the last presentation covered scope, schedule and cost. You do the rest.
+do Story.show_exhibit("charter")
+do Story.open_quest_log()
+do Story.show_card(1)
+if not GameState.short_mode
+	Is this centre's Bac 2026 a project?
+	- No, the Bac happens every year, so it's operations.
+		do GameState.record_vote(0, "A")
+		=> wrong
+	- Yes\: it's temporary and produces a unique result.
+		do GameState.record_vote(0, "B")
+		do GameState.team += 5
+		M. Jlassi: A first session, a fixed end, a unique result. A project. The national Bac is the program around it.
+	- Only if it goes over budget.
+		do GameState.record_vote(0, "C")
+		=> wrong
+=> END
+
+~ wrong
+# [TBD] story.md gives no meter cost for a wrong answer here.
+M. Jlassi: It recurs nationally, but this centre's first session is temporary and unique. That's a project; the national Bac is the program around it.
+do Story.show_card(1)
+=> END

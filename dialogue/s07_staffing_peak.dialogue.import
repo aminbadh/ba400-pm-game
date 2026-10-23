@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://dxt04lwujkpj4"
+path="res://.godot/imported/s07_staffing_peak.dialogue-73900845bbe2519a28fc7b54d5eb8d1e.tres"
+
+[deps]
+
+source_file="res://dialogue/s07_staffing_peak.dialogue"
+dest_files=["res://.godot/imported/s07_staffing_peak.dialogue-73900845bbe2519a28fc7b54d5eb8d1e.tres"]
+
+[params]
+
+defaults=true

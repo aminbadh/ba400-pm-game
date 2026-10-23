@@ -1,0 +1,31 @@
+# Scene 8: The veteran's worry. The courtyard, evening. Si Hédi and Aziz.
+# Core; trade-off vote, paid off in scenes 9 and 10.
+# Si Hédi's court story is fictionalised from 2026.
+
+~ start
+Aziz: Si Hédi, if I catch someone with a phone and the father says I lied... what happens to me?
+Si Hédi: Last year a colleague reported a device and ended up in court. Teachers wore red armbands for him.
+Si Hédi: (To you.) You want us to report everything. Then plan for what happens to us when we do.
+M. Jlassi: (Phone.) Also, the region has some budget for anti-cheating equipment, if you'd rather. Very modern.
+do Story.show_card(9)
+What does your staffing plan add?
+- Training for every supervisor on detecting devices, the week before.
+	do GameState.record_vote(8, "A")
+	do GameState.team += 5
+	do GameState.integrity += 10
+	do GameState.budget -= 300
+	do GameState.set_flag("staff_trained")
+	Aziz: Training! I'll take notes on my notes.
+- A written reporting procedure, with the ministry's legal backing for supervisors who report in good faith.
+	do GameState.record_vote(8, "B")
+	do GameState.team += 15
+	do GameState.set_flag("staff_protected")
+	Si Hédi: Now I'll report.
+	Aziz looks relieved.
+- Spend the budget on anti-cheating equipment instead.
+	do GameState.record_vote(8, "C")
+	do GameState.budget -= 1500
+	do GameState.set_flag("bought_tech")
+	M. Jlassi: Excellent, the boxes arrive Monday.
+	Si Hédi: Boxes don't supervise.
+=> END
