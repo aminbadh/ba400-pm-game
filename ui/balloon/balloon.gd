@@ -96,6 +96,9 @@ var _pages: PackedStringArray = []
 var _page: int = 0
 # Seconds the current vote has been on screen.
 var _vote_elapsed: float = 0.0
+## Whether the presenter has pointed at a card yet. Until then the focus the
+## menu puts on the first card is not drawn, so no option looks chosen.
+var _vote_pointed: bool = false
 # Holds "The room chose B" on screen; a child, so it dies with the balloon.
 var _chosen_timer: Timer = Timer.new()
 var _chosen_response: DialogueResponse = null
@@ -143,6 +146,20 @@ func _process(delta: float) -> void:
 		var share: float = minf(_vote_elapsed / VOTE_SECONDS, 1.0)
 		_vote_fill.size = Vector2(roundf(_vote_track.size.x * share), _vote_track.size.y)
 		_vote_fill.color = Palette.VOTE_OVER if share >= 1.0 else Palette.VOTE_BAR
+
+
+# Before the cards take it: the first arrow key, or E on the undrawn focus,
+# only shows the focus. The arrow keys go on to move it as usual.
+func _input(event: InputEvent) -> void:
+	if not responses_menu.visible or _vote_pointed:
+		return
+	for action: StringName in [&"ui_up", &"ui_down", &"ui_left", &"ui_right", &"move_up", &"move_down"]:
+		if event.is_action_pressed(action):
+			_show_vote_focus()
+			return
+	if event.is_action_pressed(next_action) or event.is_action_pressed(&"ui_accept"):
+		get_viewport().set_input_as_handled()
+		_show_vote_focus()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -258,6 +275,7 @@ func _show_vote() -> void:
 	_dress_responses()
 	balloon.focus_mode = Control.FOCUS_NONE
 	_vote_elapsed = 0.0
+	_vote_pointed = false
 	_vote.show()
 	responses_menu.show()
 
@@ -281,12 +299,23 @@ func _dress_responses() -> void:
 		items[i].add_theme_stylebox_override(&"normal", _card_style(card.card, Palette.PANEL))
 		items[i].add_theme_stylebox_override(&"hover", _card_style(card.card, Palette.PANEL))
 		items[i].add_theme_stylebox_override(&"pressed", _card_style(Palette.FOCUS, Palette.PANEL_RAISED))
-		items[i].add_theme_stylebox_override(&"focus", _card_style(Palette.FOCUS, Palette.PANEL_RAISED))
+		# Drawn like the others until the presenter points at a card.
+		items[i].add_theme_stylebox_override(&"focus", _card_style(card.card, Palette.PANEL))
+		items[i].add_theme_color_override(&"font_focus_color", Palette.TEXT)
 		items[i].add_theme_stylebox_override(&"disabled", _card_style(card.card, Palette.PANEL))
+		items[i].mouse_entered.connect(_show_vote_focus)
 		var tile: VoteLetter = VoteLetter.new()
 		tile.letter = letter
 		tile.card = card
 		items[i].add_child(tile)
+
+
+# Draw the focused card as focused, now that the presenter has pointed at one.
+func _show_vote_focus() -> void:
+	_vote_pointed = true
+	for item: Button in _response_items():
+		item.add_theme_stylebox_override(&"focus", _card_style(Palette.FOCUS, Palette.PANEL_RAISED))
+		item.add_theme_color_override(&"font_focus_color", Palette.FOCUS)
 
 
 func _card_style(border: Color, background: Color) -> StyleBoxFlat:

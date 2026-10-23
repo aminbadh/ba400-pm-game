@@ -1,6 +1,7 @@
 extends SceneTree
 ## Captures one screenshot of each kind of screen, for the projector check:
-## the title, the map, a line with a portrait, a long line paging, a vote, a card, a chart, the gate
+## the title, the map, a line with a portrait, a long line paging, a vote as it
+## appears and after an arrow key, a card, a chart, the gate
 ## inspection, the dashboard, the binder, the pause menu, the ending and the
 ## debrief. Each is saved at 1920x1080, the game's 320x180 scaled x6 as on a
 ## 1920x1080 projector, to build/screens/. Needs a window, not --headless:
@@ -39,6 +40,10 @@ func _main() -> void:
 	player.position = Vector2(200, 200)
 	await _frames(10)
 	await _capture("map")
+	# At the bottom of the map, by the gate, the camera's lowest.
+	player.position = Vector2(200, 296)
+	await _frames(10)
+	await _capture("map_gate")
 
 	# Scene 0's second line is the longest: it pages, three lines at a time.
 	player.position = Vector2(56, 88)
@@ -74,7 +79,11 @@ func _main() -> void:
 			break
 	await _seconds(1.0)
 	await _capture("vote")
-	await _seconds(19.5)
+	# The first arrow key shows the focus, and moves it.
+	await _key(KEY_DOWN)
+	await _seconds(0.3)
+	await _capture("vote_after_arrow")
+	await _seconds(19.2)
 	await _capture("vote_time_up")
 	await _key(KEY_2)
 	await _seconds(0.5)
