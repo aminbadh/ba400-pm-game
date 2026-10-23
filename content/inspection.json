@@ -28,7 +28,7 @@
 			"name": "Candidate 3",
 			"shows": "Phone switched off in a pocket.",
 			"answer": "stop",
-			"after": "\"It's off!\" \"Off still counts.\" Stopped at the gate and sent to the deposit desk.",
+			"after": "\"It's off!\" \"Off still counts.\" Sent to the deposit desk.",
 			"lines": [2, 3]
 		},
 		{

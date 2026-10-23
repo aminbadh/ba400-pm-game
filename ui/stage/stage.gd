@@ -267,7 +267,7 @@ func _build_inspection() -> void:
 	var checklist: VBoxContainer = VBoxContainer.new()
 	checklist.name = "Checklist"
 	checklist.position = Vector2(CardView.MARGIN, 22)
-	checklist.size = Vector2(194, 150)
+	checklist.size = Vector2(172, 150)
 	checklist.add_theme_constant_override(&"separation", 2)
 	_inspection_view.add_child(checklist)
 	var heading: Label = _label(CardView.ACCENT)
@@ -277,24 +277,24 @@ func _build_inspection() -> void:
 
 	var divider: ColorRect = ColorRect.new()
 	divider.color = CardView.FAINT
-	divider.position = Vector2(210, 8)
+	divider.position = Vector2(186, 8)
 	divider.size = Vector2(1, 164)
 	_inspection_view.add_child(divider)
 
 	var right: VBoxContainer = VBoxContainer.new()
-	right.position = Vector2(216, 6)
-	right.size = Vector2(98, 140)
+	right.position = Vector2(192, 6)
+	right.size = Vector2(122, 140)
 	right.add_theme_constant_override(&"separation", 4)
 	_inspection_view.add_child(right)
 	_candidate_count_label = _label(CardView.FAINT)
 	right.add_child(_candidate_count_label)
 	_candidate_name_label = _label(CardView.ACCENT)
 	right.add_child(_candidate_name_label)
-	_candidate_shows_label = _wrapping_label(CardView.INK, 98)
+	_candidate_shows_label = _wrapping_label(CardView.INK, 122)
 	right.add_child(_candidate_shows_label)
 	_result_label = _label(RIGHT_CALL_COLOR)
 	right.add_child(_result_label)
-	_after_label = _wrapping_label(CardView.INK, 98)
+	_after_label = _wrapping_label(CardView.INK, 122)
 	right.add_child(_after_label)
 
 	_prompt_label = _label(CardView.ACCENT, HORIZONTAL_ALIGNMENT_RIGHT)
@@ -307,7 +307,7 @@ func _fill_checklist(inspection: Dictionary) -> void:
 	(_inspection_view.get_node("Heading") as Label).text = inspection.title
 	var checklist: Node = _inspection_view.get_node("Checklist")
 	for line: String in inspection.checklist:
-		var label: Label = _wrapping_label(CardView.INK, 194)
+		var label: Label = _wrapping_label(CardView.INK, 172)
 		label.text = "- " + line
 		checklist.add_child(label)
 		_checklist_labels.append(label)
@@ -325,6 +325,7 @@ func _wrapping_label(color: Color, width: float) -> Label:
 	var label: Label = _label(color)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(width, 0)
+	label.add_theme_constant_override(&"line_spacing", -2)
 	return label
 
 

@@ -11,7 +11,9 @@ extends CanvasLayer
 ## Emitted when the binder closes.
 signal closed
 
-const DEBRIEF_PER_PAGE: int = 3
+## The height the debrief rows have on one page.
+const DEBRIEF_PAGE_HEIGHT: int = 140
+const ROW_WIDTH: int = 296
 const PANEL_COLOR: Color = Color("1b2230")
 const TEXT: Color = Color("f3efe2")
 const DIM: Color = Color("6f7682")
@@ -25,6 +27,8 @@ const DEBRIEF_HINT: String = "E  next"
 var _mode: String = ""
 var _selected: int = 0
 var _debrief_page: int = 0
+# The debrief's pages, each a list of card indices that fit on it.
+var _debrief_pages: Array[Array] = []
 var _was_paused: bool = false
 var _opened_at: int = 0
 
@@ -38,7 +42,8 @@ var _card_page: int = 0
 
 
 func _ready() -> void:
-	layer = 70
+	# Above the dialogue balloon, which stays on screen while the game is paused.
+	layer = 110
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build()
 	hide()
@@ -83,6 +88,8 @@ func _open(mode: String) -> void:
 	_selected = 0
 	_debrief_page = 0
 	_card = {}
+	if mode == "debrief":
+		_debrief_pages = _paginate_debrief()
 	_opened_at = Time.get_ticks_msec()
 	_was_paused = get_tree().paused
 	get_tree().paused = true
@@ -113,7 +120,7 @@ func _input(event: InputEvent) -> void:
 	elif _mode == "debrief":
 		if event.is_action_pressed(&"interact"):
 			_debrief_page += 1
-			if _debrief_page * DEBRIEF_PER_PAGE >= Story.cards.size():
+			if _debrief_page >= _debrief_pages.size():
 				_close()
 			else:
 				_render()
@@ -182,25 +189,52 @@ func _render_list() -> void:
 
 
 func _render_debrief() -> void:
-	var pages: int = ceili(Story.cards.size() / float(DEBRIEF_PER_PAGE))
-	_heading.text = "%s  %d/%d" % [DEBRIEF_HEADING, _debrief_page + 1, pages]
+	_heading.text = "%s  %d/%d" % [DEBRIEF_HEADING, _debrief_page + 1, _debrief_pages.size()]
 	_hint.text = DEBRIEF_HINT
-	var first: int = _debrief_page * DEBRIEF_PER_PAGE
-	for i: int in range(first, mini(first + DEBRIEF_PER_PAGE, Story.cards.size())):
-		var card: Dictionary = Story.cards[i]
-		var title: Label = Label.new()
-		title.text = "%d  %s" % [int(card.number), card.title]
-		title.add_theme_color_override(&"font_color", FOCUS)
-		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		title.custom_minimum_size = Vector2(296, 0)
+	for i: int in _debrief_pages[_debrief_page]:
+		var title: Label = _row_label(FOCUS)
+		title.text = _debrief_title(Story.cards[i])
 		_rows.add_child(title)
-		var line: Label = Label.new()
-		var vote: String = GameState.votes.get(int(card.scene), "")
-		line.text = ("%s: " % vote if not vote.is_empty() else "") + Story.debrief_line(card)
-		line.add_theme_color_override(&"font_color", TEXT)
-		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		line.custom_minimum_size = Vector2(296, 0)
+		var line: Label = _row_label(TEXT)
+		line.text = _debrief_text(Story.cards[i])
 		_rows.add_child(line)
+
+
+# Fill each page with as many cards' debrief rows as fit.
+func _paginate_debrief() -> Array[Array]:
+	var font: Font = _heading.get_theme_font(&"font")
+	var font_size: int = _heading.get_theme_font_size(&"font_size")
+	var pages: Array[Array] = [[]]
+	var used: float = 0.0
+	for i: int in Story.cards.size():
+		var card: Dictionary = Story.cards[i]
+		var height: float = 0.0
+		for text: String in [_debrief_title(card), _debrief_text(card)]:
+			height += font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, ROW_WIDTH, font_size).y + 1.0
+		if used + height > DEBRIEF_PAGE_HEIGHT and not pages[-1].is_empty():
+			pages.append([])
+			used = 0.0
+		pages[-1].append(i)
+		used += height
+	return pages
+
+
+func _debrief_title(card: Dictionary) -> String:
+	return "%d  %s" % [int(card.number), card.title]
+
+
+# The room's option, then the line for it.
+func _debrief_text(card: Dictionary) -> String:
+	var vote: String = GameState.votes.get(int(card.scene), "")
+	return ("%s: " % vote if not vote.is_empty() else "") + Story.debrief_line(card)
+
+
+func _row_label(color: Color) -> Label:
+	var label: Label = Label.new()
+	label.add_theme_color_override(&"font_color", color)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size = Vector2(ROW_WIDTH, 0)
+	return label
 
 
 func _build() -> void:
@@ -222,7 +256,7 @@ func _build() -> void:
 	_root.add_child(rule)
 	_rows = VBoxContainer.new()
 	_rows.position = Vector2(12, 23)
-	_rows.size = Vector2(296, 140)
+	_rows.size = Vector2(ROW_WIDTH, DEBRIEF_PAGE_HEIGHT)
 	_rows.add_theme_constant_override(&"separation", 1)
 	_root.add_child(_rows)
 	_hint = Label.new()

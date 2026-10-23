@@ -5,7 +5,7 @@ extends CanvasLayer
 
 
 const OPTIONS: Array[String] = ["Resume", "Binder", "Skip to next scene", "Restart to title"]
-const PANEL_COLOR: Color = Color(0.06, 0.07, 0.1, 0.92)
+const PANEL_COLOR: Color = Color(0.06, 0.07, 0.1, 0.97)
 const TEXT: Color = Color("f3efe2")
 const FOCUS: Color = Color("ffd75e")
 const HINT: String = "Up/Down  choose    E  select    Esc  resume"
@@ -61,7 +61,10 @@ func _choose(index: int) -> void:
 			_resume()
 		"Binder":
 			if binder != null:
+				hide()
 				binder.open()
+				await binder.closed
+				show()
 		"Skip to next scene":
 			_resume()
 			Story.skip_scene()

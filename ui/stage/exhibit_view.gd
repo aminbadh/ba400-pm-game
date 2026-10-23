@@ -179,7 +179,7 @@ func _draw_histogram() -> void:
 	var line_y: float = roundf(chart_bottom - chart_height * available / top_value)
 	for dash: float in range(int(left), int(left + WIDTH - 18.0), 6):
 		draw_line(Vector2(dash, line_y), Vector2(dash + 3.0, line_y), CardView.TERM)
-	_text(Vector2(left + 2.0, line_y - 12.0), _exhibit.available_label, CardView.TERM, WIDTH, HORIZONTAL_ALIGNMENT_RIGHT)
+	_text(Vector2(left, line_y - 12.0), _exhibit.available_label, CardView.TERM, WIDTH - 18.0, HORIZONTAL_ALIGNMENT_RIGHT)
 	_text(Vector2(LEFT, size.y - 26.0), _exhibit.unknown_note, CardView.FAINT)
 
 
