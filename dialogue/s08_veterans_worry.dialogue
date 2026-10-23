@@ -4,8 +4,8 @@
 
 ~ start
 Aziz: Si Hédi, if I catch someone with a phone and the father says I lied... what happens to me?
-Si Hédi: Last year a colleague reported a device and ended up in court. Teachers wore red armbands for him.
-Si Hédi: (To you.) You want us to report everything. Then plan for what happens to us when we do.
+Si Hédi: [#worried] Last year a colleague reported a device and ended up in court. Teachers wore red armbands for him.
+Si Hédi: [#worried] (To you.) You want us to report everything. Then plan for what happens to us when we do.
 M. Jlassi: (Phone.) Also, the region has some budget for anti-cheating equipment, if you'd rather. Very modern.
 do Story.show_card(9)
 What does your staffing plan add?

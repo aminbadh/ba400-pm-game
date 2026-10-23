@@ -2,7 +2,7 @@
 # Core card; the vote is optional and skipped in short mode.
 
 ~ start
-Mme Salma: One hundred and ten supervisors on the busy days. They need to know who answers to whom.
+Mme Salma: Up to a hundred and twenty supervisors on the busiest day. They need to know who answers to whom.
 do Story.show_exhibit("org_chart")
 do Story.show_card(6)
 if not GameState.short_mode

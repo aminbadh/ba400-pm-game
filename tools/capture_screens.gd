@@ -1,6 +1,6 @@
 extends SceneTree
 ## Captures one screenshot of each kind of screen, for the projector check:
-## the title, the map, a line with a portrait, a vote, a card, a chart, the gate
+## the title, the map, a line with a portrait, a long line paging, a vote, a card, a chart, the gate
 ## inspection, the dashboard, the binder, the pause menu, the ending and the
 ## debrief. Each is saved at 1920x1080, the game's 320x180 scaled x6 as on a
 ## 1920x1080 projector, to build/screens/. Needs a window, not --headless:
@@ -39,6 +39,20 @@ func _main() -> void:
 	player.position = Vector2(200, 200)
 	await _frames(10)
 	await _capture("map")
+
+	# Scene 0's second line is the longest: it pages, three lines at a time.
+	player.position = Vector2(56, 88)
+	await _frames(10)
+	_story.call(&"start_scene", 0)
+	await _seconds(2.5)
+	await _press()
+	await _seconds(4.0)
+	await _capture("dialogue_long_line_page_1")
+	await _press()
+	await _seconds(3.0)
+	await _capture("dialogue_long_line_page_2")
+	_story.call(&"skip_scene")
+	await _frames(10)
 
 	# Scene 1 in Room 12: Mme Kchaou's first line, then on to the card and the vote.
 	_game_state.set(&"scene", 1)
