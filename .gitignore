@@ -12,3 +12,6 @@ build/
 CLAUDE.local.md
 .worktreeinclude
 .claude/
+
+# Python
+__pycache__/
