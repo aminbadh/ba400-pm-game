@@ -22,7 +22,7 @@ if not GameState.short_mode
 => END
 
 ~ wrong
-# [TBD] story.md gives no meter cost for a wrong answer here.
+# No cost: story.md's vote rules say a wrong optional warm-up vote costs nothing.
 M. Jlassi: It recurs nationally, but this centre's first session is temporary and unique. That's a project; the national Bac is the program around it.
 do Story.show_card(1)
 => END

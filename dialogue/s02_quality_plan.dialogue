@@ -19,7 +19,7 @@ if not GameState.short_mode
 => END
 
 ~ wrong
-# [TBD] story.md gives no meter cost for a wrong answer here.
+# No cost: story.md's vote rules say a wrong optional warm-up vote costs nothing.
 Mme Salma: Wait, what happens when a supervisor finds a problem? We need problem reporting and corrective action. And supplier quality, for the papers.
 do Story.show_card(3)
 => END
