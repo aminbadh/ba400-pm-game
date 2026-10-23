@@ -110,7 +110,7 @@ binder={
 
 [internationalization]
 
-locale/translations_pot_files=PackedStringArray("res://dialogue/s00_charter.dialogue", "res://dialogue/s06_envelopes.dialogue", "res://dialogue/s05_org_chart.dialogue", "res://dialogue/s07_staffing_peak.dialogue", "res://dialogue/s02_quality_plan.dialogue", "res://dialogue/s10_ending.dialogue", "res://dialogue/s09_exam_day.dialogue", "res://dialogue/s04_checklist.dialogue", "res://dialogue/test.dialogue", "res://dialogue/s01_room12.dialogue", "res://dialogue/s08_veterans_worry.dialogue", "res://dialogue/s03_dashboard.dialogue")
+locale/translations_pot_files=PackedStringArray("res://dialogue/s00_charter.dialogue", "res://dialogue/s01_room12.dialogue", "res://dialogue/s02_quality_plan.dialogue", "res://dialogue/s03_dashboard.dialogue", "res://dialogue/s04_checklist.dialogue", "res://dialogue/s05_org_chart.dialogue", "res://dialogue/s06_envelopes.dialogue", "res://dialogue/s07_staffing_peak.dialogue", "res://dialogue/s08_veterans_worry.dialogue", "res://dialogue/s09_exam_day.dialogue", "res://dialogue/s10_ending.dialogue")
 
 [rendering]
 
