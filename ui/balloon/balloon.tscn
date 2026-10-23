@@ -187,7 +187,7 @@ offset_bottom = -88.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ResponsesMenu" type="VBoxContainer" parent="Balloon/CenterContainer" unique_id=930429145]
+[node name="ResponsesMenu" type="VBoxContainer" parent="Balloon/CenterContainer" unique_id=930429145 node_paths=PackedStringArray("response_template")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 8
