@@ -2,6 +2,7 @@ class_name Npc
 extends StaticBody2D
 ## A character the player can talk to. Set [member character] to an id from
 ## content/scenes.json; the sprite and the name above it follow from that.
+## It stands facing down, and turns to face the player who talks to it.
 ## Only the character who starts the current scene answers, with a marker
 ## bobbing above them; when their scene comes up they jump to its spot, or to
 ## the nearest free tile when someone already stands there.
@@ -10,7 +11,9 @@ extends StaticBody2D
 ## How far the marker bobs, in pixels, and how fast.
 const BOB_HEIGHT: float = 2.0
 const BOB_SPEED: float = 4.0
-const SPRITE_PATH: String = "res://art/placeholder/characters/%s.png"
+const SPRITE_PATH: String = "res://art/characters/%s.png"
+## The sprite sheet's rows, by facing: down, left, right, up.
+const FACING_ROWS: Dictionary[Vector2, int] = { Vector2.DOWN: 0, Vector2.LEFT: 1, Vector2.RIGHT: 2, Vector2.UP: 3 }
 const TILE_SIZE: float = 16.0
 ## How many tiles from a blocked spot to look for a free one.
 const SEARCH_TILES: int = 3
@@ -30,6 +33,7 @@ var _bob_time: float = 0.0
 func _ready() -> void:
 	_sprite.texture = load(SPRITE_PATH % character) as Texture2D
 	_name_label.text = Story.character_name(character)
+	UiStyle.put_on_plate(_name_label)
 	Story.scene_changed.connect(_refresh)
 	_refresh()
 
@@ -40,15 +44,31 @@ func _process(delta: float) -> void:
 		_marker.position = _marker_rest + Vector2(0.0, roundf(sin(_bob_time * BOB_SPEED) * BOB_HEIGHT))
 
 
-## Start this character's scene, if it is the current one. Returns whether it started.
-func talk() -> bool:
-	return Story.talk_to(character)
+## Start this character's scene, if it is the current one, turning to face
+## [param from], where the player stands. Returns whether it started.
+func talk(from: Vector2) -> bool:
+	if not Story.talk_to(character):
+		return false
+	face(from - global_position)
+	return true
+
+
+## Turn to the one of the four directions closest to [param direction].
+func face(direction: Vector2) -> void:
+	var facing: Vector2 = Vector2.DOWN
+	if absf(direction.x) > absf(direction.y):
+		facing = Vector2.RIGHT if direction.x > 0.0 else Vector2.LEFT
+	elif direction.y < 0.0:
+		facing = Vector2.UP
+	_sprite.frame = FACING_ROWS[facing] * _sprite.hframes
 
 
 func _refresh() -> void:
 	var scene: Dictionary = Story.current_scene()
 	var is_mine: bool = scene.get("character", "") == character
 	_marker.visible = is_mine and not Story.in_scene
+	if not Story.in_scene:
+		face(Vector2.DOWN)
 	if is_mine and not Story.in_scene:
 		_go_to_spot(scene.spot)
 

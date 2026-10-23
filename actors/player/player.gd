@@ -10,18 +10,26 @@ const SPEED: float = 64.0
 const REACH: float = 10.0
 ## How deep the probe box is along [member facing].
 const PROBE_DEPTH: float = 4.0
+## Walking frames per second.
+const STEPS_PER_SECOND: float = 8.0
+## The sprite sheet's rows, by facing: down, left, right, up.
+const FACING_ROWS: Dictionary[Vector2, int] = { Vector2.DOWN: 0, Vector2.LEFT: 1, Vector2.RIGHT: 2, Vector2.UP: 3 }
 
 ## The direction the player last moved in, one of the four unit vectors.
 var facing: Vector2 = Vector2.DOWN
 
+var _walk_time: float = 0.0
+
 ## Sweeps a small box from just in front of the player's body towards [member facing].
 @onready var _talk_probe: ShapeCast2D = $TalkProbe
 @onready var _body: CollisionShape2D = $CollisionShape2D
+@onready var _sprite: Sprite2D = $Sprite2D
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if Story.in_scene:
 		velocity = Vector2.ZERO
+		_show_frame(0)
 		return
 
 	var direction: Vector2 = _read_direction()
@@ -29,6 +37,17 @@ func _physics_process(_delta: float) -> void:
 		facing = direction
 	velocity = direction * SPEED
 	move_and_slide()
+	# Standing, then the two walking steps in turn while moving.
+	if direction == Vector2.ZERO:
+		_walk_time = 0.0
+		_show_frame(0)
+	else:
+		_walk_time += delta
+		_show_frame(1 + int(_walk_time * STEPS_PER_SECOND) % 2)
+
+
+func _show_frame(step: int) -> void:
+	_sprite.frame = FACING_ROWS[facing] * _sprite.hframes + step
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -36,7 +55,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	var npc: Npc = _npc_in_reach()
-	if npc != null and npc.talk():
+	if npc != null and npc.talk(global_position):
 		get_viewport().set_input_as_handled()
 
 
