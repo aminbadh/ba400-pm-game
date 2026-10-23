@@ -8,9 +8,9 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 
 | Path | What it holds |
 | --- | --- |
-| `project.godot` | Display (320x180, integer scaling, nearest filtering), input map, autoloads, the project theme |
+| `project.godot` | Display (320x180, integer scaling, nearest filtering), input map, autoloads |
 | `autoload/game_state.gd` | `GameState`: the four meters, the story flags, the room's votes, the cards collected, the current scene, Short mode |
-| `autoload/story.gd` | `Story`: loads the content files, starts each scene, and gives the dialogue its calls (`show_card`, `show_exhibit`, `run_inspection`, `backdrop`, the binder) |
+| `autoload/story.gd` | `Story`: sets the pixel font, loads the content files, starts each scene, and gives the dialogue its calls (`show_card`, `show_exhibit`, `run_inspection`, `backdrop`, the binder) |
 | `dialogue/` | The story, one Dialogue Manager `.dialogue` file per scene (`s00_charter` to `s10_ending`) |
 | `content/cards.json` | The nine concept cards and each vote's debrief lines |
 | `content/exhibits.json` | The charter, the organisational chart, the RACI chart and the resource histogram |
@@ -23,7 +23,6 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `ui/dashboard/` | The four meters, top-left, and who to talk to next, top-right |
 | `ui/binder/` | The planning binder: quest log, card viewer, debrief |
 | `ui/pause_menu/` | Resume, Binder, Skip to next scene, Restart to title |
-| `ui/theme.tres` | The project theme: the pixel font at 10 px |
 | `world/centre.tscn` | The map: gate, courtyard, admin office, Room 12, staff room, deposit room; the characters; the scene spots |
 | `actors/player/` | The player: four-direction movement, collision, and a probe for the character in front |
 | `actors/npc/` | A character: set **Character** to an id from `content/scenes.json` |

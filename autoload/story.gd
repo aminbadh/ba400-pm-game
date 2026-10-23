@@ -18,6 +18,11 @@ const INSPECTION_PATH: String = "res://content/inspection.json"
 const SCENES_PATH: String = "res://content/scenes.json"
 const TITLE_SCENE: String = "res://ui/title/title.tscn"
 const MAP_SCENE: String = "res://world/centre.tscn"
+## The font every screen uses, at [constant FONT_SIZE]. It is put in the
+## default theme at run time rather than in a project theme, so a first import
+## does not load it before the font is imported.
+const FONT_PATH: String = "res://fonts/ark-pixel-10px-proportional-latin.ttf"
+const FONT_SIZE: int = 10
 ## The cue every scene's dialogue starts from.
 const START_CUE: String = "start"
 ## The scene played after the last one, when the story is over.
@@ -59,6 +64,9 @@ var _snapshot: Dictionary = {}
 
 
 func _ready() -> void:
+	var theme: Theme = ThemeDB.get_default_theme()
+	theme.default_font = load(FONT_PATH) as Font
+	theme.default_font_size = FONT_SIZE
 	_load_content()
 	DialogueManager.dialogue_ended.connect(_on_dialogue_ended)
 

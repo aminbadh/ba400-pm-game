@@ -41,10 +41,6 @@ window/stretch/scale_mode="integer"
 
 enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg")
 
-[gui]
-
-theme/custom="res://ui/theme.tres"
-
 [input]
 
 move_up={
