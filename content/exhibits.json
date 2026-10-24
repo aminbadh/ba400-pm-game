@@ -21,7 +21,7 @@
 		"columns": ["You", "Mme Salma", "Agent Fethi", "Supervisors"],
 		"rows": [
 			{ "task": "Receive the sealed envelopes", "cells": ["?", "R", "C", "I"] },
-			{ "task": "Open the envelope at 8:30", "cells": ["A", "I", "I", "R"] },
+			{ "task": "Open the envelope at 8:00", "cells": ["A", "I", "I", "R"] },
 			{ "task": "Collect devices at the gate", "cells": ["I", "A", "R", "I"] },
 			{ "task": "Record incidents", "cells": ["I", "A", "I", "R"] },
 			{ "task": "Send copies on, sealed", "cells": ["A", "R", "C", "I"] }

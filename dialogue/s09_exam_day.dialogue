@@ -14,17 +14,17 @@ elif GameState.has_flag("raci_none")
 # The device line was missing: scene 4's check vote, answered wrongly in short mode.
 if GameState.voted(4, "B") or GameState.voted(4, "C")
 	do GameState.integrity -= 5
-	8:00, the gate: Two phones get in.
+	7:30, the gate: Two phones get in.
 elif not GameState.short_mode
-	8:00, the gate: The checklist works as well as the rehearsal went.
+	7:30, the gate: The checklist works as well as the rehearsal went.
 if GameState.has_flag("staff_thin")
 	do GameState.integrity -= 10
-	8:30, the rooms: A supervisor alone with forty candidates misses a smartwatch.
+	8:00, the rooms: A supervisor alone with forty candidates misses a smartwatch.
 elif GameState.has_flag("rooms_crowded")
 	do GameState.fairness -= 5
-	8:30, the rooms: Nour's quiet desk is gone; she finishes, but the doors bang.
+	8:00, the rooms: Nour's quiet desk is gone; she finishes, but the doors bang.
 elif GameState.has_flag("staff_borrowed")
-	8:30, the rooms: The borrowed teachers arrive with sandwiches from the region. Everyone is in place.
+	8:00, the rooms: The borrowed teachers arrive with sandwiches from the region. Everyone is in place.
 # The incident shows only when scene 8 set a flag, in both modes.
 if GameState.has_flag("staff_trained") or GameState.has_flag("staff_protected") or GameState.has_flag("bought_tech")
 	10:15, an incident: A candidate is found with an earpiece.
