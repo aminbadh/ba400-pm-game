@@ -58,6 +58,9 @@ class Waiter:
 	signal done(value: Variant)
 
 
+## Draws a candidate's line when the content gives several.
+var says_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+
 var _front: CanvasLayer
 var _backdrop: CanvasLayer
 var _card_view: CardView
@@ -155,13 +158,23 @@ func inspect_candidate(index: int, inspection: Dictionary) -> bool:
 		label.add_theme_color_override(&"font_color", CardView.INK)
 	_candidate_count_label.text = "%d of %d" % [index + 1, candidates.size()]
 	_candidate_name_label.text = candidate.name
-	_candidate_shows_label.text = candidate.shows
+	_candidate_shows_label.text = candidate_shows(candidate, says_rng)
 	_result_label.text = ""
 	_after_label.text = ""
 	_prompt_label.text = "1  Admit    2  Stop"
 	_inspection_view.show()
 	var admit: Variant = await _wait("admit_or_stop")
 	return admit as bool
+
+
+## What a candidate shows at the gate: its [code]shows[/code] text, with
+## [code]{says}[/code] replaced by one of its [code]says[/code] lines, drawn
+## afresh each time the candidate appears.
+static func candidate_shows(candidate: Dictionary, rng: RandomNumberGenerator) -> String:
+	var says: Array = candidate.get("says", [])
+	if says.is_empty():
+		return candidate.shows
+	return (candidate.shows as String).format({ "says": says[rng.randi_range(0, says.size() - 1)] })
 
 
 ## Say whether the call was right, with its effect, and flash the checklist

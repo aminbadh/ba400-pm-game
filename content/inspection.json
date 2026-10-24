@@ -41,7 +41,13 @@
 		},
 		{
 			"name": "Am Lassaad",
-			"shows": "Tries to walk in with his son. \"Ya weldi, el bac hedha wala lotto?\" (\"Son, is this the Bac or the lottery?\")",
+			"shows": "Tries to walk in with his son. \"{says}\"",
+			"says": [
+				"Ti jibtlou el kaskrout bark!",
+				"Ti khallini nodkhol, ena el coach mte3ou!",
+				"Ena 3addit el bac 3am 89, khallini n3awnou!",
+				"Ya weldi, ken tenja7, el moto mte3ek!"
+			],
 			"answer": "stop",
 			"after": "Not a candidate: stopped, kindly.",
 			"lines": [0]

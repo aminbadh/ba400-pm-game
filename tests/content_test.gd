@@ -4,7 +4,8 @@ extends SceneTree
 ## one the story uses, every scene's dialogue starts at its cue, every card
 ## page fits on screen at the base resolution, every backdrop title fits
 ## inside the screen's margins and clear of the dashboard and the dialogue box,
-## and the map's camera keeps the strip at the bottom clear. Exits non-zero on failure.
+## the map's camera keeps the strip at the bottom clear, and the gate
+## inspection shows Am Lassaad saying one of his four lines. Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/content_test.gd
 
@@ -24,6 +25,15 @@ const BALLOON_SCRIPT: String = "res://ui/balloon/balloon.gd"
 ## How far a backdrop title keeps from the dashboard and the dialogue box, in pixels.
 const TITLE_CLEARANCE: float = 4.0
 const TILE_SIZE: int = 16
+## Am Lassaad's lines at the gate, as story.md writes them; one is drawn each time.
+const AM_LASSAAD_LINES: Array = [
+	"Ti jibtlou el kaskrout bark!",
+	"Ti khallini nodkhol, ena el coach mte3ou!",
+	"Ena 3addit el bac 3am 89, khallini n3awnou!",
+	"Ya weldi, ken tenja7, el moto mte3ek!",
+]
+## How many times the check brings Am Lassaad to the gate.
+const AM_LASSAAD_DRAWS: int = 12
 
 var _problems: PackedStringArray = []
 var _story: Node
@@ -176,6 +186,7 @@ func _check_map(sources: Dictionary) -> void:
 		if not scene.spot.is_empty() and map.get_node_or_null("Spots/" + scene.spot) == null:
 			_problems.append("scene %d's spot %s is not on the map" % [int(scene.number), scene.spot])
 	_check_hint_strip(map)
+	await _check_am_lassaad(_story.get(&"stage"))
 	await _check_backdrop_titles(sources, _story.get(&"stage"), map.get_node("Dashboard"))
 	map.queue_free()
 	await process_frame
@@ -195,6 +206,35 @@ func _check_hint_strip(map: Node) -> void:
 		_problems.append("the camera stops %d px past the map's bottom, but the strip at the bottom is %d px tall" % [camera_bottom - map_bottom, strip_height])
 	if drawn != strip_height:
 		_problems.append("the strip at the bottom is drawn %d px tall, not %d" % [drawn, strip_height])
+
+
+# Each time Am Lassaad comes to the gate, the inspection shows one of story.md's
+# four lines, word for word, with no translation; which one is not checked.
+func _check_am_lassaad(stage: Object) -> void:
+	if stage == null:
+		return
+	var inspection: Dictionary = _story.get(&"inspection")
+	var index: int = -1
+	for i: int in (inspection.candidates as Array).size():
+		if inspection.candidates[i].name == "Am Lassaad":
+			index = i
+	if index < 0:
+		_problems.append("the inspection has no Am Lassaad")
+		return
+	var candidate: Dictionary = inspection.candidates[index]
+	if candidate.get("says", []) != AM_LASSAAD_LINES:
+		_problems.append("Am Lassaad's lines in inspection.json are not story.md's four: %s" % [candidate.get("says", [])])
+	var shown_label: Label = stage.get(&"_candidate_shows_label")
+	for draw: int in AM_LASSAAD_DRAWS:
+		# The inspection waits for the presenter; its wait is dropped unanswered.
+		stage.call(&"inspect_candidate", index, inspection)
+		await process_frame
+		var shown: String = shown_label.text
+		var said: String = shown.get_slice("\"", 1)
+		if said not in AM_LASSAAD_LINES or shown.count("\"") != 2 or "(" in shown:
+			_problems.append("the inspection shows Am Lassaad as %s, not one of story.md's four lines" % shown)
+	print("am lassaad: the inspection shows one of the four lines in each of %d draws" % AM_LASSAAD_DRAWS)
+	stage.call(&"end_inspection")
 
 
 # Every title the dialogue puts on the backdrop fits inside the screen's
