@@ -1,0 +1,74 @@
+# Build the web export on every push to main, run the tests, and publish it to GitHub Pages.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A newer push cancels an older build or deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.7.2
+  GODOT_RELEASE: https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable
+  # From the release's SHA512-SUMS.txt.
+  GODOT_SHA512: 9aa00f7a605200940bce3027a567b782f49bd8e940dd06ae9e987bd65aee1b1467edd56ed84fcdcbdd44354bf613bdbb4e5d2913e925850368e150c59ed54c65
+  TEMPLATES_SHA512: ca4d71c4d7b81dfc15d1a98baa07534aa95b03fdda78a0075b06672e1648d2e5f40980c9adc28d23e1b92e732ee7bf3461997aa804af74ec2fcd7a93ccb84079
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Godot and the web templates
+        id: cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64-web
+
+      - name: Download Godot and the web templates
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -fsSLO "$GODOT_RELEASE/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          curl -fsSLO "$GODOT_RELEASE/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          echo "$GODOT_SHA512  Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" | sha512sum -c
+          echo "$TEMPLATES_SHA512  Godot_v${GODOT_VERSION}-stable_export_templates.tpz" | sha512sum -c
+          mkdir -p ~/godot
+          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -d ~/godot
+          mv ~/godot/"Godot_v${GODOT_VERSION}-stable_linux.x86_64" ~/godot/godot
+          templates=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$templates"
+          unzip -q -j "Godot_v${GODOT_VERSION}-stable_export_templates.tpz" 'templates/web_*' 'templates/version.txt' -d "$templates"
+          ls "$templates"
+
+      - name: Import, test and export
+        run: tools/web_build.sh ~/godot/godot build/web
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

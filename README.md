@@ -1,5 +1,7 @@
 # BA 400 PM Game
 
+**Play it:** <https://aminbadh.github.io/ba400-pm-game/>
+
 A 2D top-down pixel story game for the BA 400 Project Management chapter 5 presentation at TBS. Built in Godot 4 with GDScript, exported for the web.
 
 The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its project manager. Each scene teaches one part of the chapter on a concept card, then the room votes on a choice with its **A**, **B** and **C** cards and the presenter presses the room's answer. Votes move four meters on the project dashboard (Integrity, Fairness, Team, Budget) and set flags that pay off on exam day; the meters decide one of three endings, followed by what really happened in June 2026 and a debrief of every vote.
@@ -128,6 +130,14 @@ uv run python -m http.server -d build/web 8000
 ```
 
 Then open <http://localhost:8000>. `build/` is not committed.
+
+`tools/web_build.sh <godot> <folder>` runs the import, every test and the export in one go, stopping at the first failure; it is what the deploy runs.
+
+## Deploy
+
+Every push to `main` runs `.github/workflows/pages.yml`: it downloads Godot 4.7.2 and its web templates from the official release (checked against the release's SHA-512 sums, then cached), runs `tools/web_build.sh`, and publishes `build/web` to GitHub Pages. A failing test stops the deploy, and a newer push cancels an older run. **Run workflow** on the Actions tab starts it by hand.
+
+Once, before the first deploy: on GitHub, **Settings > Pages**, set **Source** to **GitHub Actions**.
 
 ## Credits
 
