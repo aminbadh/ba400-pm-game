@@ -23,6 +23,8 @@ const EDGE: int = 4
 const PLATE_X: int = 3
 ## Inside the small name and room plates, above and below the text.
 const PLATE_Y: int = 1
+## The dark outline around the small plates and the strips along the screen's edges.
+const PLATE_BORDER: int = 1
 
 
 ## The opaque pixel frame for a panel, with its content [constant INSET]
@@ -43,7 +45,7 @@ static func plate(color: Color = Palette.PANEL) -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = color
 	style.border_color = Palette.OUTLINE
-	style.set_border_width_all(1)
+	style.set_border_width_all(PLATE_BORDER)
 	style.content_margin_left = PLATE_X
 	style.content_margin_right = PLATE_X
 	style.content_margin_top = PLATE_Y
