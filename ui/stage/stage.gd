@@ -19,18 +19,18 @@ const FRONT_LAYER: int = 60
 ## The backdrop is a bright slide, like the cards.
 const BACKDROP_COLOR: Color = Palette.PAPER
 ## Backdrop titles keep this far from the screen's sides, clear of its 3 px
-## border, and stay on one line: two lines at this size (56 px) do not fit
-## between the dashboard and the dialogue box.
+## border, and stay on one line.
 const BACKDROP_MARGIN: int = 6
 const BACKDROP_TITLE_LINES: int = 1
 ## The band a backdrop title sits in, [constant UiStyle.GAP] clear of the
-## dashboard above (its panel's bottom at 64) and of the speaker's name plate
-## below (its top at [constant Balloon.NAME_PLATE_TOP], 110).
-const BACKDROP_TITLE_TOP: int = 68
+## dashboard's strip above (its bottom at [constant Dashboard.STRIP_HEIGHT], 20)
+## and of the speaker's name plate below (its top at
+## [constant Balloon.NAME_PLATE_TOP], 110).
+const BACKDROP_TITLE_TOP: int = Dashboard.STRIP_HEIGHT + UiStyle.GAP
 const BACKDROP_TITLE_HEIGHT: int = int(Balloon.NAME_PLATE_TOP) - UiStyle.GAP - BACKDROP_TITLE_TOP
-## The body of the last screen, below the dashboard, and the room it keeps
-## from the slide's sides and bottom.
-const BACKDROP_BODY_TOP: int = 64
+## The body of the last screen, below the dashboard's strip, and the room it
+## keeps from the slide's sides and bottom.
+const BACKDROP_BODY_TOP: int = Dashboard.STRIP_HEIGHT + UiStyle.GAP
 const BACKDROP_BODY_SIDE: int = 20
 const BACKDROP_BODY_BOTTOM: int = 12
 ## The backdrop title's size, and its leading: lines 4 px closer than the font's.

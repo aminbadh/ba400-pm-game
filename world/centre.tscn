@@ -153,7 +153,7 @@ position = Vector2(200, 232)
 
 [node name="Camera2D" type="Camera2D" parent="Actors/Player"]
 limit_left = 0
-limit_top = 0
+limit_top = -20
 limit_right = 576
 limit_bottom = 366
 

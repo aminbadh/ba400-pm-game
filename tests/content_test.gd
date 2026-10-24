@@ -4,7 +4,7 @@ extends SceneTree
 ## one the story uses, every scene's dialogue starts at its cue, every card
 ## page fits on screen at the base resolution, every backdrop title fits
 ## inside the screen's margins and clear of the dashboard and the dialogue box,
-## the map's camera keeps the strip at the bottom clear, and the gate
+## the map's camera keeps the strips at the top and the bottom clear, and the gate
 ## inspection shows Am Lassaad saying one of his four lines. Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/content_test.gd
@@ -186,6 +186,7 @@ func _check_map(sources: Dictionary) -> void:
 		if not scene.spot.is_empty() and map.get_node_or_null("Spots/" + scene.spot) == null:
 			_problems.append("scene %d's spot %s is not on the map" % [int(scene.number), scene.spot])
 	_check_hint_strip(map)
+	_check_meter_strip(map)
 	await _check_am_lassaad(_story.get(&"stage"))
 	await _check_backdrop_titles(sources, _story.get(&"stage"), map.get_node("Dashboard"))
 	map.queue_free()
@@ -206,6 +207,41 @@ func _check_hint_strip(map: Node) -> void:
 		_problems.append("the camera stops %d px past the map's bottom, but the strip at the bottom is %d px tall" % [camera_bottom - map_bottom, strip_height])
 	if drawn != strip_height:
 		_problems.append("the strip at the bottom is drawn %d px tall, not %d" % [drawn, strip_height])
+
+
+# The camera stops before the map's top edge by the height of the meters' strip
+# at the top of the screen, so the strip covers nothing on the map: the part of
+# the screen the map can ever reach starts below it. The strip is that tall, as
+# wide as the screen, and clear of the strip at the bottom.
+func _check_meter_strip(map: Node) -> void:
+	var dashboard: Node = map.get_node("Dashboard")
+	var strip_height: int = dashboard.get(&"STRIP_HEIGHT")
+	var strip: Rect2 = dashboard.call(&"strip_rect")
+	var hint: Rect2 = dashboard.call(&"hint_rect")
+	var screen: Vector2 = map.get_viewport().get_visible_rect().size
+	# The map's edges are its outer walls, outside the floor.
+	var tiles: Rect2i = (map.get_node("Floor") as TileMapLayer).get_used_rect()
+	for layer: Node in map.get_children():
+		if layer is TileMapLayer:
+			tiles = tiles.merge((layer as TileMapLayer).get_used_rect())
+	var map_top: int = tiles.position.y * TILE_SIZE
+	var map_bottom: int = tiles.end.y * TILE_SIZE
+	var camera: Camera2D = map.get_node("Actors/Player/Camera2D")
+	# Where the map can be on screen: from its top edge with the camera at its
+	# highest to its bottom edge with the camera at its lowest.
+	var map_area: Rect2 = Rect2(0, map_top - camera.limit_top, screen.x, screen.y - (camera.limit_bottom - map_bottom) - (map_top - camera.limit_top))
+	print("meter strip: %s, drawn %s; the map can show from y %d to %d; the strip at the bottom %s"
+		% [strip_height, strip, map_area.position.y, map_area.end.y, hint])
+	if strip.size.y != strip_height:
+		_problems.append("the strip at the top is drawn %d px tall, not %d" % [strip.size.y, strip_height])
+	if strip.position != Vector2.ZERO or strip.size.x != screen.x:
+		_problems.append("the strip at the top is at %s, not along the screen's top edge" % strip)
+	if strip.intersects(map_area):
+		_problems.append("the strip at the top (%s) covers the map, which can show from y %d" % [strip, map_area.position.y])
+	if hint.intersects(map_area):
+		_problems.append("the strip at the bottom (%s) covers the map, which can show down to y %d" % [hint, map_area.end.y])
+	if strip.intersects(hint):
+		_problems.append("the strip at the top (%s) overlaps the strip at the bottom (%s)" % [strip, hint])
 
 
 # Each time Am Lassaad comes to the gate, the inspection shows one of story.md's
@@ -239,11 +275,11 @@ func _check_am_lassaad(stage: Object) -> void:
 
 # Every title the dialogue puts on the backdrop fits inside the screen's
 # margins, and its rendered rect stays [constant TITLE_CLEARANCE] px clear of the
-# dashboard above and of the dialogue box's name plate below.
+# dashboard's strip above and of the dialogue box's name plate below.
 func _check_backdrop_titles(sources: Dictionary, stage: Object, dashboard: Object) -> void:
 	if stage == null or dashboard == null:
 		return
-	var dashboard_bottom: float = (dashboard.call(&"panel_rect") as Rect2).end.y
+	var dashboard_bottom: float = (dashboard.call(&"strip_rect") as Rect2).end.y
 	var box_top: float = (load(BALLOON_SCRIPT) as Script).get_script_constant_map()[&"NAME_PLATE_TOP"]
 	var calls: RegEx = RegEx.create_from_string("Story\\.backdrop\\(\"([^\"]+)\"")
 	for path: String in sources:

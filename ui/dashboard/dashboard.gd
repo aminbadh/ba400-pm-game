@@ -1,15 +1,17 @@
 class_name Dashboard
 extends CanvasLayer
-## The project dashboard, top-left: Integrity, Fairness, Team and Budget, each
-## with an icon, a label, a bar and a number, so no meter is read by colour
-## alone. Hidden until scene 3 puts it on screen; meters the chosen metrics do
-## not light stay greyed out. With metrics_passrate it shows every meter green
-## and full until the ending reveals the real values.
+## The project dashboard, a strip as wide as the screen along its top:
+## Integrity, Fairness, Team and Budget, left to right, each cell with an icon,
+## a name and a number over a bar, so no meter is read by colour alone. Hidden
+## until scene 3 puts it on screen; meters the chosen metrics do not light stay
+## greyed out. With metrics_passrate it shows every meter green and full until
+## the ending reveals the real values.
 ##
 ## At the bottom, while the player walks, a line says who to talk to next, in a
-## strip as wide as the screen. The map's camera stops [constant HINT_HEIGHT]
-## pixels past the map's bottom edge, so the strip never hides any of the map
-## the camera can show: room and name plates scroll under it as off the screen.
+## strip as wide as the screen. The map's camera stops [constant STRIP_HEIGHT]
+## pixels before the map's top edge and [constant HINT_HEIGHT] pixels past its
+## bottom edge, so neither strip hides any of the map the camera can show: room
+## and name plates scroll under them as off the screen.
 
 
 const METER_NAMES: Dictionary[String, String] = {
@@ -22,9 +24,16 @@ const METER_NAMES: Dictionary[String, String] = {
 const ICONS_PATH: String = "res://art/ui/icons.png"
 const ICON_ORDER: Array[String] = ["integrity", "fairness", "team", "budget"]
 const ICON_SIZE: int = 9
-const BAR_SIZE: Vector2 = Vector2(36, 5)
-## The dark outline around each bar.
-const TRACK_BORDER: int = 1
+## The height of a line of text at the font's base size.
+const ROW_HEIGHT: int = 14
+## The bar along the bottom of each cell, as wide as the cell.
+const BAR_HEIGHT: int = 2
+## The height of the strip at the top: a row of text and the bars inside the
+## plate's padding and outline. world/centre.tscn's camera keeps it clear.
+const STRIP_HEIGHT: int = 2 * (UiStyle.PLATE_BORDER + UiStyle.PLATE_Y) + ROW_HEIGHT + BAR_HEIGHT
+## The widest number each cell shows, so a cell keeps its width as values change.
+const WIDEST_VALUE: String = "100"
+const WIDEST_BUDGET: String = "3000 TND"
 ## The height of the strip at the bottom; world/centre.tscn's camera keeps it clear.
 const HINT_HEIGHT: int = 14
 const GOOD: Color = Palette.METER_GOOD
@@ -32,7 +41,7 @@ const WARN: Color = Palette.METER_WARN
 const BAD: Color = Palette.METER_BAD
 const GREY: Color = Palette.METER_OFF
 
-var _panel: PanelContainer
+var _strip: Panel
 var _bars: Dictionary[String, ColorRect] = {}
 var _values: Dictionary[String, Label] = {}
 var _names: Dictionary[String, Label] = {}
@@ -64,16 +73,21 @@ static func display(meter: String) -> Dictionary:
 	return { "fill": scaled / 100.0, "color": color, "text": text, "lit": lit }
 
 
-## The screen area the dashboard covers, so nothing else is drawn under it.
-func panel_rect() -> Rect2:
-	return _panel.get_rect()
+## The screen area the strip at the top covers, so nothing else is drawn under it.
+func strip_rect() -> Rect2:
+	return _strip.get_rect()
+
+
+## The screen area the strip at the bottom covers.
+func hint_rect() -> Rect2:
+	return _hint_panel.get_rect()
 
 
 func _refresh() -> void:
-	_panel.visible = GameState.dashboard_shown or GameState.scene > 3
+	_strip.visible = GameState.dashboard_shown or GameState.scene > 3
 	for meter: String in GameState.METERS:
 		var shown: Dictionary = display(meter)
-		_bars[meter].size.x = roundf(BAR_SIZE.x * float(shown.fill))
+		_bars[meter].anchor_right = float(shown.fill)
 		_bars[meter].color = shown.color
 		_values[meter].text = shown.text
 		var text_color: Color = Palette.TEXT if shown.lit else Palette.DIM
@@ -89,24 +103,39 @@ func _refresh() -> void:
 
 
 func _build() -> void:
-	# INSET inside the frame and TIGHT between the meters would make the panel
-	# 84 px tall, too tall for the ending's titles between it and the dialogue
-	# box, so for now the meters sit on the frame's border, their rows 2 px
-	# into each other's line height.
-	_panel = PanelContainer.new()
-	var frame: StyleBoxTexture = UiStyle.frame()
-	frame.set_content_margin_all(UiStyle.FRAME_MARGIN)  # spacing: pending; INSET leaves no room for the ending's titles
-	_panel.add_theme_stylebox_override(&"panel", frame)
-	_panel.position = Vector2(UiStyle.EDGE, UiStyle.EDGE)
-	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_panel)
-	var grid: GridContainer = GridContainer.new()
-	grid.columns = 4
-	grid.add_theme_constant_override(&"h_separation", UiStyle.GAP)
-	grid.add_theme_constant_override(&"v_separation", -2)  # spacing: pending; TIGHT leaves no room for the ending's titles
-	_panel.add_child(grid)
+	# The meters in a strip at the top, in the same plate as the strip at the
+	# bottom: one cell each, side by side inside the plate's padding. Each cell
+	# is at least as wide as its icon, name and widest number, and the cells
+	# share what is left of the screen's width.
+	_strip = Panel.new()
+	_strip.add_theme_stylebox_override(&"panel", UiStyle.plate())
+	_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_strip.anchor_left = 0.0
+	_strip.anchor_right = 1.0
+	_strip.offset_bottom = STRIP_HEIGHT
+	add_child(_strip)
+	var cells: HBoxContainer = HBoxContainer.new()
+	cells.add_theme_constant_override(&"separation", UiStyle.GAP)
+	cells.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cells.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cells.offset_left = UiStyle.PLATE_BORDER + UiStyle.PLATE_X
+	cells.offset_right = -(UiStyle.PLATE_BORDER + UiStyle.PLATE_X)
+	cells.offset_top = UiStyle.PLATE_BORDER + UiStyle.PLATE_Y
+	cells.offset_bottom = -(UiStyle.PLATE_BORDER + UiStyle.PLATE_Y)
+	_strip.add_child(cells)
 	var icons: Texture2D = load(ICONS_PATH) as Texture2D
 	for meter: String in GameState.METERS:
+		var cell: Control = Control.new()
+		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cells.add_child(cell)
+		var row: HBoxContainer = HBoxContainer.new()
+		row.add_theme_constant_override(&"separation", UiStyle.GAP)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.set_anchors_preset(Control.PRESET_TOP_WIDE)
+		row.offset_bottom = ROW_HEIGHT
+		cell.add_child(row)
+
 		var icon: TextureRect = TextureRect.new()
 		var region: AtlasTexture = AtlasTexture.new()
 		region.atlas = icons
@@ -114,33 +143,37 @@ func _build() -> void:
 		icon.texture = region
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
 		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		grid.add_child(icon)
+		row.add_child(icon)
 		_icons[meter] = icon
 
 		var name_label: Label = UiStyle.label()
 		name_label.text = METER_NAMES[meter]
-		grid.add_child(name_label)
+		row.add_child(name_label)
 		_names[meter] = name_label
 
-		# The bar in a dark outlined track.
-		var track: ColorRect = ColorRect.new()
-		track.color = Palette.OUTLINE
-		track.custom_minimum_size = BAR_SIZE + Vector2.ONE * 2 * TRACK_BORDER
-		track.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		grid.add_child(track)
-		var inner: ColorRect = ColorRect.new()
-		inner.color = Palette.METER_TRACK
-		inner.position = Vector2.ONE * TRACK_BORDER
-		inner.size = BAR_SIZE
-		track.add_child(inner)
-		var bar: ColorRect = ColorRect.new()
-		bar.size = BAR_SIZE
-		inner.add_child(bar)
-		_bars[meter] = bar
-
+		# The number on the cell's right, as wide as the widest it shows.
 		var value_label: Label = UiStyle.label(Palette.TEXT, HORIZONTAL_ALIGNMENT_RIGHT)
-		grid.add_child(value_label)
+		value_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var widest: String = WIDEST_BUDGET if meter == "budget" else WIDEST_VALUE
+		var font: Font = value_label.get_theme_font(&"font")
+		var font_size: int = value_label.get_theme_font_size(&"font_size")
+		value_label.custom_minimum_size.x = ceilf(font.get_string_size(widest, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
+		row.add_child(value_label)
 		_values[meter] = value_label
+		cell.custom_minimum_size = Vector2(row.get_combined_minimum_size().x, ROW_HEIGHT + BAR_HEIGHT)
+
+		# The bar along the cell's bottom, filled from the left over a dark track.
+		var track: ColorRect = ColorRect.new()
+		track.color = Palette.METER_TRACK
+		track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		track.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+		track.offset_top = -BAR_HEIGHT
+		cell.add_child(track)
+		var bar: ColorRect = ColorRect.new()
+		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bar.anchor_bottom = 1.0
+		track.add_child(bar)
+		_bars[meter] = bar
 
 	# Who to talk to next, in the strip at the bottom, where the dialogue box
 	# goes once they talk. The strip keeps its height whatever the plate's
