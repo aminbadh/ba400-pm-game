@@ -9,6 +9,13 @@ out="$2"
 mkdir -p build "$out"
 touch build/.gdignore
 
+echo "== first import, unchecked"
+# On a machine with no Godot editor settings yet (a fresh CI runner), the first
+# import creates them, and Dialogue Manager's editor theme reads its font size
+# before it exists, printing errors that do not touch the game. The checked
+# import below runs with the settings in place.
+"$godot" --headless --path . --import > /dev/null 2>&1 || true
+
 echo "== import"
 "$godot" --headless --path . --import 2>&1 | tee "$out.import.log"
 if grep -q 'ERROR:' "$out.import.log"; then
