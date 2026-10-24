@@ -2,7 +2,7 @@ extends SceneTree
 ## Captures one screenshot of each kind of screen, for the projector check:
 ## the title, the map, a line with a portrait, a long line paging, a vote as it
 ## appears and after an arrow key, a card, a chart, the gate
-## inspection, the dashboard, the binder, the pause menu, the ending and the
+## inspection and Am Lassaad's longest line there, the dashboard, the binder, the pause menu, the ending and the
 ## debrief. Each is saved at 1920x1080, the game's 320x180 scaled x6 as on a
 ## 1920x1080 projector, to build/screens/. Needs a window, not --headless:
 ##
@@ -109,6 +109,21 @@ func _main() -> void:
 	await _frames(5)
 	await _capture("inspection")
 	stage.call(&"cancel")
+	# Am Lassaad at the gate, saying his longest line, to check it fits.
+	var inspection: Dictionary = _story.get(&"inspection")
+	var lassaad: int = (inspection.candidates as Array).find_custom(func(c: Dictionary) -> bool: return c.name == "Am Lassaad")
+	var longest: String = ""
+	for line: String in inspection.candidates[lassaad].says:
+		if line.length() > longest.length():
+			longest = line
+	for draw: int in 40:
+		stage.call(&"inspect_candidate", lassaad, inspection)
+		if longest in (stage.get(&"_candidate_shows_label") as Label).text:
+			break
+		stage.call(&"cancel")
+	await _frames(5)
+	await _capture("inspection_am_lassaad")
+	stage.call(&"cancel")
 
 	# The dashboard, lit, with the meters at different levels, on the map.
 	_game_state.set(&"scene", 6)
@@ -121,6 +136,12 @@ func _main() -> void:
 	player.position = Vector2(200, 232)
 	await _frames(10)
 	await _capture("dashboard")
+	# At the top of the map, the camera's highest: the strip clears the top wall.
+	player.position = Vector2(200, 40)
+	await _frames(10)
+	await _capture("dashboard_map_top")
+	player.position = Vector2(200, 232)
+	await _frames(10)
 
 	var binder: Node = map.get_node("Binder")
 	binder.call(&"open")
