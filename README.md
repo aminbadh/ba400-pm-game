@@ -24,7 +24,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `ui/balloon/` | The dialogue box: portrait, name plate, typed pages of three lines, optional voices; the votes as A/B/C cards with the 20-second bar, "The room chose B" |
 | `ui/stage/` | Full-screen moments: cards, charts, the gate inspection, the ending backdrop |
 | `ui/card_view/` | A card or the charter drawn as a lecture slide |
-| `ui/dashboard/` | The four meters, top-left, each with an icon, label, bar and number; who to talk to next, at the bottom |
+| `ui/dashboard/` | The four meters in a strip along the top, each cell with an icon, name, number and a bar under it; who to talk to next, in a strip at the bottom. The map's camera keeps both strips clear of the map |
 | `ui/binder/` | The planning binder: quest log, card viewer, debrief |
 | `ui/pause_menu/` | Resume, Binder, Voices on or off, Skip to next scene, Restart to title |
 | `world/centre.tscn` | The map: gate, courtyard, admin office, Room 12, staff room, deposit room; the characters; the scene spots. Its tile layers are filled by `tools/build_map.py` |
@@ -114,7 +114,7 @@ godot --headless --path . --quit-after 300           # run the title screen brie
 godot --headless --path . -s tests/story_test.gd     # play the story to each ending; exits 1 on failure, 2 on timeout
 godot --headless --path . -s tests/flow_test.gd      # restart, new game and skip, and skipping the ending; exits 1 on failure
 godot --headless --path . --fixed-fps 60 -s tests/route_test.gd  # walk to each scene's character with the movement keys; exits 1 if the player stops short
-godot --headless --path . -s tests/content_test.gd   # cards, debrief lines, flags, page and title fit; exits 1 on failure
+godot --headless --path . -s tests/content_test.gd   # cards, debrief lines, flags, page and title fit, both strips clear of the map, Am Lassaad's lines; exits 1 on failure
 godot --headless --path . -s tests/contrast_test.gd  # every text colour pair at 7:1 or more; exits 1 on failure
 godot --headless --path . -s tests/spacing_test.gd   # no number literal for a margin, separation or offset under ui/; exits 1 on failure
 ```
