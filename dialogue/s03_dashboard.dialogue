@@ -1,6 +1,7 @@
 # Scene 3: The dashboard. Admin office; M. Jlassi, on speaker.
 # Trade-off vote. The strip along the top has shown every meter greyed out
 # with "?" since scene 0; it flashes here, and the room's metrics light it.
+# Budget lights whatever the room picks: every project tracks its costs.
 
 ~ start
 M. Jlassi: The region tracks every centre on a dashboard during exam week. What will yours report?
@@ -21,6 +22,7 @@ Which metrics feed your dashboard?
 	do GameState.team += 10
 	do GameState.set_flag("metrics_people")
 	do GameState.light_meter("team")
+	do GameState.light_meter("budget")
 	M. Jlassi: People count. But will you see a late paper on that?
 	Meters not lit stay greyed out with "?" until the ending.
 - Papers on time, incidents logged, fraud detected.
@@ -29,6 +31,7 @@ Which metrics feed your dashboard?
 	do GameState.set_flag("metrics_exam")
 	do GameState.light_meter("integrity")
 	do GameState.light_meter("fairness")
+	do GameState.light_meter("budget")
 	M. Jlassi: That's what the region needs.
 	Meters not lit stay greyed out with "?" until the ending.
 => END
