@@ -33,10 +33,9 @@ const STORY_OVER: int = 11
 ## The exam day and the ending, which each have their own music.
 const EXAM_DAY_SCENE: int = 9
 const ENDING_SCENE: int = 10
-## The ending's cues for the debrief and the last screen, where skipping the
-## ending goes instead of leaving its title on screen.
+## The ending's cue for the debrief, where skipping the ending goes instead of
+## leaving its report or title on screen.
 const DEBRIEF_CUE: String = "debrief"
-const LAST_SCREEN_CUE: String = "last_screen"
 ## The scene whose debrief card shows the gate inspection instead of a vote.
 const INSPECTION_SCENE: int = 4
 ## Each speaking character's three portraits, side by side, in [constant EXPRESSIONS] order.
@@ -94,8 +93,6 @@ var _running_scene: int = -1
 var _running_dialogue: DialogueResource = null
 var _balloon: Node = null
 var _snapshot: Dictionary = {}
-## True once the ending has opened the debrief.
-var _debrief_started: bool = false
 
 
 func _ready() -> void:
@@ -156,15 +153,15 @@ func track_for_scene(number: int) -> String:
 
 ## Abandon the current scene, undoing its effects, and move to the next one.
 ## Its vote stays unrecorded, so the debrief shows it as not voted. The ending
-## has no vote to undo: skipping it goes on to the debrief, then the last screen.
+## has no vote to undo: skipping it goes on to the debrief, and closing the
+## debrief shows the last screen. (The pause menu does not open over the debrief.)
 func skip_scene() -> void:
 	if GameState.scene >= STORY_OVER:
 		return
 	if in_scene and _running_scene == ENDING_SCENE:
-		var cue: String = LAST_SCREEN_CUE if _debrief_started else DEBRIEF_CUE
 		_close_dialogue()
 		backdrop("")
-		start_scene(_running_scene, cue)
+		start_scene(_running_scene, DEBRIEF_CUE)
 		return
 	if in_scene:
 		_close_dialogue()
@@ -196,7 +193,6 @@ func _reset_story() -> void:
 	_running_scene = -1
 	_running_dialogue = null
 	_snapshot = {}
-	_debrief_started = false
 
 
 func _close_dialogue() -> void:
@@ -334,7 +330,6 @@ func show_last_screen(title: String, subtitle: String, body: String, closing: St
 
 ## Open the binder as the debrief until the presenter closes it.
 func open_debrief() -> void:
-	_debrief_started = true
 	if binder != null:
 		await binder.open_debrief()
 

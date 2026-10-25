@@ -7,8 +7,8 @@ extends SceneTree
 ##   Godot --headless --path . -s tests/story_test.gd
 
 
-## Each run: the room's vote per scene, the scenes skipped (not played at all,
-## as the pause menu's skip leaves them), the gate inspection calls (true
+## Each run: the room's vote per scene, the scenes skipped (started, then
+## skipped with Story.skip_scene, as the pause menu does), the gate inspection calls (true
 ## admits), what the state must be at the end, the region's report as
 ## [criterion, met, lines], and lines that must or must not show, as
 ## "speaker: text" or text alone.
@@ -28,7 +28,7 @@ const RUNS: Array[Dictionary] = [
 			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
 			["The centre stays within budget", true, ["Within budget: 2400 TND left."]],
 		],
-		"present": ["7:30, the gate: The checklist works as well as the rehearsal went.", "Meters not lit stay greyed out until the ending."],
+		"present": ["7:30, the gate: The checklist works as well as the rehearsal went.", "Meters not lit stay greyed out with \"?\" until the ending."],
 		"absent": ["7:30, the gate: Two phones get in.", "The dashboard: It shows green all day, whatever happened."],
 	},
 	{
@@ -67,7 +67,7 @@ const RUNS: Array[Dictionary] = [
 			["The dashboard told the truth", false, ["Your dashboard showed green all day, on a number the centre didn't control."]],
 		],
 		"present": ["7:30, the gate: The checklist works as well as the rehearsal went.", "7:30, the gate: Two phones get in.", "The dashboard: It shows green all day, whatever happened."],
-		"absent": ["Meters not lit stay greyed out until the ending."],
+		"absent": ["Meters not lit stay greyed out with \"?\" until the ending."],
 	},
 	{
 		"name": "scene 8 skipped",
@@ -166,8 +166,16 @@ func _play(run: Dictionary) -> String:
 	for scene: Dictionary in scenes:
 		var number: int = int(scene.number)
 		if number in run.get("skip", []):
-			print("  (scene %d skipped)" % number)
-			_game_state.set(&"scene", number + 1)
+			# As the pause menu does: start the scene, then skip it.
+			_story.call(&"start_scene", number)
+			for i: int in 3:
+				await process_frame
+			_story.call(&"skip_scene")
+			for i: int in 3:
+				await process_frame
+			print("  (scene %d skipped; next scene %d)" % [number, _game_state.get(&"scene")])
+			if _game_state.get(&"scene") != number + 1 or _story.get(&"in_scene"):
+				return "skipping scene %d left the story at scene %d" % [number, _game_state.get(&"scene")]
 			continue
 		var result: String = await _play_scene(number, scene.dialogue, run.votes.get(number, ""))
 		if result != PASSED:

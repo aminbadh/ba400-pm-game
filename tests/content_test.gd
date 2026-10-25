@@ -23,9 +23,10 @@ const FLAGS: Array[String] = [
 ]
 ## The scenes whose votes story.md writes, each with options A, B and C.
 const VOTE_SCENES: Array[int] = [0, 1, 2, 3, 5, 6, 7, 8]
-## The story script, in the maintainer's workspace, under the home folder. It is
-## not in the repo: on a machine without it, the comparison is skipped and says so.
-const STORY_MD: String = ".links/workspace/education/tbs-coursework/ba400-game/_working/story.md"
+## The environment variable that gives the story script's path. The script is
+## not in the repo: with the variable unset or the file missing, the
+## comparison is skipped and says so.
+const STORY_MD_VARIABLE: String = "STORY_MD"
 const ENDING_DIALOGUE: String = "res://dialogue/s10_ending.dialogue"
 const OPTIONS: Array[String] = ["A", "B", "C"]
 const TIMEOUT_SECONDS: float = 20.0
@@ -142,9 +143,9 @@ func _check_debriefs(sources: Dictionary) -> void:
 # Every vote's three options in the dialogue, and each card's debrief lines and
 # best line, word for word as story.md writes them.
 func _check_story_md() -> void:
-	var path: String = OS.get_environment("HOME").path_join(STORY_MD)
-	if not FileAccess.file_exists(path):
-		print("SKIP: story.md comparison; %s is not on this machine" % path)
+	var path: String = OS.get_environment(STORY_MD_VARIABLE)
+	if path.is_empty() or not FileAccess.file_exists(path):
+		print("SKIP: story.md comparison; set %s to the story script's path to run it" % STORY_MD_VARIABLE)
 		return
 	var text: String = FileAccess.get_file_as_string(path)
 	var options: Dictionary = _story_md_options(text)
@@ -272,7 +273,7 @@ func _check_map(sources: Dictionary) -> void:
 			_problems.append("scene %d's spot %s is not on the map" % [int(scene.number), scene.spot])
 	_check_hint_strip(map)
 	_check_meter_strip(map)
-	_check_strip_from_start(map.get_node("Dashboard"))
+	await _check_strip_from_start(map.get_node("Dashboard"))
 	await _check_am_lassaad(_story.get(&"stage"))
 	await _check_backdrop_titles(sources, _story.get(&"stage"), map.get_node("Dashboard"))
 	await _check_report_fits(_story.get(&"stage"))
@@ -388,20 +389,28 @@ func _check_backdrop_titles(sources: Dictionary, stage: Object, dashboard: Objec
 	stage.call(&"set_backdrop", "")
 
 
-# In scene 0, before any metric is chosen, the strip is on screen with every
-# meter greyed out and "?" for its number.
+# In scene 0, before any metric is chosen, the room sees the strip with all
+# four meters, each named, with "?" for its number, its text greyed and its icon dimmed.
 func _check_strip_from_start(dashboard: Object) -> void:
 	var game_state: Node = root.get_node("GameState")
 	game_state.call(&"reset")
-	var shown: Array[String] = []
+	await process_frame
+	var shown: Dictionary = dashboard.call(&"shown_meters")
+	var seen: PackedStringArray = []
 	for meter: String in game_state.get(&"METERS"):
-		var display: Dictionary = (dashboard.get_script() as Script).call(&"display", meter)
-		shown.append("%s %s" % [meter, display.text])
-		if display.text != "?" or display.lit:
-			_problems.append("in scene 0 the %s meter shows \"%s\", not a greyed-out ?" % [meter, display.text])
-	print("strip in scene 0: shown %s; %s" % [dashboard.call(&"strip_shown"), ", ".join(shown)])
-	if not dashboard.call(&"strip_shown"):
-		_problems.append("the dashboard strip is not on screen in scene 0")
+		var cell: Dictionary = shown.get(meter, {})
+		seen.append("%s \"%s\" (on screen %s)" % [cell.get("name", ""), cell.get("value", ""), cell.get("on_screen", false)])
+		if not cell.get("on_screen", false):
+			_problems.append("in scene 0 the %s meter is not on screen" % meter)
+		if (cell.get("name", "") as String).is_empty():
+			_problems.append("in scene 0 the %s meter has no name" % meter)
+		if cell.get("value", "") != "?":
+			_problems.append("in scene 0 the %s meter shows \"%s\", not ?" % [meter, cell.get("value", "")])
+		if cell.get("value_color") != Palette.DIM or cell.get("name_color") != Palette.DIM:
+			_problems.append("in scene 0 the %s meter's text is not greyed out" % meter)
+		if cell.get("icon_tint") == Color.WHITE:
+			_problems.append("in scene 0 the %s meter's icon is not dimmed" % meter)
+	print("strip in scene 0: %s" % ", ".join(seen))
 
 
 # The report at its longest, every reason shown, fits its pages: each page's

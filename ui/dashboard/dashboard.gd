@@ -83,9 +83,20 @@ static func display(meter: String) -> Dictionary:
 	return { "fill": scaled / 100.0, "color": color, "text": text, "lit": true }
 
 
-## True while the strip at the top is on screen.
-func strip_shown() -> bool:
-	return _strip.visible
+## What the strip at the top shows of each meter, as drawn: whether its cell is
+## on screen, its name and number, their colours, and the icon's tint.
+func shown_meters() -> Dictionary[String, Dictionary]:
+	var shown: Dictionary[String, Dictionary] = {}
+	for meter: String in GameState.METERS:
+		shown[meter] = {
+			"on_screen": _values[meter].is_visible_in_tree() and _names[meter].is_visible_in_tree() and _icons[meter].is_visible_in_tree(),
+			"name": _names[meter].text,
+			"value": _values[meter].text,
+			"name_color": _names[meter].get_theme_color(&"font_color"),
+			"value_color": _values[meter].get_theme_color(&"font_color"),
+			"icon_tint": _icons[meter].modulate,
+		}
+	return shown
 
 
 ## Flash the strip, to point the room at it.

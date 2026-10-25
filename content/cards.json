@@ -16,7 +16,7 @@
 				"B": "The national Bac is the program; this centre's session is a project inside it.",
 				"C": "Project: temporary, with a unique result. The national Bac is the program around it."
 			},
-			"best": "C: temporary, with a unique result."
+			"best": "C, temporary, with a unique result."
 		},
 		{
 			"number": 2,
@@ -31,7 +31,7 @@
 				"B": "It did conform. What failed was fitness for use.",
 				"C": "It conformed, but a candidate couldn't use it: fitness for use failed."
 			},
-			"best": "A: fitness for use."
+			"best": "A, fitness for use."
 		},
 		{
 			"number": 3,
@@ -46,7 +46,7 @@
 				"B": "Problem reporting and corrective action, and supplier quality, completed the plan.",
 				"C": "A timetable is logistics. The plan lacked problem reporting and supplier quality."
 			},
-			"best": "B: problem reporting and corrective action."
+			"best": "B, problem reporting and corrective action."
 		},
 		{
 			"number": 4,
@@ -61,7 +61,7 @@
 				"B": "You measured people. The exam itself went unmeasured.",
 				"C": "You measured the exam itself: on time, incidents, fraud detected."
 			},
-			"best": "C: metrics that measure your own project."
+			"best": "C, metrics that measure your own project."
 		},
 		{
 			"number": 5,
@@ -86,7 +86,7 @@
 				"B": "Deputy first: the chart shows who has authority.",
 				"C": "Straight to the centre head skips the deputy who runs the rooms."
 			},
-			"best": "B: the deputy head, as the chart shows."
+			"best": "B, the deputy head, as the chart shows."
 		},
 		{
 			"number": 7,
@@ -101,7 +101,7 @@
 				"B": "Two Accountables meant nobody signed. Exactly one A per task.",
 				"C": "'Whoever is on duty' means no one is Accountable: the envelope sat unsigned."
 			},
-			"best": "A: exactly one Accountable person per task."
+			"best": "A, exactly one Accountable person per task."
 		},
 		{
 			"number": 8,
@@ -116,7 +116,7 @@
 				"B": "You levelled the peak by crowding rooms, at a cost in fairness.",
 				"C": "You levelled the peak by borrowing staff, at a cost in budget."
 			},
-			"best": "No single best: each option levels the peak at a different cost."
+			"best": "none. Each option levels the peak at a different cost."
 		},
 		{
 			"number": 9,
@@ -131,7 +131,7 @@
 				"B": "Training: supervisors spotted the earpiece.",
 				"C": "Protection: supervisors reported without fear."
 			},
-			"best": "B or C: training and protection both belong in a staffing plan; equipment doesn't."
+			"best": "B or C. Training and protection both belong in a staffing plan; equipment doesn't."
 		}
 	]
 }

@@ -1,8 +1,9 @@
 # Scene 10: The region's report. Starts on its own after scene 9.
 # M. Jlassi's call, the region's report on the charter's success criteria
 # (content/report.json), the ending card for the meters, the debrief in the
-# binder, then the last screen. Skipping the ending (pause menu) jumps to the
-# debrief cue, or from the debrief to the last screen.
+# binder, then the last screen. Skipping the ending (pause menu) during the
+# call, the report or the ending card jumps to the debrief cue; the last screen
+# follows the debrief as usual.
 
 ~ start
 do GameState.reveal_dashboard()

@@ -59,7 +59,7 @@ The keyboard and a PlayStation-style controller work side by side, with no setti
 
 A controller never picks a vote with one button per letter: the presenter points at the room's option and confirms it. Votes are never picked for the presenter: the bar fills over 20 seconds and turns red, and waits. Cards and charts stay until the presenter presses E or ✕.
 
-**Controller check**, in the pause menu, shows the name Godot reports for each connected controller and, live, the last button or direction pressed. Run it on the presenting PC before the slot. If the buttons come out wrong, Steam's "Add a non-Steam game" with Steam Input presents the pad as an Xbox controller; a genuine DualShock 3 on Windows needs the DsHidMini driver either way.
+**Controller check**, in the pause menu, shows the name Godot reports for each connected controller and, live, the last button or direction pressed. Run it on the PC the game is played on. If the buttons come out wrong, Steam's "Add a non-Steam game" with Steam Input presents the pad as an Xbox controller; a genuine DualShock 3 on Windows needs the DsHidMini driver either way.
 
 **Sound**, in the pause menu, switches the music and the characters' voices together; it is on by default. The music plays quietly under speech: a calm loop on the map, a tenser one on exam day, the end theme from the ending on. It fades out while a concept card or the charter is on screen and comes back when it closes; it keeps playing during votes. Each track is one constant at the top of `autoload/music.gd`.
 
@@ -71,7 +71,7 @@ Walk to the character with the marker over them and press E; the line at the bot
 
 The debrief shows each card with the room's choice ("You chose B: ..."), the line for that choice and the best choice ("Best: ..."). Card 5 shows how many gate calls were right instead.
 
-Escape (or Start) opens the pause menu. **Skip to next scene** abandons the current scene with no effect on the meters, and its vote shows as "Not voted" in the debrief, still with its best choice. During the ending it goes straight to the debrief, then the last screen. **Restart to title** starts over.
+Escape (or Start) opens the pause menu. **Skip to next scene** abandons the current scene with no effect on the meters, and its vote shows as "Not voted" in the debrief, still with its best choice. During the ending (M. Jlassi's call, the report or the ending card) it goes straight to the debrief; closing the debrief shows the last screen. **Restart to title** starts over.
 
 ## Changing the story
 
@@ -134,7 +134,7 @@ godot --headless --path . -s tests/controls_test.gd  # a key and a controller bu
 
 Godot exits 0 when a test script fails to compile, so read the output for `SCRIPT ERROR` too; `tools/web_build.sh` does.
 
-`content_test.gd` compares every vote's options, debrief lines and best line with the story script, `story.md`, which is kept outside the repo (its path is `STORY_MD` in the test). On a machine without it, such as the deploy, it prints `SKIP` for that comparison and checks the rest.
+Set `STORY_MD` to the story script's path to compare the content with it: `content_test.gd` then checks every vote's options, debrief lines and best line word for word. Without it, the test prints `SKIP` for that comparison and checks the rest.
 
 ## Windows build
 

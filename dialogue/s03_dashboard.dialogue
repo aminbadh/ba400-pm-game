@@ -5,7 +5,7 @@
 ~ start
 M. Jlassi: The region tracks every centre on a dashboard during exam week. What will yours report?
 do Story.flash_dashboard()
-The dashboard strip flashes\: this is what it is for.
+The dashboard strip, greyed out with "?" since the first scene, flashes\: this is what it is for.
 do Story.show_card(4)
 Which metrics feed your dashboard?
 - The centre's pass rate\: the number everyone will ask about.
@@ -22,7 +22,7 @@ Which metrics feed your dashboard?
 	do GameState.set_flag("metrics_people")
 	do GameState.light_meter("team")
 	M. Jlassi: People count. But will you see a late paper on that?
-	Meters not lit stay greyed out until the ending.
+	Meters not lit stay greyed out with "?" until the ending.
 - Papers on time, incidents logged, fraud detected.
 	do GameState.record_vote(3, "C")
 	do GameState.integrity += 10
@@ -30,5 +30,5 @@ Which metrics feed your dashboard?
 	do GameState.light_meter("integrity")
 	do GameState.light_meter("fairness")
 	M. Jlassi: That's what the region needs.
-	Meters not lit stay greyed out until the ending.
+	Meters not lit stay greyed out with "?" until the ending.
 => END
