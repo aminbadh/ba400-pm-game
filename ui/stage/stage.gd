@@ -125,10 +125,10 @@ func _handle_inspection_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"choice_1") or event.is_action_pressed(&"choice_2"):
 		get_viewport().set_input_as_handled()
 		_resolve(event.is_action_pressed(&"choice_1"))
-	elif event.is_action_pressed(&"move_left") or event.is_action_pressed(&"ui_left"):
+	elif Stick.step(event, &"move_left") or Stick.step(event, &"ui_left"):
 		get_viewport().set_input_as_handled()
 		_point(0)
-	elif event.is_action_pressed(&"move_right") or event.is_action_pressed(&"ui_right"):
+	elif Stick.step(event, &"move_right") or Stick.step(event, &"ui_right"):
 		get_viewport().set_input_as_handled()
 		_point(1)
 	elif event.is_action_pressed(&"interact") and _pointed >= 0:

@@ -5,7 +5,10 @@ extends SceneTree
 ## gate call directly and so must have none (a controller points and confirms,
 ## never one button per letter); the hints switch to the controller's buttons
 ## after a controller press and back to the keys after a key press, on the title
-## screen too; and the controller check names what a press is. Exits non-zero on failure.
+## screen too; the controller check names what a press is; and one push of the
+## left stick, a stream of motion events, moves the binder and the pause menu
+## one row, with a held push repeating after 0.4 s and every 0.15 s. Exits
+## non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/controls_test.gd
 
@@ -41,6 +44,13 @@ func _main() -> void:
 	if await _check_hints() != true:
 		_problems.append("the hints check stopped on a script error")
 	_check_controller_names()
+	if await _check_stick() != true:
+		_problems.append("the stick check stopped on a script error")
+	# Close the map, stop the music at once, so nothing is held at exit.
+	root.get_node("Story").call(&"restart")
+	root.get_node("Music").call(&"silence")
+	# The audio server lets the track go on its next mix.
+	await create_timer(0.2, true).timeout
 	_finish(_problems)
 
 
@@ -110,6 +120,53 @@ func _check_controller_names() -> void:
 		var shown: String = (load(PAUSE_SCRIPT) as Script).call(&"pressed_name", case[0])
 		print("  %s: %s" % [(case[0] as InputEvent).as_text(), shown])
 		_expect(shown == case[1], "the controller check names %s \"%s\", not \"%s\"" % [(case[0] as InputEvent).as_text(), shown, case[1]])
+
+
+# One push of the stick moves one row; a held push repeats; raw stick motion is
+# not Godot's own arrows, which would move a vote's focus once per event.
+func _check_stick() -> bool:
+	print("== Stick")
+	for action: StringName in [&"ui_up", &"ui_down"]:
+		if InputMap.event_is_action(_joypad_motion(JOY_AXIS_LEFT_Y, 1.0), action):
+			_problems.append("stick motion still counts as %s, so a vote's focus moves once per event" % action)
+	root.get_node("Story").call(&"new_game")
+	await _settle()
+	var binder: Node = current_scene.get_node("Binder")
+	binder.call(&"open")
+	# The binder ignores presses for a moment after it opens.
+	await create_timer(0.4, true).timeout
+	await _expect_rows(binder, "the binder")
+	binder.call(&"cancel")
+	await _settle()
+	var pause: Node = current_scene.get_node("PauseMenu")
+	pause.call(&"_open")
+	await _settle()
+	await _expect_rows(pause, "the pause menu")
+	pause.call(&"_resume")
+	await _settle()
+	return true
+
+
+# In [param screen], one push down moves its selection one row; a push held
+# for 0.65 s moves it three: at once, after 0.4 s and after 0.55 s.
+func _expect_rows(screen: Node, screen_name: String) -> void:
+	var start: int = screen.get(&"_selected")
+	for value: float in [0.1, 0.3, 0.5, 0.7, 0.9, 1.0, 1.0, 0.95, 1.0]:
+		Input.parse_input_event(_joypad_motion(JOY_AXIS_LEFT_Y, value))
+		await process_frame
+	for value: float in [0.6, 0.2, 0.0]:
+		Input.parse_input_event(_joypad_motion(JOY_AXIS_LEFT_Y, value))
+		await process_frame
+	await _settle()
+	var one_push: int = int(screen.get(&"_selected")) - start
+	Input.parse_input_event(_joypad_motion(JOY_AXIS_LEFT_Y, 1.0))
+	await create_timer(0.65, true).timeout
+	Input.parse_input_event(_joypad_motion(JOY_AXIS_LEFT_Y, 0.0))
+	await _settle()
+	var held: int = int(screen.get(&"_selected")) - start - one_push
+	print("  %s: one push moved %d row, a 0.65 s hold moved %d" % [screen_name, one_push, held])
+	_expect(one_push == 1, "one push of the stick moved %s %d rows, not 1" % [screen_name, one_push])
+	_expect(held == 3, "holding the stick for 0.65 s moved %s %d rows, not 3" % [screen_name, held])
 
 
 func _joypad_button(button: JoyButton) -> InputEventJoypadButton:

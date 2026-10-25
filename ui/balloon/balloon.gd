@@ -170,7 +170,7 @@ func _input(event: InputEvent) -> void:
 	if not responses_menu.visible or _vote_pointed:
 		return
 	for action: StringName in [&"ui_up", &"ui_down", &"ui_left", &"ui_right", &"move_up", &"move_down"]:
-		if event.is_action_pressed(action):
+		if Stick.step(event, action):
 			_show_vote_focus()
 			return
 	if event.is_action_pressed(next_action) or event.is_action_pressed(&"ui_accept"):
@@ -367,9 +367,9 @@ func _handle_response_shortcuts(event: InputEvent) -> void:
 			return
 
 	var step: int = 0
-	if event.is_action_pressed(&"move_up"):
+	if Stick.step(event, &"move_up"):
 		step = -1
-	elif event.is_action_pressed(&"move_down"):
+	elif Stick.step(event, &"move_down"):
 		step = 1
 	if step == 0:
 		return

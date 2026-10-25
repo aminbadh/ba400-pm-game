@@ -92,9 +92,9 @@ func _input(event: InputEvent) -> void:
 		_check_input(event)
 	elif event.is_action_pressed(&"pause") or event.is_action_pressed(&"back"):
 		_resume()
-	elif event.is_action_pressed(&"move_up") or event.is_action_pressed(&"ui_up"):
+	elif Stick.step(event, &"move_up") or Stick.step(event, &"ui_up"):
 		_select(_selected - 1)
-	elif event.is_action_pressed(&"move_down") or event.is_action_pressed(&"ui_down"):
+	elif Stick.step(event, &"move_down") or Stick.step(event, &"ui_down"):
 		_select(_selected + 1)
 	elif event.is_action_pressed(&"interact"):
 		_choose(_selected)
@@ -113,6 +113,9 @@ func check_text() -> String:
 ## The name of what [param event] presses on a PlayStation-style controller,
 ## or an empty string for an event that presses nothing.
 static func pressed_name(event: InputEvent) -> String:
+	# The D-pad presses the stick makes for menus are not the controller's own.
+	if event.has_meta(Stick.FROM_STICK):
+		return ""
 	if event is InputEventJoypadButton and event.is_pressed():
 		var button: int = (event as InputEventJoypadButton).button_index
 		return "%s (button %d)" % [BUTTON_NAMES.get(button, "Button"), button]

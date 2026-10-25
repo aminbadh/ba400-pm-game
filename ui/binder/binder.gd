@@ -171,10 +171,10 @@ func _input(event: InputEvent) -> void:
 func _handle_list_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"binder") or event.is_action_pressed(&"pause") or event.is_action_pressed(&"back"):
 		_close()
-	elif event.is_action_pressed(&"move_up") or event.is_action_pressed(&"ui_up"):
+	elif Stick.step(event, &"move_up") or Stick.step(event, &"ui_up"):
 		_selected = wrapi(_selected - 1, 0, Story.cards.size())
 		_render()
-	elif event.is_action_pressed(&"move_down") or event.is_action_pressed(&"ui_down"):
+	elif Stick.step(event, &"move_down") or Stick.step(event, &"ui_down"):
 		_selected = wrapi(_selected + 1, 0, Story.cards.size())
 		_render()
 	elif event.is_action_pressed(&"interact"):
