@@ -13,7 +13,9 @@ Writes, for each id in content/scenes.json plus "player":
 - art/characters/<id>.png: 16x16 frames, three columns (standing, two walking
   steps) and four rows (facing down, left, right, up);
 - art/portraits/<id>.png (not for the player): three 48x48 portraits side by
-  side, neutral, worried and pleased.
+  side, neutral, worried and pleased;
+- art/characters/<id>_wave.png: two 16x16 frames side by side, facing down
+  and waving one hand, for the last screen's line-up.
 
 Run from the project root: uv run tools/draw_characters.py
 """
@@ -101,8 +103,9 @@ CAST: dict[str, dict] = {
 # Map sprites: 16x16, the head on rows 1 to 8, the body below.
 
 
-def sprite(spec: dict, facing: str, step: int) -> Canvas:
-    """One frame. [step] is 0 standing, 1 and 2 the two walking steps."""
+def sprite(spec: dict, facing: str, step: int, wave: int = 0) -> Canvas:
+    """One frame. [step] is 0 standing, 1 and 2 the two walking steps; [wave],
+    facing down, is 1 or 2 for the two frames of a wave, 0 for none."""
     flip = facing == "right"
     facing = "left" if flip else facing
     c = Canvas(T, T)
@@ -110,6 +113,8 @@ def sprite(spec: dict, facing: str, step: int) -> Canvas:
     _body(c, spec, facing, step)
     _head(c, spec, facing)
     _carry(c, spec, facing, step)
+    if wave:
+        _wave(c, spec, wave)
     c.outline(O)
     _details_after_outline(c, spec, facing)
     if flip:
@@ -179,6 +184,34 @@ def _body(c: Canvas, spec: dict, facing: str, step: int) -> None:
         c.rect(hand[0], hand[1], 2, 1, skin[1])
         if spec.get("collar") == "badge":
             c.set(x0, 10, C["SAND"])
+
+
+def _wave(c: Canvas, spec: dict, frame: int) -> None:
+    """Raise the free hand beside the head: straight up in frame 1, leaning
+    out in frame 2. The hand holding a phone stays at the ear."""
+    x0, w = (3, 10) if spec.get("wide", False) else (4, 8)
+    right = spec.get("carry") != "phone"
+    # Drawn on the right side, mirrored for the left.
+    def x(at: int) -> int:
+        return at if right else T - 1 - at
+    hanging = x0 + w
+    for y in range(9, 13):
+        c.px[y][x(hanging)] = (0, 0, 0, 0)
+    sleeve = spec["top"][1]
+    skin = spec["skin"][1]
+    arm = [(hanging, 9), (hanging + 1, 8)] + ([(hanging + 2, 7), (hanging + 2, 6)] if frame == 1 else [(hanging + 2, 7), (hanging + 3, 6)])
+    for ax, ay in arm:
+        c.set(x(ax), ay, sleeve)
+    hand_x, hand_y = arm[-1][0], arm[-1][1] - 1
+    c.set(x(hand_x), hand_y, skin)
+    c.set(x(hand_x), hand_y - 1, skin)
+
+
+def wave_strip(spec: dict) -> Image.Image:
+    strip = Canvas(2 * T, T)
+    for frame in (1, 2):
+        strip.blit(sprite(spec, "down", 0, frame), (frame - 1) * T, 0)
+    return strip.image()
 
 
 def _collar(c: Canvas, spec: dict) -> None:
@@ -776,9 +809,10 @@ def main() -> None:
     PORTRAIT_DIR.mkdir(parents=True, exist_ok=True)
     for character, spec in CAST.items():
         sprite_sheet(spec).save(SPRITE_DIR / f"{character}.png")
+        wave_strip(spec).save(SPRITE_DIR / f"{character}_wave.png")
         if character != "player":
             portrait_strip(spec).save(PORTRAIT_DIR / f"{character}.png")
-    print(f"drew {len(CAST)} sprite sheets in {SPRITE_DIR.relative_to(ROOT)} and {len(CAST) - 1} portrait strips in {PORTRAIT_DIR.relative_to(ROOT)}")
+    print(f"drew {len(CAST)} sprite sheets and waves in {SPRITE_DIR.relative_to(ROOT)} and {len(CAST) - 1} portrait strips in {PORTRAIT_DIR.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
