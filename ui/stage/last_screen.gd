@@ -19,8 +19,10 @@ const PICTURE_RAISE: int = 40
 ## The paving's pattern repeats every this many rows, two tiles of its bond,
 ## and runs to the picture's bottom edge: the band below repeats its last period.
 const PAVING_PERIOD: int = 32
-## Each character's two waving frames, side by side, drawn by tools/draw_characters.py.
+## Each character's two waving frames, side by side, drawn by tools/draw_characters.py:
+## [constant WAVE_SIZE] each, the 16 px body centred, with room for the raised hand.
 const WAVE_PATH: String = "res://art/characters/%s_wave.png"
+const WAVE_SIZE: Vector2 = Vector2(24, 16)
 const SPRITE_SIZE: int = 16
 ## How long each waving frame shows, and how far apart the characters' waves start.
 const WAVE_SECONDS: float = 0.4
@@ -154,13 +156,13 @@ func _build_cast(cast: Array) -> void:
 		for frame: int in 2:
 			var atlas: AtlasTexture = AtlasTexture.new()
 			atlas.atlas = sheet
-			atlas.region = Rect2(frame * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE)
+			atlas.region = Rect2(frame * WAVE_SIZE.x, 0, WAVE_SIZE.x, WAVE_SIZE.y)
 			frames.append(atlas)
 		_frames.append(frames)
 		var centre: float = roundf(slot * (i + 0.5))
 		var sprite: TextureRect = TextureRect.new()
 		sprite.texture = frames[0]
-		sprite.position = Vector2(centre - SPRITE_SIZE / 2.0, 0)
+		sprite.position = Vector2(centre - WAVE_SIZE.x / 2.0, 0)
 		sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_cast.add_child(sprite)
 		_sprites.append(sprite)

@@ -14,8 +14,9 @@ Writes, for each id in content/scenes.json plus "player":
   steps) and four rows (facing down, left, right, up);
 - art/portraits/<id>.png (not for the player): three 48x48 portraits side by
   side, neutral, worried and pleased;
-- art/characters/<id>_wave.png: two 16x16 frames side by side, facing down
-  and waving one hand, for the last screen's line-up.
+- art/characters/<id>_wave.png: two 24x16 frames side by side, facing down
+  and waving one hand, for the last screen's line-up: the body centred where
+  a 16x16 frame has it, with room either side for the whole raised hand.
 
 Run from the project root: uv run tools/draw_characters.py
 """
@@ -33,6 +34,9 @@ from pixel import ROOT, Canvas, load_palette  # noqa: E402
 C = load_palette()
 O = C["OUTLINE"]
 T = 16
+# A wave frame's width, and how far its 16 px body sits from its left edge.
+WAVE_W = 24
+WAVE_X = (WAVE_W - T) // 2
 DIRECTIONS = ["down", "left", "right", "up"]
 EXPRESSIONS = ["neutral", "worried", "pleased"]
 SPRITE_DIR = ROOT / "art" / "characters"
@@ -103,22 +107,37 @@ CAST: dict[str, dict] = {
 # Map sprites: 16x16, the head on rows 1 to 8, the body below.
 
 
-def sprite(spec: dict, facing: str, step: int, wave: int = 0) -> Canvas:
-    """One frame. [step] is 0 standing, 1 and 2 the two walking steps; [wave],
-    facing down, is 1 or 2 for the two frames of a wave, 0 for none."""
+def sprite(spec: dict, facing: str, step: int) -> Canvas:
+    """One frame. [step] is 0 standing, 1 and 2 the two walking steps."""
     flip = facing == "right"
     facing = "left" if flip else facing
+    c = _unoutlined(spec, facing, step)
+    c.outline(O)
+    _details_after_outline(c, spec, facing)
+    if flip:
+        c = c.flipped()
+    return c
+
+
+def wave_sprite(spec: dict, frame: int) -> Canvas:
+    """One frame of a wave, facing down: [frame] is 1 or 2. The 16 px body sits
+    [WAVE_X] px in, so the raised hand and its outline stay clear of the edges."""
+    c = Canvas(WAVE_W, T)
+    c.blit(_unoutlined(spec, "down", 0), WAVE_X, 0)
+    _wave(c, spec, frame)
+    c.outline(O)
+    details = Canvas(T, T)
+    _details_after_outline(details, spec, "down")
+    c.blit(details, WAVE_X, 0)
+    return c
+
+
+def _unoutlined(spec: dict, facing: str, step: int) -> Canvas:
     c = Canvas(T, T)
     _legs(c, spec, facing, step)
     _body(c, spec, facing, step)
     _head(c, spec, facing)
     _carry(c, spec, facing, step)
-    if wave:
-        _wave(c, spec, wave)
-    c.outline(O)
-    _details_after_outline(c, spec, facing)
-    if flip:
-        c = c.flipped()
     return c
 
 
@@ -188,12 +207,13 @@ def _body(c: Canvas, spec: dict, facing: str, step: int) -> None:
 
 def _wave(c: Canvas, spec: dict, frame: int) -> None:
     """Raise the free hand beside the head: straight up in frame 1, leaning
-    out in frame 2. The hand holding a phone stays at the ear."""
+    out in frame 2. The hand holding a phone stays at the ear. [c] is a wave
+    frame, with the body [WAVE_X] px in."""
     x0, w = (3, 10) if spec.get("wide", False) else (4, 8)
     right = spec.get("carry") != "phone"
-    # Drawn on the right side, mirrored for the left.
+    # Drawn on the right side, mirrored for the left, in the body's 16 px.
     def x(at: int) -> int:
-        return at if right else T - 1 - at
+        return WAVE_X + (at if right else T - 1 - at)
     hanging = x0 + w
     for y in range(9, 13):
         c.px[y][x(hanging)] = (0, 0, 0, 0)
@@ -208,9 +228,12 @@ def _wave(c: Canvas, spec: dict, frame: int) -> None:
 
 
 def wave_strip(spec: dict) -> Image.Image:
-    strip = Canvas(2 * T, T)
+    strip = Canvas(2 * WAVE_W, T)
     for frame in (1, 2):
-        strip.blit(sprite(spec, "down", 0, frame), (frame - 1) * T, 0)
+        frame_canvas = wave_sprite(spec, frame)
+        for edge in (0, WAVE_W - 1):
+            assert not any(frame_canvas.opaque(edge, y) for y in range(T)), f"the wave runs into column {edge}"
+        strip.blit(frame_canvas, (frame - 1) * WAVE_W, 0)
     return strip.image()
 
 

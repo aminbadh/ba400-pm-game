@@ -7,8 +7,8 @@ extends SceneTree
 ## the map's camera keeps the strips at the top and the bottom clear, the strip
 ## shows the real values from scene 0, the gate inspection shows Am Lassaad
 ## saying one of his four lines, the region's report fits its pages at its
-## longest, and the last screen stays inside the screen, clear of the strip,
-## with nothing overlapping. Every vote's options, debrief lines and best line
+## longest, the last screen stays inside the screen, clear of the strip,
+## with nothing overlapping, and no wave frame reaches its edge columns. Every vote's options, debrief lines and best line
 ## are compared with story.md's, when story.md can be read. Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/content_test.gd
@@ -31,6 +31,7 @@ const ENDING_DIALOGUE: String = "res://dialogue/s10_ending.dialogue"
 const OPTIONS: Array[String] = ["A", "B", "C"]
 const TIMEOUT_SECONDS: float = 20.0
 const BALLOON_SCRIPT: String = "res://ui/balloon/balloon.gd"
+const LAST_SCREEN_SCRIPT: String = "res://ui/stage/last_screen.gd"
 ## How far a backdrop title keeps from the dashboard and the dialogue box, in pixels.
 const TITLE_CLEARANCE: float = 4.0
 const TILE_SIZE: int = 16
@@ -279,6 +280,7 @@ func _check_map(sources: Dictionary) -> void:
 	await _check_report_fits(_story.get(&"stage"))
 	await _check_debrief_pages(_story.get(&"binder"))
 	await _check_last_screen(sources, _story.get(&"stage"), map.get_node("Dashboard"))
+	_check_waves()
 	map.queue_free()
 	await process_frame
 
@@ -542,6 +544,27 @@ func _check_last_screen(sources: Dictionary, stage: Object, dashboard: Object) -
 				_problems.append("the last screen's %s is not below its character" % name)
 	print("last screen: %d parts, all inside the screen below y %d: heading %s, body %s" % [names.size(), strip_bottom, areas.heading, areas.body])
 	(stage.call(&"last_screen") as Control).hide()
+
+
+# Each character's wave on the last screen: two frames of the last screen's WAVE_SIZE,
+# and no opaque pixel in either frame's first or last column, so the raised
+# hand is never cut off at the frame's edge.
+func _check_waves() -> void:
+	# Looked up at run time, since the last screen's script needs the autoloads.
+	var constants: Dictionary = (load(LAST_SCREEN_SCRIPT) as Script).get_script_constant_map()
+	var size: Vector2i = Vector2i(constants[&"WAVE_SIZE"])
+	for character: String in _story.get(&"cast"):
+		var image: Image = (load(constants[&"WAVE_PATH"] % character) as Texture2D).get_image()
+		if image.get_size() != Vector2i(2 * size.x, size.y):
+			_problems.append("%s's wave is %s, not two %s frames" % [character, image.get_size(), size])
+			continue
+		for frame: int in 2:
+			for column: int in [frame * size.x, frame * size.x + size.x - 1]:
+				for y: int in size.y:
+					if image.get_pixel(column, y).a > 0.0:
+						_problems.append("%s's wave frame %d has an opaque pixel in its edge column at y %d" % [character, frame + 1, y])
+						break
+	print("waves: %d characters, two %s frames each, clear edge columns" % [(_story.get(&"cast") as Array).size(), size])
 
 
 func _card_for_scene(scene: int) -> Dictionary:

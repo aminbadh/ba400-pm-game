@@ -102,7 +102,7 @@ The art is drawn in code and the PNGs are committed; run a generator again after
 ```sh
 uv run tools/build_map.py         # draw the tiles, write art/tiles/centre.png, world/centre_tiles.tres and the map's layers, check the map
 uv run tools/build_map.py --check # only check the map, writing nothing
-uv run tools/draw_characters.py   # draw the sprites, the last screen's waves and the portraits
+uv run tools/draw_characters.py   # draw the sprites, the last screen's waves (24x16 frames) and the portraits
 uv run tools/draw_ui.py           # draw the frame, the meter icons and the glyphs the font lacks
 uv run tools/check_licenses.py    # check art/LICENSES.md lists every file under art/
 ```
@@ -130,7 +130,7 @@ godot --headless --path . --quit-after 300           # run the title screen brie
 godot --headless --path . -s tests/story_test.gd     # play the story to each ending; exits 1 on failure, 2 on timeout
 godot --headless --path . -s tests/flow_test.gd      # restart, new game and skip, the report and skipping the ending; exits 1 on failure
 godot --headless --path . --fixed-fps 60 -s tests/route_test.gd  # walk to each scene's character with the movement keys; exits 1 if the player stops short
-godot --headless --path . -s tests/content_test.gd   # cards, debrief and best lines against the story script, flags, page and title fit, the strip's live values from scene 0, the report's pages, the last screen, Am Lassaad's lines; exits 1 on failure
+godot --headless --path . -s tests/content_test.gd   # cards, debrief and best lines against the story script, flags, page and title fit, the strip's live values from scene 0, the report's pages, the last screen and its wave frames' clear edges, Am Lassaad's lines; exits 1 on failure
 godot --headless --path . -s tests/contrast_test.gd  # every text colour pair at 7:1 or more; exits 1 on failure
 godot --headless --path . -s tests/spacing_test.gd   # no number literal for a margin, separation or offset under ui/; exits 1 on failure
 godot --headless --path . -s tests/sound_test.gd     # the Sound switch, each scene's track, the fade during a card; exits 1 on failure
