@@ -1,10 +1,10 @@
 extends SceneTree
 ## Captures one screenshot of each kind of screen, for the projector check:
-## the title, the map in scene 0 with the strip greyed out, a line with a
+## the title, the map in scene 0 with the strip's real values, a line with a
 ## portrait, a long line paging, a vote as it appears and after an arrow key,
 ## a card, the same card with the controller's hints, a chart, the gate
 ## inspection and Am Lassaad's longest line there, the dashboard after scene 3
-## and fully lit, the binder,
+## and with the meters at different levels, the binder,
 ## the pause menu and its controller check, M. Jlassi's call, the region's
 ## report, the ending, the debrief and the last screen. Each is saved at 1920x1080, the game's 320x180 scaled x6 as on a
 ## 1920x1080 projector, to build/screens/. Needs a window, not --headless:
@@ -134,22 +134,20 @@ func _main() -> void:
 	await _capture("inspection_am_lassaad")
 	stage.call(&"cancel")
 
-	# The dashboard after scene 3 with vote B, as it lights Team and Budget
-	# (tests/story_test.gd checks the dialogue does): the others greyed out.
+	# The dashboard after scene 3 with vote B: Team up by 10.
 	_game_state.set(&"scene", 4)
-	(_game_state.get(&"lit_meters") as Array).assign(["team", "budget"])
+	_game_state.set(&"team", int(_game_state.get(&"team")) + 10)
 	_game_state.emit_signal(&"changed")
 	_story.emit_signal(&"scene_changed")
 	player.position = Vector2(200, 232)
 	await _frames(10)
 	await _capture("dashboard_after_scene3")
 
-	# The dashboard, lit, with the meters at different levels, on the map.
+	# The dashboard with the meters at different levels, on the map.
 	_game_state.set(&"scene", 6)
 	_game_state.set(&"integrity", 75)
 	_game_state.set(&"fairness", 45)
 	_game_state.set(&"team", 20)
-	(_game_state.get(&"lit_meters") as Array).assign(["integrity", "fairness", "team", "budget"])
 	_game_state.emit_signal(&"changed")
 	_story.emit_signal(&"scene_changed")
 	player.position = Vector2(200, 232)

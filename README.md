@@ -30,7 +30,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `ui/balloon/` | The dialogue box: portrait, name plate, typed pages of three lines, voices; the votes as A/B/C cards with the 20-second bar, "The room chose B" |
 | `ui/stage/` | Full-screen moments: cards, charts, the gate inspection, the region's report, the ending backdrop, and the last screen (`last_screen.gd`) |
 | `ui/card_view/` | A card, the charter or the region's report drawn as a lecture slide |
-| `ui/dashboard/` | The four meters in a strip along the top, each cell with an icon, name, number and a bar under it, greyed out with "?" until scene 3 lights Budget and the ones the room's metrics measure; who to talk to next, in a strip at the bottom. The map's camera keeps both strips clear of the map |
+| `ui/dashboard/` | The four meters in a strip along the top, each cell with an icon, name, number and a bar under it, live from the first scene; who to talk to next, in a strip at the bottom. The map's camera keeps both strips clear of the map |
 | `ui/binder/` | The planning binder: quest log, card viewer, scene 0's read-only overview, debrief |
 | `ui/pause_menu/` | Resume, Binder, Sound on or off, Full screen on or off, Controller check, Skip to next scene, Restart to title; its hint covers the dashboard's strip at the bottom |
 | `world/centre.tscn` | The map: gate, courtyard, admin office, Room 12, staff room, deposit room; the characters; the scene spots. Its tile layers are filled by `tools/build_map.py` |
@@ -72,7 +72,7 @@ In menus, the binder, the votes and the gate, one push of the left stick moves o
 
 On the title screen, press **E** or **✕**. The story takes about 30 minutes.
 
-Walk to the character with the marker over them and press E; the line at the bottom of the screen says who and where. Only that character answers. The dashboard strip along the top shows all four meters greyed out with "?" from the first scene; scene 3 lights Budget, which every project tracks, and the ones the room's metrics measure. In scene 0, after the first card, the binder opens as a read-only overview of the nine cards. After scene 9 the ending starts on its own: M. Jlassi's call, the region's report on the charter's success criteria, the ending, the debrief and the last screen.
+Walk to the character with the marker over them and press E; the line at the bottom of the screen says who and where. Only that character answers. The dashboard strip along the top shows all four meters with their real values from the first scene, so every vote shows its effect at once; scene 3 flashes it and explains it on card 4. If the room picks the pass rate there, the strip shows every meter green and full until the ending. In scene 0, after the first card, the binder opens as a read-only overview of the nine cards. After scene 9 the ending starts on its own: M. Jlassi's call, the region's report on the charter's success criteria, the ending, the debrief and the last screen.
 
 The debrief shows each card with the room's choice ("You chose B: ..."), the line for that choice and the best choice ("Best: ..."). Card 5 shows how many gate calls were right instead.
 
@@ -130,7 +130,7 @@ godot --headless --path . --quit-after 300           # run the title screen brie
 godot --headless --path . -s tests/story_test.gd     # play the story to each ending; exits 1 on failure, 2 on timeout
 godot --headless --path . -s tests/flow_test.gd      # restart, new game and skip, the report and skipping the ending; exits 1 on failure
 godot --headless --path . --fixed-fps 60 -s tests/route_test.gd  # walk to each scene's character with the movement keys; exits 1 if the player stops short
-godot --headless --path . -s tests/content_test.gd   # cards, debrief and best lines against the story script, flags, page and title fit, the strip in scene 0, the report's pages, the last screen, Am Lassaad's lines; exits 1 on failure
+godot --headless --path . -s tests/content_test.gd   # cards, debrief and best lines against the story script, flags, page and title fit, the strip's live values from scene 0, the report's pages, the last screen, Am Lassaad's lines; exits 1 on failure
 godot --headless --path . -s tests/contrast_test.gd  # every text colour pair at 7:1 or more; exits 1 on failure
 godot --headless --path . -s tests/spacing_test.gd   # no number literal for a margin, separation or offset under ui/; exits 1 on failure
 godot --headless --path . -s tests/sound_test.gd     # the Sound switch, each scene's track, the fade during a card; exits 1 on failure

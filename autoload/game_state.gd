@@ -57,8 +57,6 @@ var inspection_calls: Dictionary[int, bool] = {}
 ## The scene to play next, 0 to 10; 11 once the story is over.
 var scene: int = 0
 
-## The meters the chosen metrics light up; the others stay greyed out.
-var lit_meters: Array[String] = []
 ## True once the ending shows the dashboard's real values.
 var dashboard_revealed: bool = false
 
@@ -74,7 +72,6 @@ func reset() -> void:
 	cards = []
 	inspection_calls = {}
 	scene = 0
-	lit_meters = []
 	dashboard_revealed = false
 	changed.emit()
 
@@ -103,14 +100,6 @@ func voted(scene_number: int, option: String) -> bool:
 func collect_card(number: int) -> void:
 	if number not in cards:
 		cards.append(number)
-		changed.emit()
-
-
-## Light up one meter on the dashboard: "integrity", "fairness", "team" or "budget".
-func light_meter(meter: String) -> void:
-	assert(meter in METERS, "unknown meter: " + meter)
-	if meter not in lit_meters:
-		lit_meters.append(meter)
 		changed.emit()
 
 
@@ -160,7 +149,6 @@ func snapshot() -> Dictionary:
 		"votes": votes.duplicate(),
 		"cards": cards.duplicate(),
 		"inspection_calls": inspection_calls.duplicate(),
-		"lit_meters": lit_meters.duplicate(),
 		"dashboard_revealed": dashboard_revealed,
 	}
 
@@ -175,6 +163,5 @@ func restore(saved: Dictionary) -> void:
 	votes = saved.votes
 	cards = saved.cards
 	inspection_calls = saved.inspection_calls
-	lit_meters = saved.lit_meters
 	dashboard_revealed = saved.dashboard_revealed
 	changed.emit()

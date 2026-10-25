@@ -3,11 +3,9 @@ extends CanvasLayer
 ## The project dashboard, a strip as wide as the screen along its top:
 ## Integrity, Fairness, Team and Budget, left to right, each cell with an icon,
 ## a name and a number over a bar, so no meter is read by colour alone. On
-## screen from the first scene with every meter greyed out and "?" for its
-## number; scene 3 flashes it and lights the meters the room's metrics measure,
-## and the others stay greyed out until the ending reveals them all. With
-## metrics_passrate it shows every meter green and full until the ending
-## reveals the real values.
+## screen with the real values from the first scene, so the early votes show
+## their effect at once; scene 3 flashes it. With metrics_passrate it shows
+## every meter green and full until the ending reveals the real values.
 ##
 ## At the bottom, while the player walks, a line says who to talk to next, in a
 ## strip as wide as the screen. The map's camera stops [constant STRIP_HEIGHT]
@@ -38,8 +36,6 @@ const WIDEST_VALUE: String = "100"
 const WIDEST_BUDGET: String = "3000 TND"
 ## The height of the strip at the bottom; world/centre.tscn's camera keeps it clear.
 const HINT_HEIGHT: int = 14
-## What an unlit meter shows in place of its number.
-const UNKNOWN: String = "?"
 ## The flash: the strip's outline turns to the heading colour this many
 ## times, leaving the text on its panel colour.
 const FLASHES: int = 3
@@ -47,7 +43,6 @@ const FLASH_SECONDS: float = 0.2
 const GOOD: Color = Palette.METER_GOOD
 const WARN: Color = Palette.METER_WARN
 const BAD: Color = Palette.METER_BAD
-const GREY: Color = Palette.METER_OFF
 
 var _strip: Panel
 var _bars: Dictionary[String, ColorRect] = {}
@@ -70,17 +65,13 @@ func _ready() -> void:
 ## The text and colour one meter shows, for the dashboard and the tests.
 static func display(meter: String) -> Dictionary:
 	var faked: bool = GameState.has_flag("metrics_passrate") and not GameState.dashboard_revealed
-	var lit: bool = meter in GameState.lit_meters or GameState.dashboard_revealed
 	var scaled: int = 100 if faked else GameState.scaled(meter)
 	var value: int = GameState.budget if meter == "budget" else scaled
 	if faked and meter == "budget":
 		value = GameState.BUDGET_START
-	if not lit:
-		# Greyed out, with nothing to read in the bar either.
-		return { "fill": 1.0, "color": GREY, "text": UNKNOWN, "lit": false }
 	var color: Color = GOOD if scaled >= GameState.SMOOTH_FROM else (WARN if scaled >= GameState.NEWS_BELOW else BAD)
 	var text: String = str(value) if meter != "budget" else "%d TND" % value
-	return { "fill": scaled / 100.0, "color": color, "text": text, "lit": true }
+	return { "fill": scaled / 100.0, "color": color, "text": text }
 
 
 ## What the strip at the top shows of each meter, as drawn: whether its cell is
@@ -127,10 +118,6 @@ func _refresh() -> void:
 		_bars[meter].anchor_right = float(shown.fill)
 		_bars[meter].color = shown.color
 		_values[meter].text = shown.text
-		var text_color: Color = Palette.TEXT if shown.lit else Palette.DIM
-		_values[meter].add_theme_color_override(&"font_color", text_color)
-		_names[meter].add_theme_color_override(&"font_color", text_color)
-		_icons[meter].modulate = Color.WHITE if shown.lit else Color(0.55, 0.55, 0.6)
 
 	var scene: Dictionary = Story.current_scene()
 	var character: String = scene.get("character", "")

@@ -124,7 +124,6 @@ const VOTE_OVER: Color = Color("e0394c")
 const METER_GOOD: Color = Color("74a334")
 const METER_WARN: Color = Color("f1c471")
 const METER_BAD: Color = Color("e0394c")
-const METER_OFF: Color = Color("695953")
 const METER_TRACK: Color = Color("0f141e")
 
 ## Every text colour and the background it is drawn on, named for the check.

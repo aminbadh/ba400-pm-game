@@ -5,7 +5,7 @@ extends SceneTree
 ## page fits on screen at the base resolution, every backdrop title fits
 ## inside the screen's margins and clear of the dashboard and the dialogue box,
 ## the map's camera keeps the strips at the top and the bottom clear, the strip
-## shows from scene 0 greyed out with "?", the gate inspection shows Am Lassaad
+## shows the real values from scene 0, the gate inspection shows Am Lassaad
 ## saying one of his four lines, the region's report fits its pages at its
 ## longest, and the last screen stays inside the screen, clear of the strip,
 ## with nothing overlapping. Every vote's options, debrief lines and best line
@@ -390,28 +390,51 @@ func _check_backdrop_titles(sources: Dictionary, stage: Object, dashboard: Objec
 	stage.call(&"set_backdrop", "")
 
 
-# In scene 0, before any metric is chosen, the room sees the strip with all
-# four meters, each named, with "?" for its number, its text greyed and its icon dimmed.
+# In scene 0 the room sees the strip with all four meters, each named, with
+# its real value in the text colour and its icon undimmed, and a vote's effect
+# shows at once.
 func _check_strip_from_start(dashboard: Object) -> void:
 	var game_state: Node = root.get_node("GameState")
 	game_state.call(&"reset")
 	await process_frame
+	_check_strip_values(dashboard, game_state, "in scene 0")
+	# Scene 0's right answer: Team +5, on the strip straight away.
+	game_state.set(&"team", int(game_state.get(&"team")) + 5)
+	await process_frame
+	_check_strip_values(dashboard, game_state, "after scene 0's vote")
+	# From scene 3, the pass rate fakes every meter full until the ending.
+	game_state.set(&"team", 20)
+	game_state.call(&"set_flag", "metrics_passrate")
+	await process_frame
+	var faked: Dictionary = dashboard.call(&"shown_meters")
+	for meter: String in game_state.get(&"METERS"):
+		var full: String = "%d TND" % game_state.get(&"BUDGET_START") if meter == "budget" else "100"
+		if faked[meter].value != full:
+			_problems.append("with metrics_passrate the %s meter shows \"%s\", not %s" % [meter, faked[meter].value, full])
+	game_state.call(&"reveal_dashboard")
+	await process_frame
+	_check_strip_values(dashboard, game_state, "once the ending reveals it")
+	game_state.call(&"reset")
+
+
+func _check_strip_values(dashboard: Object, game_state: Node, when: String) -> void:
 	var shown: Dictionary = dashboard.call(&"shown_meters")
 	var seen: PackedStringArray = []
 	for meter: String in game_state.get(&"METERS"):
 		var cell: Dictionary = shown.get(meter, {})
+		var expected: String = "%d TND" % game_state.get(&"budget") if meter == "budget" else str(game_state.get(meter))
 		seen.append("%s \"%s\" (on screen %s)" % [cell.get("name", ""), cell.get("value", ""), cell.get("on_screen", false)])
 		if not cell.get("on_screen", false):
-			_problems.append("in scene 0 the %s meter is not on screen" % meter)
+			_problems.append("%s the %s meter is not on screen" % [when, meter])
 		if (cell.get("name", "") as String).is_empty():
-			_problems.append("in scene 0 the %s meter has no name" % meter)
-		if cell.get("value", "") != "?":
-			_problems.append("in scene 0 the %s meter shows \"%s\", not ?" % [meter, cell.get("value", "")])
-		if cell.get("value_color") != Palette.DIM or cell.get("name_color") != Palette.DIM:
-			_problems.append("in scene 0 the %s meter's text is not greyed out" % meter)
-		if cell.get("icon_tint") == Color.WHITE:
-			_problems.append("in scene 0 the %s meter's icon is not dimmed" % meter)
-	print("strip in scene 0: %s" % ", ".join(seen))
+			_problems.append("%s the %s meter has no name" % [when, meter])
+		if cell.get("value", "") != expected:
+			_problems.append("%s the %s meter shows \"%s\", not %s" % [when, meter, cell.get("value", ""), expected])
+		if cell.get("value_color") != Palette.TEXT or cell.get("name_color") != Palette.TEXT:
+			_problems.append("%s the %s meter's text is not in the text colour" % [when, meter])
+		if cell.get("icon_tint") != Color.WHITE:
+			_problems.append("%s the %s meter's icon is dimmed" % [when, meter])
+	print("strip %s: %s" % [when, ", ".join(seen)])
 
 
 # Every debrief page, rendered with each vote at its longest option, ends

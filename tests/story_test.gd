@@ -16,8 +16,6 @@ const RUNS: Array[Dictionary] = [
 	{
 		"name": "smooth",
 		"votes": { 0: "C", 1: "A", 2: "B", 3: "C", 5: "B", 6: "A", 7: "C", 8: "C" },
-		# The meters lit once scene 3 ends, sorted: Budget whatever the room picks.
-		"lit": ["budget", "fairness", "integrity"],
 		"inspection": [true, false, false, true, false],
 		"integrity": 100, "fairness": 75, "team": 100, "budget": 2400,
 		"flags": ["room12_fixed", "metrics_exam", "raci_clear", "staff_borrowed", "staff_protected"],
@@ -30,14 +28,12 @@ const RUNS: Array[Dictionary] = [
 			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
 			["The centre stays within budget", true, ["Within budget: 2400 TND left."]],
 		],
-		"present": ["7:30, the gate: The checklist works as well as the rehearsal went.", "Meters not lit stay greyed out with \"?\" until the ending."],
+		"present": ["7:30, the gate: The checklist works as well as the rehearsal went."],
 		"absent": ["7:30, the gate: Two phones get in.", "The dashboard: It shows green all day, whatever happened."],
 	},
 	{
 		"name": "strained",
 		"votes": { 0: "A", 1: "A", 2: "C", 3: "B", 5: "A", 6: "B", 7: "A", 8: "B" },
-		# The meters lit once scene 3 ends, sorted: Budget whatever the room picks.
-		"lit": ["budget", "team"],
 		"inspection": [true, true, false, false, false],
 		"integrity": 40, "fairness": 75, "team": 75, "budget": 2700,
 		"flags": ["room12_fixed", "metrics_people", "raci_double", "staff_thin", "staff_trained"],
@@ -56,8 +52,6 @@ const RUNS: Array[Dictionary] = [
 	{
 		"name": "in the news",
 		"votes": { 0: "B", 1: "B", 2: "A", 3: "A", 5: "C", 6: "C", 7: "B", 8: "A" },
-		# The meters lit once scene 3 ends, sorted: Budget whatever the room picks.
-		"lit": ["budget", "fairness", "integrity", "team"],
 		# The switched-off phone is admitted, which lets two phones in on exam day.
 		"inspection": [true, true, true, false, true],
 		"integrity": 20, "fairness": 40, "team": 60, "budget": 1500,
@@ -73,13 +67,11 @@ const RUNS: Array[Dictionary] = [
 			["The dashboard told the truth", false, ["Your dashboard showed green all day, on a number the centre didn't control."]],
 		],
 		"present": ["7:30, the gate: The checklist works as well as the rehearsal went.", "7:30, the gate: Two phones get in.", "The dashboard: It shows green all day, whatever happened."],
-		"absent": ["Meters not lit stay greyed out with \"?\" until the ending."],
+		"absent": [],
 	},
 	{
 		"name": "scene 8 skipped",
 		"votes": { 0: "C", 1: "A", 2: "B", 3: "C", 5: "B", 6: "A", 7: "C" },
-		# The meters lit once scene 3 ends, sorted: Budget whatever the room picks.
-		"lit": ["budget", "fairness", "integrity"],
 		"skip": [8],
 		"inspection": [true, false, false, true, false],
 		"integrity": 95, "fairness": 75, "team": 80, "budget": 2400,
@@ -188,12 +180,6 @@ func _play(run: Dictionary) -> String:
 		var result: String = await _play_scene(number, scene.dialogue, run.votes.get(number, ""))
 		if result != PASSED:
 			return "scene %d: %s" % [number, "a script error stopped it" if result.is_empty() else result]
-		if number == 3:
-			var lit: Array = (_game_state.get(&"lit_meters") as Array).duplicate()
-			lit.sort()
-			print("  lit after scene 3=%s" % [lit])
-			if lit != run.lit:
-				return "after scene 3 the lit meters are %s, expected %s" % [lit, run.lit]
 		_game_state.set(&"scene", number + 1)
 	return _check(run)
 
