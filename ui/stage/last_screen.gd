@@ -7,7 +7,8 @@ extends Control
 ##
 ## Everything stacks from below the dashboard's strip to [constant UiStyle.EDGE]
 ## above the screen's bottom, [constant UiStyle.GAP] apart. The name plates
-## alternate above and below the row, since nine side by side do not fit.
+## alternate above and below the row, since nine side by side do not fit, and
+## shift sideways where two in a row would touch.
 
 
 const PICTURE_PATH: String = "res://art/ui/title.png"
@@ -158,7 +159,22 @@ func _build_cast(cast: Array) -> void:
 		plate.add_theme_color_override(&"font_color", colors.text)
 		_cast.add_child(plate)
 		plate.size = plate.get_minimum_size()
-		var left: float = clampf(roundf(centre - plate.size.x / 2.0), 0.0, width - plate.size.x)
 		var top: float = 0.0 if i % 2 == 0 else CAST_HEIGHT - NAME_PLATE_HEIGHT
-		plate.position = Vector2(left, top)
+		plate.position = Vector2(roundf(centre - plate.size.x / 2.0), top)
 		_plates.append(plate)
+	for row: int in 2:
+		_spread(_plates.filter(func(plate: Label) -> bool: return _plates.find(plate) % 2 == row), width)
+
+
+# Keep one row's plates inside [0, width] and [constant UiStyle.GAP] apart:
+# pushed right past the one before, then back left from the row's right end.
+func _spread(row: Array, width: float) -> void:
+	var edge: float = 0.0
+	for plate: Label in row:
+		plate.position.x = maxf(plate.position.x, edge)
+		edge = plate.position.x + plate.size.x + UiStyle.GAP
+	edge = width
+	for i: int in range(row.size() - 1, -1, -1):
+		var plate: Label = row[i]
+		plate.position.x = minf(plate.position.x, edge - plate.size.x)
+		edge = plate.position.x - UiStyle.GAP

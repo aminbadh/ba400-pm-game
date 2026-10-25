@@ -1,52 +1,77 @@
 extends SceneTree
 ## Plays the whole story through the Dialogue Manager API with fixed votes, one
 ## run per ending plus one that skips scene 8, and checks the final meters, flags,
-## ending, the cards shown again after wrong answers, the debrief, and lines that
-## must not show. Exits non-zero on failure.
+## ending, the cards shown again after wrong answers, the debrief's three lines,
+## the region's report, and lines that must or must not show. Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/story_test.gd
 
 
-## Each run: the mode, the room's vote per scene, the scenes skipped (not played
-## at all, as the pause menu's skip leaves them), the gate inspection calls (true
-## admits), what the state must be at the end, and speakers whose lines must not show.
+## Each run: the room's vote per scene, the scenes skipped (not played at all,
+## as the pause menu's skip leaves them), the gate inspection calls (true
+## admits), what the state must be at the end, the region's report as
+## [criterion, met, lines], and lines that must or must not show, as
+## "speaker: text" or text alone.
 const RUNS: Array[Dictionary] = [
 	{
-		"name": "smooth, Full mode",
-		"short": false,
-		"votes": { 0: "B", 1: "B", 2: "A", 3: "B", 5: "B", 6: "A", 7: "A", 8: "B" },
+		"name": "smooth",
+		"votes": { 0: "C", 1: "A", 2: "B", 3: "C", 5: "B", 6: "A", 7: "C", 8: "C" },
 		"inspection": [true, false, false, true, false],
 		"integrity": 100, "fairness": 75, "team": 100, "budget": 2400,
 		"flags": ["room12_fixed", "metrics_exam", "raci_clear", "staff_borrowed", "staff_protected"],
 		"cards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
 		"inspection_debrief": "You made 5 of 5 calls right against the checklist. It catches what memory misses.",
 		"ending": "smooth",
+		"report": [
+			["Every paper starts on time", true, ["Every envelope signed and opened on time."]],
+			["No paper leaves its envelope early, and the exam stays secure", true, ["Envelopes sealed, devices kept out.", "The earpiece was caught."]],
+			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
+			["The centre stays within budget", true, ["Within budget: 2400 TND left."]],
+		],
+		"present": ["7:30, the gate: The checklist works as well as the rehearsal went.", "Meters not lit stay greyed out until the ending."],
+		"absent": ["7:30, the gate: Two phones get in.", "The dashboard: It shows green all day, whatever happened."],
 	},
 	{
-		"name": "strained, Full mode",
-		"short": false,
-		"votes": { 0: "A", 1: "B", 2: "C", 3: "A", 5: "A", 6: "B", 7: "C", 8: "A" },
+		"name": "strained",
+		"votes": { 0: "A", 1: "A", 2: "C", 3: "B", 5: "A", 6: "B", 7: "A", 8: "B" },
 		"inspection": [true, true, false, false, false],
 		"integrity": 40, "fairness": 75, "team": 75, "budget": 2700,
 		"flags": ["room12_fixed", "metrics_people", "raci_double", "staff_thin", "staff_trained"],
 		"cards": [1, 1, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9],
 		"inspection_debrief": "You made 3 of 5 calls right against the checklist. It catches what memory misses.",
 		"ending": "strained",
+		"report": [
+			["Every paper starts on time", false, ["The escort waited twenty minutes: each signer thought the other had signed."]],
+			["No paper leaves its envelope early, and the exam stays secure", false, ["A smartwatch was missed in a thin room."]],
+			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
+			["The centre stays within budget", true, ["Within budget: 2700 TND left."]],
+		],
+		"present": ["7:30, the gate: The checklist works as well as the rehearsal went."],
+		"absent": ["7:30, the gate: Two phones get in."],
 	},
 	{
-		"name": "in the news, Short mode",
-		"short": true,
-		"votes": { 1: "A", 3: "C", 4: "C", 6: "C", 7: "C", 8: "C" },
-		"inspection": [],
-		"integrity": 2, "fairness": 55, "team": 60, "budget": 1500,
-		"flags": ["room12_fixed", "metrics_passrate", "raci_none", "staff_thin", "bought_tech"],
-		"cards": [1, 2, 2, 3, 4, 5, 5, 6, 7, 8, 9],
+		"name": "in the news",
+		"votes": { 0: "B", 1: "B", 2: "A", 3: "A", 5: "C", 6: "C", 7: "B", 8: "A" },
+		# The switched-off phone is admitted, which lets two phones in on exam day.
+		"inspection": [true, true, true, false, true],
+		"integrity": 20, "fairness": 40, "team": 60, "budget": 1500,
+		"flags": ["room12_fixed", "metrics_passrate", "phone_admitted", "raci_none", "rooms_crowded", "bought_tech"],
+		"cards": [1, 1, 2, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9],
+		"inspection_debrief": "You made 1 of 5 calls right against the checklist. It catches what memory misses.",
 		"ending": "news",
+		"report": [
+			["Every paper starts on time", true, ["Every envelope signed and opened on time."]],
+			["No paper leaves its envelope early, and the exam stays secure", false, ["An envelope sat unsigned on a desk.", "Two phones got in at the gate.", "The earpiece went unnoticed."]],
+			["Every candidate can sit every paper, special arrangements included", false, ["Nour lost her quiet desk in a crowded room."]],
+			["The centre stays within budget", true, ["Within budget: 1500 TND left."]],
+			["The dashboard told the truth", false, ["Your dashboard showed green all day, on a number the centre didn't control."]],
+		],
+		"present": ["7:30, the gate: The checklist works as well as the rehearsal went.", "7:30, the gate: Two phones get in.", "The dashboard: It shows green all day, whatever happened."],
+		"absent": ["Meters not lit stay greyed out until the ending."],
 	},
 	{
-		"name": "scene 8 skipped, Full mode",
-		"short": false,
-		"votes": { 0: "B", 1: "B", 2: "A", 3: "B", 5: "B", 6: "A", 7: "A" },
+		"name": "scene 8 skipped",
+		"votes": { 0: "C", 1: "A", 2: "B", 3: "C", 5: "B", 6: "A", 7: "C" },
 		"skip": [8],
 		"inspection": [true, false, false, true, false],
 		"integrity": 95, "fairness": 75, "team": 80, "budget": 2400,
@@ -54,8 +79,15 @@ const RUNS: Array[Dictionary] = [
 		"cards": [1, 2, 3, 4, 5, 6, 7, 8],
 		"inspection_debrief": "You made 5 of 5 calls right against the checklist. It catches what memory misses.",
 		"ending": "smooth",
+		"report": [
+			["Every paper starts on time", true, ["Every envelope signed and opened on time."]],
+			["No paper leaves its envelope early, and the exam stays secure", true, ["Envelopes sealed, devices kept out."]],
+			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
+			["The centre stays within budget", true, ["Within budget: 2400 TND left."]],
+		],
 		# Scene 9's 10:15 beat shows only when scene 8 set a flag.
-		"absent_speakers": ["10:15, an incident"],
+		"present": [],
+		"absent": ["10:15, an incident: A candidate is found with an earpiece."],
 	},
 ]
 const LETTERS: String = "ABC"
@@ -73,6 +105,8 @@ var _story: Node
 var _dialogue_manager: Node
 ## Every speaker whose line showed in the current run.
 var _speakers: Array[String] = []
+## Every line that showed in the current run, as "speaker: text" or text alone.
+var _lines: Array[String] = []
 
 
 func _initialize() -> void:
@@ -120,7 +154,6 @@ func _finish(failures: Array[String]) -> void:
 
 ## Play scenes 0 to 10 with the run's votes and return what went wrong, or [constant PASSED].
 func _play(run: Dictionary) -> String:
-	_game_state.set(&"short_mode", run.short)
 	_game_state.call(&"reset")
 	(_story.get(&"shown_cards") as Array).clear()
 	var calls: Array[bool] = []
@@ -128,6 +161,7 @@ func _play(run: Dictionary) -> String:
 	_story.set(&"scripted_inspection", calls)
 
 	_speakers.clear()
+	_lines.clear()
 	var scenes: Array = _story.get(&"scenes")
 	for scene: Dictionary in scenes:
 		var number: int = int(scene.number)
@@ -154,6 +188,7 @@ func _play_scene(number: int, path: String, vote: String) -> String:
 		count += 1
 		if line.responses.is_empty():
 			_speakers.append(line.character)
+			_lines.append(line.text if line.character.is_empty() else "%s: %s" % [line.character, line.text])
 			print("  %s%s" % ["" if line.character.is_empty() else line.character + ": ", line.text])
 			line = await _dialogue_manager.call(&"get_next_dialogue_line", resource, line.next_id)
 			continue
@@ -208,21 +243,41 @@ func _check(run: Dictionary) -> String:
 	expected_collected.sort()
 	if collected != expected_collected:
 		problems.append("the binder holds cards %s, expected %s" % [collected, expected_collected])
-	for speaker: String in run.get("absent_speakers", []):
-		if speaker in _speakers:
-			problems.append("a line from \"%s\" showed" % speaker)
+	for line: String in run.present:
+		if line not in _lines:
+			problems.append("the line \"%s\" never showed" % line)
+	for line: String in run.absent:
+		if line in _lines:
+			problems.append("the line \"%s\" showed" % line)
 
-	# The debrief: each card's line follows the room's vote, or says it was not voted.
+	# The debrief: the room's option, the line for it and the best choice, or
+	# "Not voted" and the best choice; the inspection's count for card 5.
 	var not_voted: String = _story.get(&"not_voted_text")
 	for card: Dictionary in _story.get(&"cards"):
-		var line: String = _story.call(&"debrief_line", card)
-		var vote: String = run.votes.get(int(card.scene), "")
-		var expected: String = not_voted if vote.is_empty() else card.debrief[vote]
-		if run.short == false and int(card.scene) == 4:
-			expected = run.inspection_debrief
-		if line != expected:
-			problems.append("debrief for card %d is \"%s\", expected \"%s\"" % [int(card.number), line, expected])
-		print("  debrief %d: %s" % [int(card.number), line])
+		var rows: Dictionary = _story.call(&"debrief_rows", card)
+		var scene: int = int(card.scene)
+		var vote: String = run.votes.get(scene, "")
+		var expected: Dictionary
+		if scene == 4:
+			expected = { "chose": "", "line": run.inspection_debrief, "best": "" }
+		elif vote.is_empty():
+			expected = { "chose": not_voted, "line": "", "best": "Best: " + card.best }
+		else:
+			var option: String = _story.call(&"option_text", scene, vote)
+			expected = { "chose": "You chose %s: %s" % [vote, option], "line": card.debrief[vote], "best": "Best: " + card.best }
+			if option.is_empty():
+				problems.append("scene %d has no option %s" % [scene, vote])
+		if rows != expected:
+			problems.append("debrief for card %d is %s, expected %s" % [int(card.number), rows, expected])
+		print("  debrief %d: %s | %s | %s" % [int(card.number), rows.chose, rows.line, rows.best])
+
+	# The region's report: each criterion that applies, met or not, with its lines.
+	var report: Array = []
+	for entry: Dictionary in _story.call(&"report"):
+		report.append([entry.criterion, entry.met, entry.lines])
+		print("  report %s %s: %s" % ["met" if entry.met else "NOT met", entry.criterion, " ".join(entry.lines)])
+	if str(report) != str(run.report):
+		problems.append("the report is %s, expected %s" % [report, run.report])
 
 	if not problems.is_empty():
 		return "; ".join(problems)

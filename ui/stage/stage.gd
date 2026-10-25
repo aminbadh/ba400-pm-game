@@ -188,7 +188,9 @@ func report_pages(entries: Array[Dictionary]) -> Array[String]:
 	var page: Array[String] = []
 	for entry: Dictionary in entries:
 		var paragraph: String = CardView.report_paragraph(entry)
-		if not page.is_empty() and _card_view.rich_height(page + [paragraph]) > CardView.BODY_SIZE.y:
+		var with_it: Array[String] = page.duplicate()
+		with_it.append(paragraph)
+		if not page.is_empty() and _card_view.rich_height(with_it) > CardView.BODY_SIZE.y:
 			pages.append("\n".join(page))
 			page = []
 		page.append(paragraph)

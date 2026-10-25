@@ -4,8 +4,12 @@ extends SceneTree
 ## one the story uses, every scene's dialogue starts at its cue, every card
 ## page fits on screen at the base resolution, every backdrop title fits
 ## inside the screen's margins and clear of the dashboard and the dialogue box,
-## the map's camera keeps the strips at the top and the bottom clear, and the gate
-## inspection shows Am Lassaad saying one of his four lines. Exits non-zero on failure.
+## the map's camera keeps the strips at the top and the bottom clear, the strip
+## shows from scene 0 greyed out with "?", the gate inspection shows Am Lassaad
+## saying one of his four lines, the region's report fits its pages at its
+## longest, and the last screen stays inside the screen, clear of the strip,
+## with nothing overlapping. Every vote's options, debrief lines and best line
+## are compared with story.md's, when story.md can be read. Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/content_test.gd
 
@@ -15,10 +19,14 @@ const DIALOGUE_DIR: String = "res://dialogue/"
 const FLAGS: Array[String] = [
 	"room12_fixed", "metrics_people", "metrics_exam", "metrics_passrate",
 	"raci_clear", "raci_double", "raci_none", "staff_borrowed", "rooms_crowded",
-	"staff_thin", "staff_trained", "staff_protected", "bought_tech",
+	"staff_thin", "staff_trained", "staff_protected", "bought_tech", "phone_admitted",
 ]
 ## The scenes whose votes story.md writes, each with options A, B and C.
-const VOTE_SCENES: Array[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+const VOTE_SCENES: Array[int] = [0, 1, 2, 3, 5, 6, 7, 8]
+## The story script, in the maintainer's workspace, under the home folder. It is
+## not in the repo: on a machine without it, the comparison is skipped and says so.
+const STORY_MD: String = ".links/workspace/education/tbs-coursework/ba400-game/_working/story.md"
+const ENDING_DIALOGUE: String = "res://dialogue/s10_ending.dialogue"
 const OPTIONS: Array[String] = ["A", "B", "C"]
 const TIMEOUT_SECONDS: float = 20.0
 const BALLOON_SCRIPT: String = "res://ui/balloon/balloon.gd"
@@ -53,6 +61,7 @@ func _main() -> void:
 		var sources: Dictionary = _read_dialogue()
 		_check_calls(sources)
 		_check_debriefs(sources)
+		_check_story_md()
 		_check_scenes()
 		await _check_pages_fit()
 		await _check_map(sources)
@@ -117,13 +126,89 @@ func _check_debriefs(sources: Dictionary) -> void:
 			var line: String = card.get("debrief", {}).get(option, "")
 			if line.strip_edges().is_empty():
 				_problems.append("card %d has no debrief line for option %s" % [int(card.number), option])
+			if (_story.call(&"option_text", scene, option) as String).is_empty():
+				_problems.append("scene %d's dialogue has no option %s" % [scene, option])
 			if not recorded.has("%d%s" % [scene, option]):
 				_problems.append("scene %d's dialogue never records option %s" % [scene, option])
+		if (card.get("best", "") as String).is_empty():
+			_problems.append("card %d has no best line" % int(card.number))
 		print("scene %d vote: debrief lines for A, B and C on card %d" % [scene, int(card.number)])
 	for key: String in recorded:
 		var scene: int = int(key.left(-1))
 		if scene not in VOTE_SCENES:
 			_problems.append("%s records a vote in scene %d, which has none in story.md" % [recorded[key], scene])
+
+
+# Every vote's three options in the dialogue, and each card's debrief lines and
+# best line, word for word as story.md writes them.
+func _check_story_md() -> void:
+	var path: String = OS.get_environment("HOME").path_join(STORY_MD)
+	if not FileAccess.file_exists(path):
+		print("SKIP: story.md comparison; %s is not on this machine" % path)
+		return
+	var text: String = FileAccess.get_file_as_string(path)
+	var options: Dictionary = _story_md_options(text)
+	var debriefs: Dictionary = _story_md_debriefs(text)
+	var compared: int = 0
+	for scene: int in VOTE_SCENES:
+		var card: Dictionary = _card_for_scene(scene)
+		for i: int in OPTIONS.size():
+			var letter: String = OPTIONS[i]
+			var written: String = options.get(scene, {}).get(letter, "")
+			var shown: String = _story.call(&"option_text", scene, letter)
+			if shown != written:
+				_problems.append("scene %d option %s is \"%s\"; story.md writes \"%s\"" % [scene, letter, shown, written])
+			var line: String = debriefs.get(scene, [])[i] if debriefs.has(scene) else ""
+			if card.get("debrief", {}).get(letter, "") != line:
+				_problems.append("card %d's debrief for %s is \"%s\"; story.md writes \"%s\"" % [int(card.number), letter, card.get("debrief", {}).get(letter, ""), line])
+			compared += 2
+		var best: String = debriefs.get(scene, ["", "", "", ""])[3]
+		if card.get("best", "") != best:
+			_problems.append("card %d's best line is \"%s\"; story.md writes \"%s\"" % [int(card.number), card.get("best", ""), best])
+		compared += 1
+	print("story.md: %d option, debrief and best texts compared" % compared)
+
+
+# Each scene's vote options in story.md, by scene and letter, without the
+# right answer's mark, the effects in backticks or the team's italic notes.
+func _story_md_options(text: String) -> Dictionary:
+	var heading: RegEx = RegEx.create_from_string("^## Scene (\\d+):")
+	var option: RegEx = RegEx.create_from_string("^- ([ABC]): (.*)$")
+	var extras: RegEx = RegEx.create_from_string("\\s*(`[^`]*`|\\*\\(.*?\\)\\*|✓)")
+	var found: Dictionary = {}
+	var scene: int = -1
+	var in_vote: bool = false
+	for line: String in text.split("\n"):
+		var scene_match: RegExMatch = heading.search(line)
+		if scene_match != null:
+			scene = int(scene_match.get_string(1))
+			in_vote = false
+		elif line.begins_with("**Vote ("):
+			in_vote = true
+		elif in_vote:
+			var option_match: RegExMatch = option.search(line)
+			if option_match != null:
+				if not found.has(scene):
+					found[scene] = {}
+				found[scene][option_match.get_string(1)] = extras.sub(option_match.get_string(2), "", true).strip_edges()
+			elif not line.strip_edges().is_empty():
+				in_vote = false
+	return found
+
+
+# The debrief table's rows in story.md, by scene: the lines for A, B and C, then the best.
+func _story_md_debriefs(text: String) -> Dictionary:
+	var found: Dictionary = {}
+	var row: RegEx = RegEx.create_from_string("^\\| (\\d+) [^|]*\\|(.*)\\|\\s*$")
+	for line: String in text.get_slice("## The debrief", 1).split("\n"):
+		var row_match: RegExMatch = row.search(line)
+		if row_match == null:
+			continue
+		var cells: Array[String] = []
+		for cell: String in row_match.get_string(2).split("|"):
+			cells.append(cell.strip_edges().trim_prefix("\"").trim_suffix("\""))
+		found[int(row_match.get_string(1))] = cells
+	return found
 
 
 func _check_scenes() -> void:
@@ -187,8 +272,11 @@ func _check_map(sources: Dictionary) -> void:
 			_problems.append("scene %d's spot %s is not on the map" % [int(scene.number), scene.spot])
 	_check_hint_strip(map)
 	_check_meter_strip(map)
+	_check_strip_from_start(map.get_node("Dashboard"))
 	await _check_am_lassaad(_story.get(&"stage"))
 	await _check_backdrop_titles(sources, _story.get(&"stage"), map.get_node("Dashboard"))
+	await _check_report_fits(_story.get(&"stage"))
+	await _check_last_screen(sources, _story.get(&"stage"), map.get_node("Dashboard"))
 	map.queue_free()
 	await process_frame
 
@@ -285,7 +373,7 @@ func _check_backdrop_titles(sources: Dictionary, stage: Object, dashboard: Objec
 	for path: String in sources:
 		for found: RegExMatch in calls.search_all(sources[path]):
 			var title: String = found.get_string(1)
-			stage.call(&"set_backdrop", title, "")
+			stage.call(&"set_backdrop", title)
 			await process_frame
 			var fits: bool = stage.call(&"backdrop_title_fits")
 			var rect: Rect2 = stage.call(&"backdrop_title_rect")
@@ -297,7 +385,76 @@ func _check_backdrop_titles(sources: Dictionary, stage: Object, dashboard: Objec
 				_problems.append("backdrop title \"%s\" starts at y %d, within %d px of the dashboard's bottom at %d" % [title, rect.position.y, TITLE_CLEARANCE, dashboard_bottom])
 			if rect.end.y > box_top - TITLE_CLEARANCE:
 				_problems.append("backdrop title \"%s\" ends at y %d, within %d px of the dialogue box's name plate at %d" % [title, rect.end.y, TITLE_CLEARANCE, box_top])
-	stage.call(&"set_backdrop", "", "")
+	stage.call(&"set_backdrop", "")
+
+
+# In scene 0, before any metric is chosen, the strip is on screen with every
+# meter greyed out and "?" for its number.
+func _check_strip_from_start(dashboard: Object) -> void:
+	var game_state: Node = root.get_node("GameState")
+	game_state.call(&"reset")
+	var shown: Array[String] = []
+	for meter: String in game_state.get(&"METERS"):
+		var display: Dictionary = (dashboard.get_script() as Script).call(&"display", meter)
+		shown.append("%s %s" % [meter, display.text])
+		if display.text != "?" or display.lit:
+			_problems.append("in scene 0 the %s meter shows \"%s\", not a greyed-out ?" % [meter, display.text])
+	print("strip in scene 0: shown %s; %s" % [dashboard.call(&"strip_shown"), ", ".join(shown)])
+	if not dashboard.call(&"strip_shown"):
+		_problems.append("the dashboard strip is not on screen in scene 0")
+
+
+# The report at its longest, every reason shown, fits its pages: each page's
+# body no taller than the slide's.
+func _check_report_fits(stage: Object) -> void:
+	if stage == null:
+		return
+	var entries: Array[Dictionary] = []
+	for criterion: Dictionary in (_story.get(&"report_content") as Dictionary).criteria:
+		var lines: Array[String] = []
+		for reason: Dictionary in criterion.reasons:
+			lines.append(reason.text)
+		entries.append({ "criterion": criterion.criterion, "met": false, "lines": lines })
+	var pages: Array[String] = stage.call(&"report_pages", entries)
+	var view: CardView = stage.get(&"_card_view")
+	for i: int in pages.size():
+		view.show_rich_page("report", pages[i], i, pages.size(), "")
+		await process_frame
+		await process_frame
+		var height: int = view.body_content_height()
+		print("report at its longest, page %d of %d: body %d of %d px" % [i + 1, pages.size(), height, CardView.BODY_SIZE.y])
+		if height > CardView.BODY_SIZE.y:
+			_problems.append("the report's page %d does not fit: %d px of %d" % [i + 1, height, CardView.BODY_SIZE.y])
+	view.hide()
+
+
+# The last screen, with the ending's own text: everything inside the screen,
+# below the strip, and no two parts overlapping.
+func _check_last_screen(sources: Dictionary, stage: Object, dashboard: Object) -> void:
+	if stage == null:
+		return
+	var last_call: RegEx = RegEx.create_from_string("Story\\.show_last_screen\\(\"([^\"]*)\", \"([^\"]*)\", \"([^\"]*)\", \"([^\"]*)\"\\)")
+	var found: RegExMatch = last_call.search(sources.get(ENDING_DIALOGUE, ""))
+	if found == null:
+		_problems.append("the ending never shows the last screen")
+		return
+	stage.call(&"show_last_screen", found.get_string(1), found.get_string(2), found.get_string(3), found.get_string(4))
+	for i: int in 5:
+		await process_frame
+	var areas: Dictionary = (stage.call(&"last_screen") as Object).call(&"areas")
+	var strip_bottom: float = (dashboard.call(&"strip_rect") as Rect2).end.y
+	var screen: Rect2 = Rect2(Vector2.ZERO, Vector2(320, 180))
+	var names: Array = areas.keys()
+	for name: String in names:
+		var area: Rect2 = areas[name]
+		if not screen.encloses(area) or area.position.y < strip_bottom:
+			_problems.append("the last screen's %s at %s is not inside the screen below the strip" % [name, area])
+	for i: int in names.size():
+		for j: int in range(i + 1, names.size()):
+			if (areas[names[i]] as Rect2).intersects(areas[names[j]]):
+				_problems.append("the last screen's %s and %s overlap" % [names[i], names[j]])
+	print("last screen: %d parts, all inside the screen below y %d: heading %s, body %s" % [names.size(), strip_bottom, areas.heading, areas.body])
+	(stage.call(&"last_screen") as Control).hide()
 
 
 func _card_for_scene(scene: int) -> Dictionary:
