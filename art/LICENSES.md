@@ -22,6 +22,9 @@ Every image and sound under `art/`, where it comes from and its licence. `uv run
 | `Audio/Sounds/Voice/Voice6.wav` | `art/ninja_adventure/Audio/Sounds/Voice/Voice6.wav` | Agent Fethi's voice |
 | `Audio/Sounds/Voice/Voice7.wav` | `art/ninja_adventure/Audio/Sounds/Voice/Voice7.wav` | Nour's voice |
 | `Audio/Sounds/Voice/Voice8.wav` | `art/ninja_adventure/Audio/Sounds/Voice/Voice8.wav` | Am Lassaad's voice |
+| `Audio/Musics/33 - Calm Village.ogg` | `art/ninja_adventure/Audio/Musics/33 - Calm Village.ogg` | The music on the map, scenes 0 to 8 |
+| `Audio/Musics/28 - Tension.ogg` | `art/ninja_adventure/Audio/Musics/28 - Tension.ogg` | The music on exam day, scene 9 |
+| `Audio/Musics/8 - End Theme.ogg` | `art/ninja_adventure/Audio/Musics/8 - End Theme.ogg` | The music from the ending to the last screen |
 
 ## Drawn for this project
 
@@ -40,6 +43,15 @@ Drawn in code by the generators in `tools/`, in the pack's palette (see `ui/pale
 | `art/characters/fethi.png` | `tools/draw_characters.py` | Agent Fethi's frames |
 | `art/characters/nour.png` | `tools/draw_characters.py` | Nour's frames |
 | `art/characters/lassaad.png` | `tools/draw_characters.py` | Am Lassaad's frames |
+| `art/characters/player_wave.png` | `tools/draw_characters.py` | The player's two waving frames, for the last screen |
+| `art/characters/jlassi_wave.png` | `tools/draw_characters.py` | M. Jlassi's two waving frames, for the last screen |
+| `art/characters/kchaou_wave.png` | `tools/draw_characters.py` | Mme Kchaou's two waving frames, for the last screen |
+| `art/characters/salma_wave.png` | `tools/draw_characters.py` | Mme Salma's two waving frames, for the last screen |
+| `art/characters/hedi_wave.png` | `tools/draw_characters.py` | Si Hédi's two waving frames, for the last screen |
+| `art/characters/aziz_wave.png` | `tools/draw_characters.py` | Aziz's two waving frames, for the last screen |
+| `art/characters/fethi_wave.png` | `tools/draw_characters.py` | Agent Fethi's two waving frames, for the last screen |
+| `art/characters/nour_wave.png` | `tools/draw_characters.py` | Nour's two waving frames, for the last screen |
+| `art/characters/lassaad_wave.png` | `tools/draw_characters.py` | Am Lassaad's two waving frames, for the last screen |
 | `art/portraits/jlassi.png` | `tools/draw_characters.py` | M. Jlassi's portraits |
 | `art/portraits/kchaou.png` | `tools/draw_characters.py` | Mme Kchaou's portraits |
 | `art/portraits/salma.png` | `tools/draw_characters.py` | Mme Salma's portraits |
@@ -50,3 +62,4 @@ Drawn in code by the generators in `tools/`, in the pack's palette (see `ui/pale
 | `art/portraits/lassaad.png` | `tools/draw_characters.py` | Am Lassaad's portraits |
 | `art/ui/frame.png` | `tools/draw_ui.py` | The nine-slice panel frame |
 | `art/ui/icons.png` | `tools/draw_ui.py` | The dashboard's meter icons |
+| `art/ui/glyphs.png` | `tools/draw_ui.py` | The icons the font lacks: a tick and a cross for the region's report, the controller's cross and Start buttons |

@@ -2,64 +2,76 @@
 
 **Play it:** <https://aminbadh.github.io/ba400-pm-game/>
 
-A 2D top-down pixel story game for the BA 400 Project Management chapter 5 presentation at TBS. Built in Godot 4 with GDScript, exported for the web.
+A 2D top-down pixel story game for the BA 400 Project Management chapter 5 presentation at TBS. Built in Godot 4 with GDScript, exported for Windows (for the presentation) and the web.
 
-The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its project manager. Each scene teaches one part of the chapter on a concept card, then the room votes on a choice with its **A**, **B** and **C** cards and the presenter presses the room's answer. Votes move four meters on the project dashboard (Integrity, Fairness, Team, Budget) and set flags that pay off on exam day; the meters decide one of three endings, followed by what really happened in June 2026 and a debrief of every vote.
+The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its project manager. Each scene teaches one part of the chapter on a concept card, then the room votes on a choice with its **A**, **B** and **C** cards and the presenter presses the room's answer. Votes move four meters on the project dashboard (Integrity, Fairness, Team, Budget) and set flags that pay off on exam day. The story ends on the region's report, which checks the charter's success criteria against the room's choices, then one of three endings set by the meters, a debrief of every vote, and the cast's thank-you.
 
 ## Layout
 
 | Path | What it holds |
 | --- | --- |
 | `project.godot` | Display (320x180, integer scaling, nearest filtering), input map, autoloads |
-| `autoload/game_state.gd` | `GameState`: the four meters, the story flags, the room's votes, the cards collected, the current scene, Short mode |
-| `autoload/story.gd` | `Story`: sets the pixel font, loads the content files, starts each scene, and gives the dialogue its calls (`show_card`, `show_exhibit`, `run_inspection`, `backdrop`, the binder) |
+| `autoload/game_state.gd` | `GameState`: the four meters, the story flags, the room's votes, the cards collected, the current scene |
+| `autoload/music.gd` | `Music`: the background music, one constant per track, crossfaded, quiet under speech on its own bus, faded out while a card shows; mutes music and voices for the Sound switch |
+| `autoload/hints.gd` | `Hints`: whether the last input came from the keyboard or a controller, and the on-screen hints for it |
+| `autoload/story.gd` | `Story`: sets the pixel font, loads the content files, starts each scene and its music, and gives the dialogue its calls (`show_card`, `show_exhibit`, `open_overview`, `flash_dashboard`, `run_inspection`, `show_report`, `backdrop`, `open_debrief`, `show_last_screen`); builds the debrief's lines and the region's report |
 | `dialogue/` | The story, one Dialogue Manager `.dialogue` file per scene (`s00_charter` to `s10_ending`) |
-| `content/cards.json` | The nine concept cards and each vote's debrief lines |
+| `content/cards.json` | The nine concept cards, each vote's debrief line per option and its best choice |
+| `content/report.json` | The region's report: the charter's success criteria, the line when each is met and the reason, by flag, when it is not |
 | `content/exhibits.json` | The charter, the organisational chart, the RACI chart and the resource histogram |
 | `content/inspection.json` | Scene 4's gate checklist and its five rehearsal candidates |
-| `content/scenes.json` | The scene order, who starts each scene and where, the characters' names and colours, the place names |
+| `content/scenes.json` | The scene order, who starts each scene and where, the characters' names and colours, the last screen's line-up, the place names |
 | `ui/palette.gd` | Every colour: the pack's palette, the lycée's cream walls and blue doors, the UI colours and every text and background pair |
 | `ui/ui_style.gd` | The pixel frame, the dark name plates and labels every screen shares, and the spacing rule: `INSET` (6 px) inside every frame, `GAP` (4) between separate items, `TIGHT` (2) between the lines of a list, `EDGE` (4) from a panel to the screen's edge, `PLATE_X` and `PLATE_Y` (3, 1) inside the small plates |
-| `ui/title/` | The title screen: Full or Short |
-| `ui/balloon/` | The dialogue box: portrait, name plate, typed pages of three lines, optional voices; the votes as A/B/C cards with the 20-second bar, "The room chose B" |
-| `ui/stage/` | Full-screen moments: cards, charts, the gate inspection, the ending backdrop |
-| `ui/card_view/` | A card or the charter drawn as a lecture slide |
-| `ui/dashboard/` | The four meters in a strip along the top, each cell with an icon, name, number and a bar under it; who to talk to next, in a strip at the bottom. The map's camera keeps both strips clear of the map |
-| `ui/binder/` | The planning binder: quest log, card viewer, debrief |
-| `ui/pause_menu/` | Resume, Binder, Voices on or off, Skip to next scene, Restart to title |
+| `ui/glyphs.gd` | The icons the pixel font lacks (a tick, a cross, the controller's cross and Start buttons), as a fallback font, so any text can show them |
+| `ui/title/` | The title screen: one prompt to start |
+| `ui/balloon/` | The dialogue box: portrait, name plate, typed pages of three lines, voices; the votes as A/B/C cards with the 20-second bar, "The room chose B" |
+| `ui/stage/` | Full-screen moments: cards, charts, the gate inspection, the region's report, the ending backdrop, and the last screen (`last_screen.gd`) |
+| `ui/card_view/` | A card, the charter or the region's report drawn as a lecture slide |
+| `ui/dashboard/` | The four meters in a strip along the top, each cell with an icon, name, number and a bar under it, greyed out with "?" until scene 3 lights them; who to talk to next, in a strip at the bottom. The map's camera keeps both strips clear of the map |
+| `ui/binder/` | The planning binder: quest log, card viewer, scene 0's read-only overview, debrief |
+| `ui/pause_menu/` | Resume, Binder, Sound on or off, Controller check, Skip to next scene, Restart to title |
 | `world/centre.tscn` | The map: gate, courtyard, admin office, Room 12, staff room, deposit room; the characters; the scene spots. Its tile layers are filled by `tools/build_map.py` |
 | `actors/player/` | The player: four-direction movement and walk frames, collision, and a probe for the character in front |
 | `actors/npc/` | A character: set **Character** to an id from `content/scenes.json`; it faces down, and turns to the player who talks to it |
 | `art/tiles/`, `art/characters/`, `art/portraits/`, `art/ui/` | The drawn art: the map's tile atlas, the sprites, the portraits (neutral, worried, pleased), the frame, icons and title picture |
-| `art/ninja_adventure/` | The files used from the Ninja Adventure pack, at their path in the pack |
+| `art/ninja_adventure/` | The files used from the Ninja Adventure pack, at their path in the pack: tiles, voices and three music tracks |
 | `art/LICENSES.md` | Where every image and sound under `art/` comes from |
 | `tools/` | The art generators (Python, run with `uv`), the screenshot capture and its washed-out filter, the licence check |
 | `fonts/` | Ark Pixel 10 px and its licence |
 | `addons/dialogue_manager/` | [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager) v4.1.0, vendored |
-| `tests/` | `story_test.gd` plays the story to each ending and with scene 8 skipped; `flow_test.gd` drives restart and skip; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files; `contrast_test.gd` checks every text colour reaches 7:1; `spacing_test.gd` checks every margin, separation and offset under `ui/` comes from `UiStyle`'s constants |
-| `export_presets.cfg` | The `Web` export preset (single-threaded) |
+| `tests/` | `story_test.gd` plays the story to each ending and with scene 8 skipped; `flow_test.gd` drives restart, skip and the ending; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files, and compares the votes and debrief with the story script when it can read it; `contrast_test.gd` checks every text colour reaches 7:1; `spacing_test.gd` checks every margin, separation and offset under `ui/` comes from `UiStyle`'s constants; `sound_test.gd` checks the music and the Sound switch; `controls_test.gd` checks every action has a key and a controller button, and that the hints follow the device |
+| `export_presets.cfg` | The `Windows` preset (64-bit, one executable with the game inside) and the `Web` preset (single-threaded) |
 
 ## Controls
 
-| Action | Keys |
-| --- | --- |
-| Move | WASD or arrow keys |
-| Talk, show the whole line while it types, advance, turn a card's page | E, Space or Enter |
-| Vote A, B or C | 1, 2, 3 (or click the option) |
-| Gate inspection: admit or stop | 1 admit, 2 stop |
-| Open or close the binder | B |
-| Pause menu | Escape |
-| Choose in the binder and menus | Up and Down, then E |
+The keyboard and a PlayStation-style controller work side by side, with no setting to change. The hints on screen show the keys or the controller's buttons, whichever was used last.
 
-Votes are never picked for the presenter: the bar fills over 20 seconds and turns red, and waits. Cards and charts stay until the presenter presses E. The characters' voices are off by default; **Voices** in the pause menu switches them on (they need the laptop's sound).
+| Action | Keys | Controller |
+| --- | --- | --- |
+| Move | WASD or arrow keys | Left stick or D-pad |
+| Talk, show the whole line while it types, advance, turn a card's page, confirm | E, Space or Enter | ✕ |
+| Vote | 1, 2, 3, or Up/Down then E (or click the option) | Up/Down to point at an option, then ✕ |
+| Gate inspection: admit or stop | 1 admit, 2 stop, or Left/Right then E | D-pad left for Admit, right for Stop, then ✕ |
+| Open or close the binder | B | △ to open, ○ to close |
+| Pause menu | Escape | Start; ○ backs out |
+| Choose in the binder and menus | Up and Down, then E | D-pad, then ✕ |
+
+A controller never picks a vote with one button per letter: the presenter points at the room's option and confirms it. Votes are never picked for the presenter: the bar fills over 20 seconds and turns red, and waits. Cards and charts stay until the presenter presses E or ✕.
+
+**Controller check**, in the pause menu, shows the name Godot reports for each connected controller and, live, the last button or direction pressed. Run it on the presenting PC before the slot. If the buttons come out wrong, Steam's "Add a non-Steam game" with Steam Input presents the pad as an Xbox controller; a genuine DualShock 3 on Windows needs the DsHidMini driver either way.
+
+**Sound**, in the pause menu, switches the music and the characters' voices together; it is on by default. The music plays quietly under speech: a calm loop on the map, a tenser one on exam day, the end theme from the ending on. It fades out while a concept card or the charter is on screen and comes back when it closes; it keeps playing during votes. Each track is one constant at the top of `autoload/music.gd`.
 
 ## Running a session
 
-On the title screen, press **1** for **Full** (about 30 minutes) or **2** for **Short** (about 20). Short mode drops the optional votes in scenes 0, 2 and 5 (their cards still show), replaces scene 4's gate inspection with its check vote, keeps only the exam-day beats that a flag sets, and trims the ending to the ending line, three real figures and the debrief.
+On the title screen, press **E** or **✕**. The story takes about 30 minutes.
 
-Walk to the character with the marker over them and press E; the line at the bottom of the screen says who and where. Only that character answers. After scene 9 the ending starts on its own.
+Walk to the character with the marker over them and press E; the line at the bottom of the screen says who and where. Only that character answers. The dashboard strip along the top shows all four meters greyed out with "?" from the first scene; scene 3 lights the ones the room's metrics measure. In scene 0, after the first card, the binder opens as a read-only overview of the nine cards. After scene 9 the ending starts on its own: M. Jlassi's call, the region's report on the charter's success criteria, the ending, the debrief and the last screen.
 
-Escape opens the pause menu. **Skip to next scene** abandons the current scene with no effect on the meters, and its vote shows as "Not voted" in the debrief. During the ending it goes straight to the debrief, then the last screen. **Restart to title** starts over.
+The debrief shows each card with the room's choice ("You chose B: ..."), the line for that choice and the best choice ("Best: ..."). Card 5 shows how many gate calls were right instead.
+
+Escape (or Start) opens the pause menu. **Skip to next scene** abandons the current scene with no effect on the meters, and its vote shows as "Not voted" in the debrief, still with its best choice. During the ending it goes straight to the debrief, then the last screen. **Restart to title** starts over.
 
 ## Changing the story
 
@@ -69,7 +81,6 @@ Story text lives in the `.dialogue` files under `dialogue/`, in Dialogue Manager
 | --- | --- |
 | `do GameState.integrity += 10` | Change a meter: `integrity`, `fairness`, `team` (0 to 100) or `budget` (TND, 0 to 3,000) |
 | `do GameState.set_flag("raci_clear")` | Set a flag; `if GameState.has_flag("raci_clear")` tests it |
-| `if GameState.short_mode` | Branch on Short mode |
 | `do GameState.record_vote(6, "A")` | Record the room's vote in a scene, for the debrief |
 | `do Story.show_card(7)` | Show a card full screen until the presenter presses E, and add it to the binder |
 | `do Story.show_exhibit("raci")` | Show the charter or a chart from `content/exhibits.json` |
@@ -77,7 +88,7 @@ Story text lives in the `.dialogue` files under `dialogue/`, in Dialogue Manager
 
 A line longer than three lines in the box pages inside it on its own: there is no need to split it.
 
-Card text lives in `content/cards.json`. Each card has a number, title, slide range, one or more `pages` of body text, and its vote's `debrief` line for A, B and C. Card 5 also has `debrief_inspection`, the line for Full mode's gate inspection, where `{right}` and `{total}` become the count of right calls. Mark a key term as `**term**` to draw it in the accent colour; `\n` starts a new paragraph. If a page is too long, `tests/content_test.gd` fails and names it: split its text into two pages rather than shortening a definition.
+Card text lives in `content/cards.json`. Each card has a number, title, slide range, one or more `pages` of body text, its vote's `debrief` line for A, B and C, and its `best` choice. Card 5 has no vote: its `debrief_inspection` is the gate inspection's line, where `{right}` and `{total}` become the count of right calls. The debrief's "You chose B:" line takes the option's text from the dialogue file, so an option is only ever written once. The region's report lives in `content/report.json`. Mark a key term as `**term**` to draw it in the accent colour; `\n` starts a new paragraph. If a page is too long, `tests/content_test.gd` fails and names it: split its text into two pages rather than shortening a definition.
 
 ## Art
 
@@ -86,8 +97,8 @@ The art is drawn in code and the PNGs are committed; run a generator again after
 ```sh
 uv run tools/build_map.py         # draw the tiles, write art/tiles/centre.png, world/centre_tiles.tres and the map's layers, check the map
 uv run tools/build_map.py --check # only check the map, writing nothing
-uv run tools/draw_characters.py   # draw the sprites and portraits
-uv run tools/draw_ui.py           # draw the frame and the meter icons
+uv run tools/draw_characters.py   # draw the sprites, the last screen's waves and the portraits
+uv run tools/draw_ui.py           # draw the frame, the meter icons and the glyphs the font lacks
 uv run tools/check_licenses.py    # check art/LICENSES.md lists every file under art/
 ```
 
@@ -112,12 +123,29 @@ Run from the project root. `godot` stands for the Godot binary (on macOS, `/Appl
 godot --headless --path . --import                   # import assets; must print no errors
 godot --headless --path . --quit-after 300           # run the title screen briefly
 godot --headless --path . -s tests/story_test.gd     # play the story to each ending; exits 1 on failure, 2 on timeout
-godot --headless --path . -s tests/flow_test.gd      # restart, new game and skip, and skipping the ending; exits 1 on failure
+godot --headless --path . -s tests/flow_test.gd      # restart, new game and skip, the report and skipping the ending; exits 1 on failure
 godot --headless --path . --fixed-fps 60 -s tests/route_test.gd  # walk to each scene's character with the movement keys; exits 1 if the player stops short
-godot --headless --path . -s tests/content_test.gd   # cards, debrief lines, flags, page and title fit, both strips clear of the map, Am Lassaad's lines; exits 1 on failure
+godot --headless --path . -s tests/content_test.gd   # cards, debrief and best lines against the story script, flags, page and title fit, the strip in scene 0, the report's pages, the last screen, Am Lassaad's lines; exits 1 on failure
 godot --headless --path . -s tests/contrast_test.gd  # every text colour pair at 7:1 or more; exits 1 on failure
 godot --headless --path . -s tests/spacing_test.gd   # no number literal for a margin, separation or offset under ui/; exits 1 on failure
+godot --headless --path . -s tests/sound_test.gd     # the Sound switch, each scene's track, the fade during a card; exits 1 on failure
+godot --headless --path . -s tests/controls_test.gd  # a key and a controller button for every action, hints that follow the device; exits 1 on failure
 ```
+
+Godot exits 0 when a test script fails to compile, so read the output for `SCRIPT ERROR` too; `tools/web_build.sh` does.
+
+`content_test.gd` compares every vote's options, debrief lines and best line with the story script, `story.md`, which is kept outside the repo (its path is `STORY_MD` in the test). On a machine without it, such as the deploy, it prints `SKIP` for that comparison and checks the rest.
+
+## Windows build
+
+The presentation runs from a Windows PC. The `Windows` preset makes one 64-bit executable with the game inside it, so it can be copied to the PC and run from anywhere. It needs the Godot 4.7.2 export templates.
+
+```sh
+mkdir -p build/windows && touch build/.gdignore
+godot --headless --path . --export-release Windows build/windows/ba400-pm-game.exe
+```
+
+Copy `build/windows/ba400-pm-game.exe` to the PC. Windows may warn that the file is from an unknown publisher, since it is not signed: choose **More info**, then **Run anyway**.
 
 ## Web build
 
@@ -143,6 +171,6 @@ Once, before the first deploy: on GitHub, **Settings > Pages**, set **Source** t
 
 - [Ark Pixel Font](https://github.com/TakWolf/ark-pixel-font) by TakWolf, 10 px proportional, Latin build: SIL Open Font License 1.1 ([`fonts/OFL.txt`](fonts/OFL.txt)).
 - [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager) by Nathan Hoad: MIT licence ([`addons/dialogue_manager/LICENSE`](addons/dialogue_manager/LICENSE)).
-- [Ninja Adventure Asset Pack](https://pixel-boy.itch.io/ninja-adventure-asset-pack) by Pixel-boy and AAA: floors, plants, some furniture and the voices. Creative Commons Zero v1.0 Universal ([`art/ninja_adventure/LICENSE.txt`](art/ninja_adventure/LICENSE.txt)); the files used are listed in [`art/LICENSES.md`](art/LICENSES.md).
+- [Ninja Adventure Asset Pack](https://pixel-boy.itch.io/ninja-adventure-asset-pack) by Pixel-boy and AAA: floors, plants, some furniture, the voices and the music. Creative Commons Zero v1.0 Universal ([`art/ninja_adventure/LICENSE.txt`](art/ninja_adventure/LICENSE.txt)); the files used are listed in [`art/LICENSES.md`](art/LICENSES.md).
 - The lycée's walls, doors, furniture, trees, the characters, portraits and UI were drawn for this project, in the pack's palette.
-- Every person in the story is fictional. The 2026 figures in the ending are as reported by the press.
+- Every person in the story is fictional. The story draws on the real Bac 2026, but no real statistic appears in it.
