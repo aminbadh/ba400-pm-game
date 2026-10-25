@@ -3,7 +3,8 @@ extends Control
 ## The game's last screen: the whole cast in a row on the courtyard, the centre
 ## head and the eight characters, each waving, with their name plates; a
 ## thank-you above them and the hand-off to the next team below. The picture
-## behind is the title screen's, raised so the cast stands on the paving.
+## behind is the title screen's, raised so the cast stands on the paving, with
+## its last rows of paving repeated below it.
 ##
 ## Everything stacks from below the dashboard's strip to [constant UiStyle.EDGE]
 ## above the screen's bottom, [constant UiStyle.GAP] apart. The name plates
@@ -46,6 +47,16 @@ func _init() -> void:
 	picture.position = Vector2(0, -PICTURE_RAISE)
 	picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(picture)
+	# The band the raised picture leaves at the bottom, filled with its own
+	# bottom rows, the paving.
+	var paving: AtlasTexture = AtlasTexture.new()
+	paving.atlas = picture.texture
+	paving.region = Rect2(0, SCREEN.y - PICTURE_RAISE, SCREEN.x, PICTURE_RAISE)
+	var below: TextureRect = TextureRect.new()
+	below.texture = paving
+	below.position = Vector2(0, SCREEN.y - PICTURE_RAISE)
+	below.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(below)
 
 	_column = VBoxContainer.new()
 	_column.position = Vector2(UiStyle.EDGE, Dashboard.STRIP_HEIGHT + UiStyle.GAP)

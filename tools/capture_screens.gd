@@ -200,6 +200,9 @@ func _main() -> void:
 	await _capture("last_screen")
 
 	print("captured %d screens in %s" % [_count, ProjectSettings.globalize_path(OUT_DIR)])
+	# Stop the music at once, so no track is still held at exit.
+	root.get_node("Music").call(&"silence")
+	await _frames(5)
 	quit(0)
 
 
