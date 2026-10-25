@@ -18,7 +18,8 @@ if GameState.has_flag("phone_admitted")
 	7:30, the gate: Two phones get in.
 if GameState.has_flag("staff_thin")
 	do GameState.integrity -= 10
-	8:00, the rooms: A supervisor alone with forty candidates misses a smartwatch.
+	do GameState.team -= 10
+	8:00, the rooms: A supervisor alone with forty candidates misses a smartwatch, and goes home exhausted.
 elif GameState.has_flag("rooms_crowded")
 	do GameState.fairness -= 5
 	8:00, the rooms: Nour's quiet desk is gone; she finishes, but the doors bang.
@@ -36,7 +37,8 @@ elif GameState.has_flag("staff_protected")
 	10:15, an incident: Si Hédi reports it without hesitating, by the book.
 elif GameState.has_flag("bought_tech")
 	do GameState.integrity -= 5
-	10:15, an incident: The new equipment beeps at everyone's calculator. The earpiece goes unnoticed.
+	do GameState.fairness -= 5
+	10:15, an incident: The new equipment beeps at everyone's calculator, and candidates lose minutes. The earpiece goes unnoticed.
 if GameState.has_flag("metrics_passrate")
 	The dashboard: It shows green all day, whatever happened.
 	Mme Kchaou: Your dashboard says everything is fine. My notes don't.

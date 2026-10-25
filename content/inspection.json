@@ -7,8 +7,10 @@
 		"Devices handed in at the deposit desk before entry",
 		"Special arrangements checked against the list"
 	],
-	"correct": { "integrity": 2 },
-	"miss": { "integrity": -3 },
+	"effects": {
+		"admit": { "right": { "fairness": 3 }, "wrong": { "fairness": -5 } },
+		"stop": { "right": { "integrity": 2 }, "wrong": { "integrity": -3 } }
+	},
 	"candidates": [
 		{
 			"name": "Candidate 1",

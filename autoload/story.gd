@@ -294,11 +294,18 @@ func is_right_call(index: int, admit: bool) -> bool:
 	return (answer == "admit") == admit
 
 
+## The meters a call on candidate [param index] moves, by the candidate's kind:
+## a right Admit raises Fairness and a wrong Stop of them lowers it; a right
+## Stop raises Integrity and a wrong Admit of them lowers it.
+func inspection_effects(index: int, right: bool) -> Dictionary:
+	return inspection.effects[inspection.candidates[index].answer]["right" if right else "wrong"]
+
+
 ## Apply the effect of one inspection call to the meters, and set the
 ## candidate's [code]admit_flag[/code] when they are admitted. Returns whether it was right.
 func judge_candidate(index: int, admit: bool) -> bool:
 	var right: bool = is_right_call(index, admit)
-	var effects: Dictionary = inspection.correct if right else inspection.miss
+	var effects: Dictionary = inspection_effects(index, right)
 	for meter: String in effects:
 		GameState.set(meter, GameState.get(meter) + int(effects[meter]))
 	var flag: String = inspection.candidates[index].get("admit_flag", "")

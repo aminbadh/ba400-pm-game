@@ -6,12 +6,13 @@
 Aziz: Si Hédi, if I catch someone with a phone and the father says I lied... what happens to me?
 Si Hédi: [#worried] Last year a colleague reported a device and ended up in court. Teachers wore red armbands for him.
 Si Hédi: [#worried] (To you.) You want us to report everything. Then plan for what happens to us when we do.
-M. Jlassi: (Phone.) Also, the region has some budget for anti-cheating equipment, if you'd rather. Very modern.
+M. Jlassi: (Phone.) Also, your budget could buy anti-cheating equipment, if you'd rather. Very modern.
 do Story.show_card(9)
 What does your staffing plan add?
-- Anti-cheating equipment for every room, from the region's budget.
+- Anti-cheating equipment for every room, paid from your budget.
 	do GameState.record_vote(8, "A")
-	do GameState.budget -= 1500
+	do GameState.budget -= 1400
+	do GameState.team -= 10
 	do GameState.set_flag("bought_tech")
 	M. Jlassi: Excellent, the boxes arrive Monday.
 	Si Hédi: Boxes don't supervise.
@@ -19,7 +20,7 @@ What does your staffing plan add?
 	do GameState.record_vote(8, "B")
 	do GameState.team += 5
 	do GameState.integrity += 10
-	do GameState.budget -= 300
+	do GameState.budget -= 400
 	do GameState.set_flag("staff_trained")
 	Aziz: Training! I'll take notes on my notes.
 - A written reporting procedure, with legal backing for supervisors.

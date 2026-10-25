@@ -248,7 +248,7 @@ static func inspection_prompt(pointed: int) -> String:
 ## lines that cover it when it was missed.
 func show_inspection_result(index: int, inspection: Dictionary, right: bool) -> void:
 	var candidate: Dictionary = inspection.candidates[index]
-	var effects: Dictionary = inspection.correct if right else inspection.miss
+	var effects: Dictionary = Story.inspection_effects(index, right)
 	var effect_texts: PackedStringArray = []
 	for meter: String in effects:
 		effect_texts.append("%s %+d" % [meter.capitalize(), int(effects[meter])])

@@ -112,7 +112,7 @@
 				"A **resource histogram** is a column chart showing the number of resources needed for, or assigned to, a project over time.\nStacking the columns by skill shows the total needed each period; after assignment, it shows how each person's time is allocated."
 			],
 			"debrief": {
-				"A": "You cut the peak by thinning supervision, at a cost in integrity.",
+				"A": "You cut the peak by thinning supervision, at a cost in integrity and in your team.",
 				"B": "You levelled the peak by crowding rooms, at a cost in fairness.",
 				"C": "You levelled the peak by borrowing staff, at a cost in budget."
 			},

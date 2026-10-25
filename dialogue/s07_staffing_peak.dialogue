@@ -9,6 +9,7 @@ Day one needs 120 supervisors; you have 95. How do you level it?
 - Run day one with fewer supervisors in each room.
 	do GameState.record_vote(7, "A")
 	do GameState.integrity -= 15
+	do GameState.team -= 10
 	do GameState.set_flag("staff_thin")
 	Si Hédi: One pair of eyes per forty candidates. They'll love that.
 - Regroup candidates into fewer, fuller rooms for day one.
@@ -18,7 +19,7 @@ Day one needs 120 supervisors; you have 95. How do you level it?
 	Fewer rooms, more desks per room.
 	if GameState.has_flag("room12_fixed")
 		Nour: I'll lose the quiet desk, won't I?
-- Borrow 25 from a neighbouring centre; the region pays their lunch.
+- Borrow 25 from a neighbouring centre, paying their transport and lunch.
 	do GameState.record_vote(7, "C")
 	do GameState.budget -= 600
 	do GameState.team += 10

@@ -33,7 +33,7 @@ const BAR_HEIGHT: int = 2
 const STRIP_HEIGHT: int = 2 * (UiStyle.PLATE_BORDER + UiStyle.PLATE_Y) + ROW_HEIGHT + BAR_HEIGHT
 ## The widest number each cell shows, so a cell keeps its width as values change.
 const WIDEST_VALUE: String = "100"
-const WIDEST_BUDGET: String = "3000 TND"
+const WIDEST_BUDGET: String = "2000 TND"
 ## The height of the strip at the bottom; world/centre.tscn's camera keeps it clear.
 const HINT_HEIGHT: int = 14
 ## The flash: the strip's outline turns to the heading colour this many

@@ -1,6 +1,7 @@
 extends SceneTree
 ## Plays the whole story through the Dialogue Manager API with fixed votes, one
-## run per ending plus one that skips scene 8, and checks the final meters, flags,
+## run per ending, one per meter that alone puts the centre in the news, a
+## smooth run after a wrong answer in scene 1 and one that skips scene 8, and checks the final meters, flags,
 ## ending, the cards shown again after wrong answers, the debrief's three lines,
 ## the region's report, and lines that must or must not show. Exits non-zero on failure.
 ##
@@ -12,12 +13,14 @@ extends SceneTree
 ## admits), what the state must be at the end, the region's report as
 ## [criterion, met, lines], and lines that must or must not show, as
 ## "speaker: text" or text alone.
+## The ending's line when the centre makes the news.
+const NEWS_LINE: String = "A photo of an unsigned envelope is on Facebook by noon."
 const RUNS: Array[Dictionary] = [
 	{
 		"name": "smooth",
 		"votes": { 0: "C", 1: "A", 2: "B", 3: "C", 5: "B", 6: "A", 7: "C", 8: "C" },
 		"inspection": [true, false, false, true, false],
-		"integrity": 100, "fairness": 75, "team": 100, "budget": 2400,
+		"integrity": 96, "fairness": 81, "team": 100, "budget": 1400,
 		"flags": ["room12_fixed", "metrics_exam", "raci_clear", "staff_borrowed", "staff_protected"],
 		"cards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
 		"inspection_debrief": "You made 5 of 5 calls right against the checklist. It catches what memory misses.",
@@ -26,7 +29,7 @@ const RUNS: Array[Dictionary] = [
 			["Every paper starts on time", true, ["Every envelope signed and opened on time."]],
 			["No paper leaves its envelope early, and the exam stays secure", true, ["Envelopes sealed, devices kept out.", "The earpiece was caught."]],
 			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
-			["The centre stays within budget", true, ["Within budget: 2400 TND left."]],
+			["The centre stays within budget", true, ["Within budget: 1400 TND left."]],
 		],
 		"present": ["7:30, the gate: The checklist works as well as the rehearsal went."],
 		"absent": ["7:30, the gate: Two phones get in.", "The dashboard: It shows green all day, whatever happened."],
@@ -35,7 +38,7 @@ const RUNS: Array[Dictionary] = [
 		"name": "strained",
 		"votes": { 0: "A", 1: "A", 2: "C", 3: "B", 5: "A", 6: "B", 7: "A", 8: "B" },
 		"inspection": [true, true, false, false, false],
-		"integrity": 40, "fairness": 75, "team": 75, "budget": 2700,
+		"integrity": 41, "fairness": 73, "team": 50, "budget": 1600,
 		"flags": ["room12_fixed", "metrics_people", "raci_double", "staff_thin", "staff_trained"],
 		"cards": [1, 1, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9],
 		"inspection_debrief": "You made 3 of 5 calls right against the checklist. It catches what memory misses.",
@@ -44,7 +47,7 @@ const RUNS: Array[Dictionary] = [
 			["Every paper starts on time", false, ["The escort waited twenty minutes: each signer thought the other had signed."]],
 			["No paper leaves its envelope early, and the exam stays secure", false, ["A smartwatch was missed in a thin room."]],
 			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
-			["The centre stays within budget", true, ["Within budget: 2700 TND left."]],
+			["The centre stays within budget", true, ["Within budget: 1600 TND left."]],
 		],
 		"present": ["7:30, the gate: The checklist works as well as the rehearsal went."],
 		"absent": ["7:30, the gate: Two phones get in."],
@@ -54,7 +57,7 @@ const RUNS: Array[Dictionary] = [
 		"votes": { 0: "B", 1: "B", 2: "A", 3: "A", 5: "C", 6: "C", 7: "B", 8: "A" },
 		# The switched-off phone is admitted, which lets two phones in on exam day.
 		"inspection": [true, true, true, false, true],
-		"integrity": 20, "fairness": 40, "team": 60, "budget": 1500,
+		"integrity": 21, "fairness": 33, "team": 45, "budget": 600,
 		"flags": ["room12_fixed", "metrics_passrate", "phone_admitted", "raci_none", "rooms_crowded", "bought_tech"],
 		"cards": [1, 1, 2, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9],
 		"inspection_debrief": "You made 1 of 5 calls right against the checklist. It catches what memory misses.",
@@ -63,7 +66,7 @@ const RUNS: Array[Dictionary] = [
 			["Every paper starts on time", true, ["Every envelope signed and opened on time."]],
 			["No paper leaves its envelope early, and the exam stays secure", false, ["An envelope sat unsigned on a desk.", "Two phones got in at the gate.", "The earpiece went unnoticed."]],
 			["Every candidate can sit every paper, special arrangements included", false, ["Nour lost her quiet desk in a crowded room."]],
-			["The centre stays within budget", true, ["Within budget: 1500 TND left."]],
+			["The centre stays within budget", true, ["Within budget: 600 TND left."]],
 			["The dashboard told the truth", false, ["Your dashboard showed green all day, on a number the centre didn't control."]],
 		],
 		"present": ["7:30, the gate: The checklist works as well as the rehearsal went.", "7:30, the gate: Two phones get in.", "The dashboard: It shows green all day, whatever happened."],
@@ -74,7 +77,7 @@ const RUNS: Array[Dictionary] = [
 		"votes": { 0: "C", 1: "A", 2: "B", 3: "C", 5: "B", 6: "A", 7: "C" },
 		"skip": [8],
 		"inspection": [true, false, false, true, false],
-		"integrity": 95, "fairness": 75, "team": 80, "budget": 2400,
+		"integrity": 91, "fairness": 81, "team": 80, "budget": 1400,
 		"flags": ["room12_fixed", "metrics_exam", "raci_clear", "staff_borrowed"],
 		"cards": [1, 2, 3, 4, 5, 6, 7, 8],
 		"inspection_debrief": "You made 5 of 5 calls right against the checklist. It catches what memory misses.",
@@ -83,11 +86,110 @@ const RUNS: Array[Dictionary] = [
 			["Every paper starts on time", true, ["Every envelope signed and opened on time."]],
 			["No paper leaves its envelope early, and the exam stays secure", true, ["Envelopes sealed, devices kept out."]],
 			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
-			["The centre stays within budget", true, ["Within budget: 2400 TND left."]],
+			["The centre stays within budget", true, ["Within budget: 1400 TND left."]],
 		],
 		# Scene 9's 10:15 beat shows only when scene 8 set a flag.
 		"present": [],
 		"absent": ["10:15, an incident: A candidate is found with an earpiece."],
+	},
+	# One run per meter that puts the centre in the news through that meter
+	# alone, on the overseer's paths: every other choice right or best.
+	{
+		"name": "in the news through Integrity",
+		"votes": { 0: "C", 1: "A", 2: "B", 3: "C", 5: "B", 6: "C", 7: "A", 8: "A" },
+		# Every gate call wrong, the switched-off phone admitted.
+		"inspection": [false, true, true, false, true],
+		"integrity": 11, "fairness": 60, "team": 35, "budget": 600,
+		"news_through": "integrity",
+		"flags": ["room12_fixed", "metrics_exam", "phone_admitted", "raci_none", "staff_thin", "bought_tech"],
+		"cards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+		"inspection_debrief": "You made 0 of 5 calls right against the checklist. It catches what memory misses.",
+		"ending": "news",
+		"report": [
+			["Every paper starts on time", true, ["Every envelope signed and opened on time."]],
+			["No paper leaves its envelope early, and the exam stays secure", false, ["An envelope sat unsigned on a desk.", "Two phones got in at the gate.", "A smartwatch was missed in a thin room.", "The earpiece went unnoticed."]],
+			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
+			["The centre stays within budget", true, ["Within budget: 600 TND left."]],
+		],
+		"present": ["8:00, the rooms: A supervisor alone with forty candidates misses a smartwatch, and goes home exhausted.", NEWS_LINE],
+		"absent": [],
+	},
+	{
+		"name": "in the news through Fairness",
+		"votes": { 0: "C", 1: "B", 2: "B", 3: "C", 5: "B", 6: "A", 7: "B", 8: "A" },
+		# Both candidates who should be admitted stopped; the rest right.
+		"inspection": [false, false, false, false, false],
+		"integrity": 86, "fairness": 25, "team": 60, "budget": 600,
+		"news_through": "fairness",
+		"flags": ["room12_fixed", "metrics_exam", "raci_clear", "rooms_crowded", "bought_tech"],
+		"cards": [1, 2, 2, 3, 4, 5, 6, 7, 8, 9],
+		"inspection_debrief": "You made 3 of 5 calls right against the checklist. It catches what memory misses.",
+		"ending": "news",
+		"report": [
+			["Every paper starts on time", true, ["Every envelope signed and opened on time."]],
+			["No paper leaves its envelope early, and the exam stays secure", false, ["The earpiece went unnoticed."]],
+			["Every candidate can sit every paper, special arrangements included", false, ["Nour lost her quiet desk in a crowded room."]],
+			["The centre stays within budget", true, ["Within budget: 600 TND left."]],
+		],
+		"present": ["10:15, an incident: The new equipment beeps at everyone's calculator, and candidates lose minutes. The earpiece goes unnoticed.", NEWS_LINE],
+		"absent": [],
+	},
+	{
+		"name": "in the news through Team",
+		"votes": { 0: "A", 1: "A", 2: "B", 3: "C", 5: "A", 6: "B", 7: "A", 8: "A" },
+		"inspection": [true, false, false, true, false],
+		"integrity": 41, "fairness": 76, "team": 25, "budget": 600,
+		"news_through": "team",
+		"flags": ["room12_fixed", "metrics_exam", "raci_double", "staff_thin", "bought_tech"],
+		"cards": [1, 1, 2, 3, 4, 5, 6, 6, 7, 8, 9],
+		"inspection_debrief": "You made 5 of 5 calls right against the checklist. It catches what memory misses.",
+		"ending": "news",
+		"report": [
+			["Every paper starts on time", false, ["The escort waited twenty minutes: each signer thought the other had signed."]],
+			["No paper leaves its envelope early, and the exam stays secure", false, ["A smartwatch was missed in a thin room.", "The earpiece went unnoticed."]],
+			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
+			["The centre stays within budget", true, ["Within budget: 600 TND left."]],
+		],
+		"present": [NEWS_LINE],
+		"absent": [],
+	},
+	{
+		"name": "in the news through Budget",
+		"votes": { 0: "C", 1: "A", 2: "B", 3: "C", 5: "B", 6: "A", 7: "C", 8: "A" },
+		"inspection": [true, false, false, true, false],
+		"integrity": 86, "fairness": 76, "team": 70, "budget": 0,
+		"news_through": "budget",
+		"flags": ["room12_fixed", "metrics_exam", "raci_clear", "staff_borrowed", "bought_tech"],
+		"cards": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+		"inspection_debrief": "You made 5 of 5 calls right against the checklist. It catches what memory misses.",
+		"ending": "news",
+		"report": [
+			["Every paper starts on time", true, ["Every envelope signed and opened on time."]],
+			["No paper leaves its envelope early, and the exam stays secure", false, ["The earpiece went unnoticed."]],
+			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
+			["The centre stays within budget", false, ["The budget ran out."]],
+		],
+		"present": [NEWS_LINE],
+		"absent": [],
+	},
+	# A smooth session stays reachable after a wrong answer in scene 1.
+	{
+		"name": "smooth after scene 1 wrong",
+		"votes": { 0: "C", 1: "B", 2: "B", 3: "C", 5: "B", 6: "A", 7: "C", 8: "C" },
+		"inspection": [true, false, false, true, false],
+		"integrity": 96, "fairness": 61, "team": 100, "budget": 1400,
+		"flags": ["room12_fixed", "metrics_exam", "raci_clear", "staff_borrowed", "staff_protected"],
+		"cards": [1, 2, 2, 3, 4, 5, 6, 7, 8, 9],
+		"inspection_debrief": "You made 5 of 5 calls right against the checklist. It catches what memory misses.",
+		"ending": "smooth",
+		"report": [
+			["Every paper starts on time", true, ["Every envelope signed and opened on time."]],
+			["No paper leaves its envelope early, and the exam stays secure", true, ["Envelopes sealed, devices kept out.", "The earpiece was caught."]],
+			["Every candidate can sit every paper, special arrangements included", true, ["Nour had her quiet desk and her extra time."]],
+			["The centre stays within budget", true, ["Within budget: 1400 TND left."]],
+		],
+		"present": [],
+		"absent": [NEWS_LINE],
 	},
 ]
 const LETTERS: String = "ABC"
@@ -95,7 +197,7 @@ const METERS: Array[String] = ["integrity", "fairness", "team", "budget"]
 ## Give up on a scene after this many lines, in case its dialogue loops.
 const MAX_LINES: int = 200
 ## Exit 2 after this many seconds, in case a run dies on an error and never quits.
-const TIMEOUT_SECONDS: float = 30.0
+const TIMEOUT_SECONDS: float = 60.0
 ## What a check returns when it passed. Success must be explicit: a coroutine
 ## that dies on a runtime error hands its caller an empty value.
 const PASSED: String = "passed"
@@ -235,6 +337,15 @@ func _check(run: Dictionary) -> String:
 
 	if ending != run.ending:
 		problems.append("ending is %s, expected %s" % [ending, run.ending])
+	if run.has("news_through"):
+		var news_below: int = _game_state.get(&"NEWS_BELOW")
+		var below: Array[String] = []
+		for meter: String in METERS:
+			if int(_game_state.call(&"scaled", meter)) < news_below:
+				below.append(meter)
+		print("  below %d: %s" % [news_below, below])
+		if below != [run.news_through]:
+			problems.append("the meters below %d are %s, expected %s alone" % [news_below, below, run.news_through])
 	var expected_flags: Array = run.flags.duplicate()
 	expected_flags.sort()
 	flags.sort()

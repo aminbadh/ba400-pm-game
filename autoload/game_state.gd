@@ -13,7 +13,7 @@ const METER_START: int = 60
 ## The most a meter can hold.
 const METER_MAX: int = 100
 ## Budget in TND, where it starts and the most it can hold.
-const BUDGET_START: int = 3000
+const BUDGET_START: int = 2000
 ## The four meters, in the order the dashboard shows them.
 const METERS: Array[String] = ["integrity", "fairness", "team", "budget"]
 ## A meter below this, on a 0 to 100 scale, puts the centre in the news.

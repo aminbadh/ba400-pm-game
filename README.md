@@ -21,7 +21,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `content/cards.json` | The nine concept cards, each vote's debrief line per option and its best choice |
 | `content/report.json` | The region's report: the charter's success criteria, the line when each is met and the reason, by flag, when it is not |
 | `content/exhibits.json` | The charter, the organisational chart, the RACI chart and the resource histogram |
-| `content/inspection.json` | Scene 4's gate checklist and its five rehearsal candidates |
+| `content/inspection.json` | Scene 4's gate checklist, its five rehearsal candidates, and what a right or wrong call scores for each kind: Fairness for a candidate who should be admitted, Integrity for one who should be stopped |
 | `content/scenes.json` | The scene order, who starts each scene and where, the characters' names and colours, the last screen's line-up, the place names |
 | `ui/palette.gd` | Every colour: the pack's palette, the lycée's cream walls and blue doors, the UI colours and every text and background pair |
 | `ui/ui_style.gd` | The pixel frame, the dark name plates and labels every screen shares, and the spacing rule: `INSET` (6 px) inside every frame, `GAP` (4) between separate items, `TIGHT` (2) between the lines of a list, `EDGE` (4) from a panel to the screen's edge, `PLATE_X` and `PLATE_Y` (3, 1) inside the small plates |
@@ -42,7 +42,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `tools/` | The art generators (Python, run with `uv`), the screenshot capture and its washed-out filter, the licence check |
 | `fonts/` | Ark Pixel 10 px and its licence |
 | `addons/dialogue_manager/` | [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager) v4.1.0, vendored |
-| `tests/` | `story_test.gd` plays the story to each ending and with scene 8 skipped; `flow_test.gd` drives restart, skip and the ending; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files, and compares the votes and debrief with the story script when it can read it; `contrast_test.gd` checks every text colour reaches 7:1; `spacing_test.gd` checks every margin, separation and offset under `ui/` comes from `UiStyle`'s constants; `sound_test.gd` checks the music and the Sound switch; `controls_test.gd` checks every action has a key and a controller button, that the hints follow the device, and the full screen keys; `layout_test.gd` checks the pause menu fits between the strip and its hint, and the organisational chart's boxes and lines |
+| `tests/` | `story_test.gd` plays the story to each ending, into the news through each meter alone, to a smooth session after a wrong answer in scene 1, and with scene 8 skipped; `flow_test.gd` drives restart, skip and the ending; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files, and compares the votes and debrief with the story script when it can read it; `contrast_test.gd` checks every text colour reaches 7:1; `spacing_test.gd` checks every margin, separation and offset under `ui/` comes from `UiStyle`'s constants; `sound_test.gd` checks the music and the Sound switch; `controls_test.gd` checks every action has a key and a controller button, that the hints follow the device, and the full screen keys; `layout_test.gd` checks the pause menu fits between the strip and its hint, and the organisational chart's boxes and lines |
 | `export_presets.cfg` | The `Windows` preset (64-bit, one executable with the game inside) and the `Web` preset (single-threaded) |
 
 ## Controls
@@ -84,7 +84,7 @@ Story text lives in the `.dialogue` files under `dialogue/`, in Dialogue Manager
 
 | In a dialogue file | What it does |
 | --- | --- |
-| `do GameState.integrity += 10` | Change a meter: `integrity`, `fairness`, `team` (0 to 100) or `budget` (TND, 0 to 3,000) |
+| `do GameState.integrity += 10` | Change a meter: `integrity`, `fairness`, `team` (0 to 100) or `budget` (TND, 0 to 2,000) |
 | `do GameState.set_flag("raci_clear")` | Set a flag; `if GameState.has_flag("raci_clear")` tests it |
 | `do GameState.record_vote(6, "A")` | Record the room's vote in a scene, for the debrief |
 | `do Story.show_card(7)` | Show a card full screen until the presenter presses E, and add it to the binder |
@@ -127,7 +127,7 @@ Run from the project root. `godot` stands for the Godot binary (on macOS, `/Appl
 ```sh
 godot --headless --path . --import                   # import assets; must print no errors
 godot --headless --path . --quit-after 300           # run the title screen briefly
-godot --headless --path . -s tests/story_test.gd     # play the story to each ending; exits 1 on failure, 2 on timeout
+godot --headless --path . -s tests/story_test.gd     # play the story to each ending, and into the news through each meter; exits 1 on failure, 2 on timeout
 godot --headless --path . -s tests/flow_test.gd      # restart, new game and skip, the report and skipping the ending; exits 1 on failure
 godot --headless --path . --fixed-fps 60 -s tests/route_test.gd  # walk to each scene's character with the movement keys; exits 1 if the player stops short
 godot --headless --path . -s tests/content_test.gd   # cards, debrief and best lines against the story script, flags, page and title fit, the strip's live values from scene 0, the report's pages, the last screen and its wave frames' clear edges, Am Lassaad's lines; exits 1 on failure

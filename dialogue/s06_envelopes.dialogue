@@ -16,11 +16,13 @@ Who is Accountable for receiving the envelopes?
 	Si Hédi: One name in the A column. That's how it should be.
 - Mme Salma and Agent Fethi together\: two signatures, two checks.
 	do GameState.record_vote(6, "B")
+	do GameState.team -= 5
 	do GameState.set_flag("raci_double")
 	=> shrug
 - Whoever is on duty at 7:00\: the escort can't wait for anyone.
 	do GameState.record_vote(6, "C")
 	do GameState.integrity -= 10
+	do GameState.team -= 5
 	do GameState.set_flag("raci_none")
 	=> shrug
 => END
