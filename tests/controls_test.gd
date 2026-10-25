@@ -7,14 +7,19 @@ extends SceneTree
 ## after a controller press and back to the keys after a key press, on the title
 ## screen too; the controller check names what a press is; and one push of the
 ## left stick, a stream of motion events, moves the binder and the pause menu
-## one row, with a held push repeating after 0.4 s and every 0.15 s. Exits
-## non-zero on failure.
+## one row, with a held push repeating after 0.4 s and every 0.15 s; F11 and
+## Alt+Enter switch full screen, anywhere and in the pause menu, without Enter
+## also confirming the menu's item, and so does the menu's Full screen item.
+## Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/controls_test.gd
 
 
-## The keyboard's direct picks: a vote's A, B and C, the gate's admit and stop.
-const KEYBOARD_ONLY: Array[String] = ["choice_1", "choice_2", "choice_3"]
+## The keyboard's direct picks: a vote's A, B and C, the gate's admit and stop;
+## and full screen, which a controller reaches through the pause menu only.
+const KEYBOARD_ONLY: Array[String] = ["choice_1", "choice_2", "choice_3", "full_screen"]
+## The keys that switch full screen: F11 and Alt+Enter, as [physical key, Alt].
+const FULL_SCREEN_KEYS: Array[Array] = [[KEY_F11, false], [KEY_ENTER, true]]
 const TITLE_SCENE: String = "res://ui/title/title.tscn"
 ## Scripts that need the autoloads, loaded once they exist.
 const STAGE_SCRIPT: String = "res://ui/stage/stage.gd"
@@ -46,6 +51,8 @@ func _main() -> void:
 	_check_controller_names()
 	if await _check_stick() != true:
 		_problems.append("the stick check stopped on a script error")
+	if await _check_full_screen() != true:
+		_problems.append("the full screen check stopped on a script error")
 	# Close the map, stop the music at once, so nothing is held at exit.
 	root.get_node("Story").call(&"restart")
 	root.get_node("Music").call(&"silence")
@@ -78,6 +85,12 @@ func _check_input_map() -> void:
 				_problems.append("%s picks one letter directly, so it must have no joypad event" % action)
 		elif pads == 0:
 			_problems.append("%s has no joypad event" % action)
+	var full_screen_keys: Array[Array] = []
+	for event: InputEvent in InputMap.action_get_events(&"full_screen"):
+		if event is InputEventKey:
+			full_screen_keys.append([(event as InputEventKey).physical_keycode, (event as InputEventKey).alt_pressed])
+	print("  full_screen keys: %s" % [full_screen_keys])
+	_expect(full_screen_keys == FULL_SCREEN_KEYS, "full_screen has the keys %s, not %s" % [full_screen_keys, FULL_SCREEN_KEYS])
 
 
 # A controller press switches every hint to its buttons; a key press switches
@@ -142,6 +155,51 @@ func _check_stick() -> bool:
 	pause.call(&"_open")
 	await _settle()
 	await _expect_rows(pause, "the pause menu")
+	pause.call(&"_resume")
+	await _settle()
+	return true
+
+
+# F11 and Alt+Enter switch the window between full screen and windowed, on the
+# map and in the pause menu, where Alt+Enter's Enter must not also confirm the
+# selected item (here Full screen itself, which would switch it back); the
+# menu's item switches it too and reads the new state.
+func _check_full_screen() -> bool:
+	print("== Full screen")
+	var screen: Node = root.get_node("Screen")
+	screen.call(&"set_full_screen", false)
+	var alt_enter: InputEventKey = _key(KEY_ENTER)
+	alt_enter.alt_pressed = true
+	var pause: Node = current_scene.get_node("PauseMenu")
+	var item: int = (pause.get(&"OPTIONS") as Array).find("Full screen")
+	var steps: Array[Dictionary] = [
+		{ "name": "F11 on the map", "event": _key(KEY_F11), "on": true, "paused": false },
+		{ "name": "Alt+Enter on the map", "event": alt_enter, "on": false, "paused": false },
+		{ "name": "F11 in the pause menu", "event": _key(KEY_F11), "on": true, "paused": true },
+		{ "name": "Alt+Enter in the pause menu", "event": alt_enter.duplicate(), "on": false, "paused": true },
+	]
+	for step: Dictionary in steps:
+		if step.paused and not pause.get(&"visible"):
+			pause.call(&"_open")
+			pause.call(&"_select", item)
+			await _settle()
+		Input.parse_input_event(step.event)
+		await _settle()
+		var on: bool = screen.call(&"is_full_screen")
+		print("  after %s: full screen %s, window mode %d" % [step.name, on, root.mode])
+		_expect(on == step.on, "after %s full screen is %s, expected %s" % [step.name, on, step.on])
+		# Headless, there is no window to switch; with one, its mode must follow.
+		if DisplayServer.get_name() != "headless":
+			_expect((DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN) == step.on, "after %s the window mode is %d" % [step.name, DisplayServer.window_get_mode()])
+		if step.paused:
+			var text: String = pause.call(&"option_text", item)
+			_expect(text == ("Full screen: On" if step.on else "Full screen: Off"), "after %s the menu reads \"%s\"" % [step.name, text])
+	_expect(pause.get(&"visible") and paused, "Alt+Enter in the pause menu confirmed an item")
+	pause.call(&"_choose", item)
+	print("  after the menu's item: full screen %s, \"%s\"" % [screen.call(&"is_full_screen"), pause.call(&"option_text", item)])
+	_expect(screen.call(&"is_full_screen") and pause.call(&"option_text", item) == "Full screen: On", "the menu's Full screen item did not switch full screen on")
+	pause.call(&"_choose", item)
+	_expect(not screen.call(&"is_full_screen"), "the menu's Full screen item did not switch full screen off")
 	pause.call(&"_resume")
 	await _settle()
 	return true
