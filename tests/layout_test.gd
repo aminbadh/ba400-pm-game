@@ -62,6 +62,12 @@ func _check_pause_menu() -> bool:
 	pause.call(&"_show_check")
 	await _settle()
 	_check_pause_view(pause, "the controller check")
+	# A line longer than the screen is wide wraps inside the panel.
+	var pressed: Label = pause.get(&"_pressed_label")
+	pressed.text = "Pressed: Right stick right (axis 2), Right stick right (axis 2), Right stick right (axis 2)"
+	pause.call(&"_place")
+	await _settle()
+	_check_pause_view(pause, "the controller check with a long line")
 	pause.call(&"_resume")
 	await _settle()
 	return true

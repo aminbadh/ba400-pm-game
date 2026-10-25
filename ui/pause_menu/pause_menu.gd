@@ -176,6 +176,7 @@ func _check_input(event: InputEvent) -> void:
 	var pressed: String = pressed_name(event)
 	if not pressed.is_empty():
 		_pressed_label.text = PRESSED % pressed
+		_place()
 	if event.is_action_pressed(&"back") or (event is InputEventKey and event.is_action_pressed(&"pause")):
 		_show_menu()
 
@@ -245,8 +246,20 @@ func _refresh_hint() -> void:
 
 
 # The menu's panel, centred across the screen and in the room between the
-# strip at the top and the hint at the bottom.
+# strip at the top and the hint at the bottom. The controller check's lines
+# widen it up to the screen's width, then wrap.
 func _place() -> void:
+	var inner_widest: float = SCREEN.x - 2 * (UiStyle.EDGE + UiStyle.FRAME_MARGIN + UiStyle.INSET)
+	for label: Label in [_controller_label, _pressed_label]:
+		var font: Font = label.get_theme_font(&"font")
+		var font_size: int = label.get_theme_font_size(&"font_size")
+		var widest: float = 0.0
+		for line: String in label.text.split("\n"):
+			widest = maxf(widest, ceilf(font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x))
+		label.custom_minimum_size.x = minf(widest, inner_widest)
+		# A wrapping label's height follows its width, which the panel sets only later.
+		label.size.x = label.custom_minimum_size.x
+		label.update_minimum_size()
 	_panel.reset_size()
 	var panel_size: Vector2 = _panel.get_combined_minimum_size()
 	var room_top: float = Dashboard.STRIP_HEIGHT + UiStyle.EDGE
@@ -254,11 +267,10 @@ func _place() -> void:
 	_panel.position = (Vector2(SCREEN.x - panel_size.x, room_top + room_bottom - panel_size.y) / 2.0).floor()
 
 
-# A label that wraps at the panel's narrowest inner width.
+# A label that wraps once [method _place] has made it as wide as it may be.
 func _wrapping_label(color: Color) -> Label:
 	var made: Label = UiStyle.label(color)
 	made.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	made.custom_minimum_size.x = PANEL_WIDTH - 2 * (UiStyle.FRAME_MARGIN + UiStyle.INSET)
 	return made
 
 
