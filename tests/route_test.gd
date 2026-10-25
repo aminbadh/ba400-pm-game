@@ -42,7 +42,7 @@ func _main() -> void:
 	if _story == null or _game_state == null:
 		_finish(["the GameState or Story autoload is missing"])
 		return
-	_story.call(&"new_game", false)
+	_story.call(&"new_game")
 	await _settle()
 	_map = current_scene
 	_player = _map.get_node("Actors/Player") as CharacterBody2D
@@ -55,6 +55,8 @@ func _main() -> void:
 	_story.call(&"restart")
 	await _settle()
 	current_scene.queue_free()
+	# Stop the music at once, so no track is still held at exit.
+	root.get_node("Music").call(&"silence")
 	await _settle()
 	for scene: Dictionary in _story.get(&"scenes"):
 		var resource: DialogueResource = load(scene.dialogue) as DialogueResource

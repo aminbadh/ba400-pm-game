@@ -48,6 +48,13 @@ func _ready() -> void:
 		_players.append(player)
 
 
+# Let go of the tracks, so none is still held when the game quits.
+func _exit_tree() -> void:
+	for player: AudioStreamPlayer in _players:
+		player.stop()
+		player.stream = null
+
+
 ## Crossfade to [param track], looping; an empty string fades the music out.
 ## Asking for the track already playing changes nothing.
 func play(track: String) -> void:
@@ -75,6 +82,18 @@ func play(track: String) -> void:
 ## Stop the music, fading it out.
 func stop() -> void:
 	play("")
+
+
+## Stop the music at once, with no fade, and let go of the tracks. The audio
+## server lets a stopped track go on its next mix, so a caller about to quit
+## waits a few frames after this.
+func silence() -> void:
+	current_track = ""
+	if _crossfade != null:
+		_crossfade.kill()
+	for player: AudioStreamPlayer in _players:
+		player.stop()
+		player.stream = null
 
 
 ## Fade the music out, for a card on screen.

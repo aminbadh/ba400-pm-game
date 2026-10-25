@@ -187,6 +187,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+# Let go of the voice, so it is not still held when the game quits.
+func _exit_tree() -> void:
+	_voice.stop()
+	_voice.stream = null
+
+
 ## Start some dialogue.
 func start(with_dialogue_resource: DialogueResource = null, cue: String = "", extra_game_states: Array = []) -> void:
 	temporary_game_states = [self] + extra_game_states

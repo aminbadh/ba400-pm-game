@@ -33,7 +33,7 @@ func _main() -> void:
 	await _frames(10)
 	await _capture("title")
 
-	_story.call(&"new_game", false)
+	_story.call(&"new_game")
 	await _frames(10)
 	var map: Node = current_scene
 	var player: Node2D = map.get_node("Actors/Player")

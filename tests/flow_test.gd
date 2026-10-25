@@ -1,8 +1,9 @@
 extends SceneTree
 ## Drives the Story autoload the way the title screen and the pause menu do, on
 ## the real map: restarting mid-scene and starting a new game must leave no
-## scene behind, so the first skip goes to scene 1; and skipping the ending goes
-## to the debrief, then the last screen. Exits non-zero on failure.
+## scene behind, so the first skip goes to scene 1; the ending shows the
+## region's report, and skipping the ending goes to the debrief, then the last
+## screen. Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/flow_test.gd
 
@@ -38,6 +39,8 @@ func _main() -> void:
 	# makes by storing each dialogue resource in its own line data, so nothing
 	# leaks at exit.
 	current_scene.queue_free()
+	# Stop the music at once, so no track is still held at exit.
+	root.get_node("Music").call(&"silence")
 	await _settle()
 	for scene: Dictionary in _story.get(&"scenes"):
 		var resource: DialogueResource = load(scene.dialogue) as DialogueResource
@@ -49,7 +52,7 @@ func _main() -> void:
 # Start a scene, restart to the title, start a new game and skip: the next scene is 1.
 func _check_restart() -> void:
 	print("== Restart, new game, skip")
-	_story.call(&"new_game", false)
+	_story.call(&"new_game")
 	await _settle()
 	_game_state.set(&"scene", MIDDLE_SCENE)
 	_story.call(&"start_scene", MIDDLE_SCENE)
@@ -58,7 +61,7 @@ func _check_restart() -> void:
 	_story.call(&"restart")
 	await _settle()
 	print("  restarted to %s" % current_scene.scene_file_path)
-	_story.call(&"new_game", false)
+	_story.call(&"new_game")
 	await _settle()
 	_story.call(&"skip_scene")
 	await _settle()
@@ -68,10 +71,10 @@ func _check_restart() -> void:
 	_expect(not _story.get(&"in_scene"), "a scene is running after the skip")
 
 
-# Skip during the ending: its title leaves, the debrief opens, then the last screen.
+# The ending's report, then a skip at the ending's title: the title leaves, the debrief opens, then the last screen.
 func _check_ending_skip() -> void:
 	print("== Skip during the ending")
-	_story.call(&"new_game", false)
+	_story.call(&"new_game")
 	await _settle()
 	var stage: Object = _story.get(&"stage")
 	var binder: Object = _story.get(&"binder")
@@ -79,23 +82,39 @@ func _check_ending_skip() -> void:
 		_problems.append("the map's stage or binder did not register with Story")
 		return
 	var title: Label = stage.get(&"_backdrop_title")
-	var body: Label = stage.get(&"_backdrop_body")
+	var report: Control = stage.get(&"_card_view")
+	var last_screen: Control = stage.call(&"last_screen")
 	_game_state.set(&"scene", ENDING_SCENE)
 	_story.call(&"start_scene", ENDING_SCENE)
 	await _settle()
-	print("  ending shows \"%s\"" % title.text)
-	_expect(not title.text.is_empty(), "the ending shows no title")
+	# M. Jlassi's call, then the report.
+	var balloon: Node = _story.get(&"_balloon")
+	for i: int in 3:
+		balloon.call(&"next", (balloon.get(&"dialogue_line") as DialogueLine).next_id)
+		await _settle()
+		if report.visible:
+			break
+	print("  the ending shows the report: %s" % report.visible)
+	_expect(report.visible, "the ending does not show the region's report")
+	# The presenter pages through the report; the ending's title follows.
+	for i: int in 5:
+		if not report.visible:
+			break
+		stage.call(&"_next_page")
+		await _settle()
+	print("  after the report, the ending shows \"%s\"" % title.text)
+	_expect(not title.text.is_empty(), "the ending shows no title after the report")
 	_story.call(&"skip_scene")
 	await _settle()
-	print("  after the skip: title \"%s\", binder open: %s" % [title.text, binder.call(&"is_open")])
-	_expect(title.text.is_empty(), "the ending's title \"%s\" stays on screen after the skip" % title.text)
+	print("  after the skip: report shown %s, title \"%s\", binder open: %s" % [report.visible, title.text, binder.call(&"is_open")])
+	_expect(not report.visible and title.text.is_empty(), "the report or the ending's title stays on screen after the skip")
 	_expect(binder.call(&"is_open") and binder.get(&"_mode") == "debrief", "the debrief did not open after the skip")
 	# The presenter closes the debrief.
 	binder.call(&"_close")
 	await _settle()
 	var scene: int = _game_state.get(&"scene")
-	print("  after the debrief: \"%s\", next scene %d" % [body.text, scene])
-	_expect(body.text.begins_with("Your centre's quality plan"), "the last screen did not show after the debrief")
+	print("  after the debrief: last screen shown %s, next scene %d" % [last_screen.visible, scene])
+	_expect(last_screen.visible, "the last screen did not show after the debrief")
 	_expect(scene == STORY_OVER, "the story is not over after the last screen: next scene %d" % scene)
 
 
