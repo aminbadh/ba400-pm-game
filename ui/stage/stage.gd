@@ -1,8 +1,9 @@
 class_name Stage
 extends Node
 ## The full-screen moments of the story: concept cards, exhibits (the charter
-## and the charts), scene 4's gate inspection, and the backdrop behind the
-## ending. Each waits for the presenter before the dialogue goes on.
+## and the charts), scene 4's gate inspection, the region's report, the
+## backdrop behind the ending and the last screen. Each waits for the presenter
+## before the dialogue goes on, except the last screen, which stays.
 ##
 ## The dialogue reaches it through the Story autoload, where it registers itself.
 
@@ -10,10 +11,10 @@ extends Node
 ## Ignore presses for this long after a page opens, so a double press on the
 ## line before it cannot skip a card the room has not seen.
 const INPUT_GUARD_MSEC: int = 300
-## What the footer says while a page waits for the presenter.
-const NEXT_HINT: String = "E  next"
-## Draw order: the backdrop sits under the dashboard, the rest over everything
-## but the dialogue balloon's vote.
+## What the footer says while a page waits for the presenter; see [Hints].
+const NEXT_HINT: String = "{interact}  next"
+## Draw order: the backdrop and the last screen sit under the dashboard, the
+## rest over everything but the dialogue balloon's vote.
 const BACKDROP_LAYER: int = 15
 const FRONT_LAYER: int = 60
 ## The backdrop is a bright slide, like the cards.
@@ -28,11 +29,6 @@ const BACKDROP_TITLE_LINES: int = 1
 ## [constant Balloon.NAME_PLATE_TOP], 110).
 const BACKDROP_TITLE_TOP: int = Dashboard.STRIP_HEIGHT + UiStyle.GAP
 const BACKDROP_TITLE_HEIGHT: int = int(Balloon.NAME_PLATE_TOP) - UiStyle.GAP - BACKDROP_TITLE_TOP
-## The body of the last screen, below the dashboard's strip, and the room it
-## keeps from the slide's sides and bottom.
-const BACKDROP_BODY_TOP: int = Dashboard.STRIP_HEIGHT + UiStyle.GAP
-const BACKDROP_BODY_SIDE: int = 20
-const BACKDROP_BODY_BOTTOM: int = 12
 ## The backdrop title's size, and its leading: lines 4 px closer than the font's.
 const BACKDROP_TITLE_SIZE: int = 20
 const BACKDROP_TITLE_LEADING: int = -4
@@ -45,6 +41,12 @@ const DIVIDER_RECT: Rect2 = Rect2(186, 8, 1, 164)
 const CANDIDATE_RECT: Rect2 = Rect2(192, 6, 122, 140)
 const PROMPT_LEFT: int = 196
 const PROMPT_WIDTH: int = 118
+## The inspection's two calls, picked with 1 and 2, or pointed at with left
+## and right and confirmed; the one pointed at is marked.
+const ADMIT_TEXT: String = "Admit"
+const STOP_TEXT: String = "Stop"
+const POINTED_MARK: String = ">"
+const CONFIRM_HINT: String = "{interact}"
 ## Wrapped text on a slide: lines 2 px closer than the font's.
 const WRAPPED_LEADING: int = -2
 const RIGHT_CALL_COLOR: Color = Palette.RIGHT_CALL
@@ -67,7 +69,7 @@ var _card_view: CardView
 var _exhibit_view: ExhibitView
 var _inspection_view: Control
 var _backdrop_title: Label
-var _backdrop_body: Label
+var _last_screen: LastScreen
 
 var _waiter: Waiter = null
 ## What the current wait accepts: "next", or "admit_or_stop".
@@ -75,6 +77,10 @@ var _wait_kind: String = ""
 var _opened_at: int = 0
 var _card: Dictionary = {}
 var _page: int = 0
+# The exhibit on screen, to redraw its hint.
+var _exhibit_name: String = ""
+var _exhibit: Dictionary = {}
+var _exhibit_variant: String = ""
 
 var _checklist_labels: Array[Label] = []
 var _flashes: Array[Tween] = []
@@ -84,11 +90,14 @@ var _candidate_shows_label: Label
 var _result_label: Label
 var _after_label: Label
 var _prompt_label: Label
+# The call pointed at during the inspection: 0 admit, 1 stop, -1 none yet.
+var _pointed: int = -1
 
 
 func _ready() -> void:
 	_build()
 	Story.stage = self
+	Hints.device_changed.connect(_redraw_hints)
 
 
 func _exit_tree() -> void:
@@ -109,9 +118,22 @@ func _input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				_next_page()
 		"admit_or_stop":
-			if event.is_action_pressed(&"choice_1") or event.is_action_pressed(&"choice_2"):
-				get_viewport().set_input_as_handled()
-				_resolve(event.is_action_pressed(&"choice_1"))
+			_handle_inspection_input(event)
+
+
+func _handle_inspection_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"choice_1") or event.is_action_pressed(&"choice_2"):
+		get_viewport().set_input_as_handled()
+		_resolve(event.is_action_pressed(&"choice_1"))
+	elif event.is_action_pressed(&"move_left") or event.is_action_pressed(&"ui_left"):
+		get_viewport().set_input_as_handled()
+		_point(0)
+	elif event.is_action_pressed(&"move_right") or event.is_action_pressed(&"ui_right"):
+		get_viewport().set_input_as_handled()
+		_point(1)
+	elif event.is_action_pressed(&"interact") and _pointed >= 0:
+		get_viewport().set_input_as_handled()
+		_resolve(_pointed == 0)
 
 
 #region Calls from Story
@@ -137,15 +159,46 @@ func present_exhibit(exhibit_name: String, exhibit: Dictionary, variant: String)
 		await _wait("next")
 		_card_view.hide()
 		return
-	_exhibit_view.show_exhibit(exhibit_name, exhibit, variant, NEXT_HINT)
+	_exhibit_name = exhibit_name
+	_exhibit = exhibit
+	_exhibit_variant = variant
+	_exhibit_view.show_exhibit(exhibit_name, exhibit, variant, Hints.text(NEXT_HINT))
 	_exhibit_view.show()
 	_card = {}
 	await _wait("next")
 	_exhibit_view.hide()
 
 
+## Show the region's report, styled like the charter: each success criterion
+## from [method Story.report] with a tick or a cross and its reasons, over as
+## many pages as it needs.
+func present_report(title: String, entries: Array[Dictionary]) -> void:
+	_card = { "number": "", "title": title, "slides": "", "pages": [], "rich_pages": report_pages(entries) }
+	_page = 0
+	_show_card_page()
+	_card_view.show()
+	await _wait("next")
+	_card_view.hide()
+
+
+## The report's entries as pages of the slide's rich text, each filled with as
+## many whole entries as fit [constant CardView.BODY_SIZE].
+func report_pages(entries: Array[Dictionary]) -> Array[String]:
+	var pages: Array[String] = []
+	var page: Array[String] = []
+	for entry: Dictionary in entries:
+		var paragraph: String = CardView.report_paragraph(entry)
+		if not page.is_empty() and _card_view.rich_height(page + [paragraph]) > CardView.BODY_SIZE.y:
+			pages.append("\n".join(page))
+			page = []
+		page.append(paragraph)
+	if not page.is_empty():
+		pages.append("\n".join(page))
+	return pages
+
+
 ## Show candidate [param index] at the gate; returns true when the presenter
-## presses 1 to admit, false for 2 to stop.
+## admits them, false to stop them: 1 or 2, or left or right and then interact.
 func inspect_candidate(index: int, inspection: Dictionary) -> bool:
 	var candidates: Array = inspection.candidates
 	var candidate: Dictionary = candidates[index]
@@ -161,7 +214,8 @@ func inspect_candidate(index: int, inspection: Dictionary) -> bool:
 	_candidate_shows_label.text = candidate_shows(candidate, says_rng)
 	_result_label.text = ""
 	_after_label.text = ""
-	_prompt_label.text = "1  Admit    2  Stop"
+	_pointed = -1
+	_prompt_label.text = inspection_prompt(_pointed)
 	_inspection_view.show()
 	var admit: Variant = await _wait("admit_or_stop")
 	return admit as bool
@@ -175,6 +229,17 @@ static func candidate_shows(candidate: Dictionary, rng: RandomNumberGenerator) -
 	if says.is_empty():
 		return candidate.shows
 	return (candidate.shows as String).format({ "says": says[rng.randi_range(0, says.size() - 1)] })
+
+
+## The inspection's prompt: the two calls with their keys or buttons, the one
+## pointed at marked, and how to confirm it once one is.
+static func inspection_prompt(pointed: int) -> String:
+	var admit: String = "%s %s" % [POINTED_MARK if pointed == 0 else Hints.text("{admit}"), ADMIT_TEXT]
+	var stop: String = "%s %s" % [POINTED_MARK if pointed == 1 else Hints.text("{stop}"), STOP_TEXT]
+	var prompt: String = "%s    %s" % [admit, stop]
+	if pointed >= 0:
+		prompt += "    " + Hints.text(CONFIRM_HINT)
+	return prompt
 
 
 ## Say whether the call was right, with its effect, and flash the checklist
@@ -191,10 +256,10 @@ func show_inspection_result(index: int, inspection: Dictionary, right: bool) -> 
 	if candidate.has("after_if_room12_fixed") and GameState.has_flag("room12_fixed"):
 		after = (after + " " + candidate.after_if_room12_fixed).strip_edges()
 	_after_label.text = after
-	_prompt_label.text = NEXT_HINT
 	if not right:
 		for line: Variant in candidate.lines:
 			_flash(_checklist_labels[int(line)])
+	_prompt_label.text = Hints.text(NEXT_HINT)
 	await _wait("next")
 
 
@@ -202,11 +267,20 @@ func end_inspection() -> void:
 	_inspection_view.hide()
 
 
-## Show the backdrop with a title and body; both empty hides it.
-func set_backdrop(title: String, body: String) -> void:
+## Show the backdrop with a title; an empty title hides it.
+func set_backdrop(title: String) -> void:
 	_backdrop_title.text = title
-	_backdrop_body.text = body
-	_backdrop.visible = not (title.is_empty() and body.is_empty())
+	_backdrop.visible = not title.is_empty()
+
+
+## Show the last screen, which stays until a restart.
+func show_last_screen(title: String, subtitle: String, body: String, closing: String) -> void:
+	_last_screen.present(title, subtitle, body, closing)
+
+
+## The last screen, for the tests.
+func last_screen() -> LastScreen:
+	return _last_screen
 
 
 ## True if the backdrop's title fits inside its margins on at most
@@ -227,6 +301,7 @@ func cancel() -> void:
 	_card_view.hide()
 	_exhibit_view.hide()
 	_inspection_view.hide()
+	_last_screen.hide()
 
 
 #endregion
@@ -247,9 +322,13 @@ func _resolve(value: Variant) -> void:
 	waiter.done.emit(value)
 
 
+func _point(choice: int) -> void:
+	_pointed = choice
+	_redraw_hints()
+
+
 func _next_page() -> void:
-	var pages: Array = _card.get("pages", [])
-	if _page < pages.size() - 1:
+	if _page < _page_count() - 1:
 		_page += 1
 		_opened_at = Time.get_ticks_msec()
 		_show_card_page()
@@ -257,11 +336,28 @@ func _next_page() -> void:
 	_resolve(null)
 
 
+func _page_count() -> int:
+	return (_card.get("rich_pages", _card.get("pages", [])) as Array).size()
+
+
 func _show_card_page() -> void:
-	var pages: Array = _card.pages
 	# Card numbers come from JSON as floats; exhibits with pages have none.
 	var number: String = "" if typeof(_card.number) == TYPE_STRING else str(int(_card.number))
-	_card_view.show_page(number, _card.title, _card.slides, pages[_page], _page, pages.size(), NEXT_HINT)
+	var footer: String = Hints.text(NEXT_HINT)
+	if _card.has("rich_pages"):
+		_card_view.show_rich_page(_card.title, _card.rich_pages[_page], _page, _page_count(), footer)
+	else:
+		_card_view.show_page(number, _card.title, _card.slides, _card.pages[_page], _page, _page_count(), footer)
+
+
+# Redraw every hint on screen for the device used last.
+func _redraw_hints() -> void:
+	if _card_view.visible and not _card.is_empty():
+		_show_card_page()
+	if _exhibit_view.visible:
+		_exhibit_view.show_exhibit(_exhibit_name, _exhibit, _exhibit_variant, Hints.text(NEXT_HINT))
+	if _inspection_view.visible:
+		_prompt_label.text = inspection_prompt(_pointed) if _wait_kind == "admit_or_stop" else Hints.text(NEXT_HINT)
 
 
 func _flash(label: Label) -> void:
@@ -298,12 +394,14 @@ func _build() -> void:
 	_backdrop_title.position = Vector2(BACKDROP_MARGIN, BACKDROP_TITLE_TOP)
 	_backdrop_title.size = Vector2(CardView.SCREEN.x - 2 * BACKDROP_MARGIN, BACKDROP_TITLE_HEIGHT)
 	_backdrop.add_child(_backdrop_title)
-	_backdrop_body = _label(CardView.INK, HORIZONTAL_ALIGNMENT_CENTER)
-	_backdrop_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_backdrop_body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_backdrop_body.position = Vector2(BACKDROP_BODY_SIDE, BACKDROP_BODY_TOP)
-	_backdrop_body.size = Vector2(CardView.SCREEN.x - 2 * BACKDROP_BODY_SIDE, CardView.SCREEN.y - BACKDROP_BODY_TOP - BACKDROP_BODY_BOTTOM)
-	_backdrop.add_child(_backdrop_body)
+
+	# The last screen, on its own layer at the backdrop's depth, under the dashboard.
+	var last_layer: CanvasLayer = CanvasLayer.new()
+	last_layer.layer = BACKDROP_LAYER
+	add_child(last_layer)
+	_last_screen = LastScreen.new()
+	_last_screen.hide()
+	last_layer.add_child(_last_screen)
 
 	_front = CanvasLayer.new()
 	_front.layer = FRONT_LAYER

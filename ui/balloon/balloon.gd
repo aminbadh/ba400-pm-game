@@ -8,7 +8,8 @@ extends CanvasLayer
 ## the text typed out at most [constant LINES_PER_PAGE] lines at a time. A press
 ## while typing shows the whole page; the next press goes on to the next page or
 ## line. Lines with no speaker are narration: no portrait, no plate. With
-## [member Story.voice_blips] on, the speaker's voice plays while a line types.
+## [member Story.sound_on], the speaker's voice plays while a line types.
+## The portrait sits as far from the frame on the left as above and below.
 ##
 ## A vote shows the question at the top and the options as the room's cards
 ## below it, A blue, B orange, C green, with the 20-second bar under them; it is
@@ -46,8 +47,12 @@ const RESPONSES_MENU_SCRIPT: Script = preload("res://addons/dialogue_manager/nod
 ## The layout, in base pixels. Spacing comes from [UiStyle].
 const SCREEN: Vector2 = Vector2(320, 180)
 const BOX_HEIGHT: float = 58.0
-## The portrait drawn in the box, inside its 1 px outline.
+## The portrait drawn in the box, inside its 1 px outline, and with the outline.
 const PORTRAIT_SHOWN: float = 46.0
+const PORTRAIT_FRAMED: float = PORTRAIT_SHOWN + 2.0 * UiStyle.PLATE_BORDER
+## How far the portrait sits inside the frame's border on every side: what is
+## left above and below it, so the gap on its left matches.
+const PORTRAIT_INSET: float = (BOX_HEIGHT - 2.0 * UiStyle.FRAME_MARGIN - PORTRAIT_FRAMED) / 2.0
 ## The height of a line of text in the game's font.
 const LINE_HEIGHT: float = 14.0
 ## The speaker's name plate: a line of text with [constant UiStyle.PLATE_Y] above and below.
@@ -114,6 +119,7 @@ var _chosen_timer: Timer = Timer.new()
 var _chosen_response: DialogueResponse = null
 
 var _box: PanelContainer
+var _frame: StyleBoxTexture
 var _portrait_back: PanelContainer
 var _portrait: TextureRect
 var _name_plate: Label
@@ -250,14 +256,17 @@ func _type_page() -> void:
 
 # The portrait, the name plate and the text's width for the line's speaker.
 # The text sits [constant UiStyle.INSET] inside the frame, or [constant
-# UiStyle.GAP] after the portrait when there is one.
+# UiStyle.GAP] after the portrait when there is one, which sits [constant
+# PORTRAIT_INSET] inside the frame.
 func _show_speaker() -> void:
 	var speaker: String = dialogue_line.character
 	var character: String = Story.character_id(speaker)
 	var portrait: Texture2D = Story.portrait(character, dialogue_line.tags)
 	_portrait_back.visible = portrait != null
 	_portrait.texture = portrait
-	var text_left: float = UiStyle.EDGE + UiStyle.FRAME_MARGIN + UiStyle.INSET + (PORTRAIT_SHOWN + UiStyle.GAP if portrait != null else 0.0)
+	var left_inset: float = PORTRAIT_INSET if portrait != null else float(UiStyle.INSET)
+	_frame.content_margin_left = UiStyle.FRAME_MARGIN + left_inset
+	var text_left: float = UiStyle.EDGE + UiStyle.FRAME_MARGIN + left_inset + (PORTRAIT_FRAMED + UiStyle.GAP if portrait != null else 0.0)
 	dialogue_label.custom_minimum_size.x = SCREEN.x - UiStyle.EDGE - UiStyle.FRAME_MARGIN - UiStyle.INSET - text_left
 	dialogue_label.add_theme_color_override(&"default_color", Palette.TEXT if not speaker.is_empty() else Palette.NARRATION)
 	_set_name_plate(_name_plate, speaker, character)
@@ -376,14 +385,15 @@ func _build() -> void:
 	balloon.theme = Theme.new()
 	balloon.theme.default_font_size = Story.FONT_SIZE
 
-	# The line's box. Three lines of text (42 px) and the portrait (46 px) do
-	# not fit [constant UiStyle.INSET] above and below in its 48 px inside, so
-	# for now they keep only the frame's border there, centred in the 48 px.
+	# The line's box. Three lines of text (42 px) and the framed portrait
+	# (48 px) do not fit [constant UiStyle.INSET] above and below in its 48 px
+	# inside, so they keep only the frame's border there, centred in the 48 px;
+	# the portrait keeps the same on its left, [constant PORTRAIT_INSET].
 	_box = PanelContainer.new()
-	var frame: StyleBoxTexture = UiStyle.frame()
-	frame.content_margin_top = UiStyle.FRAME_MARGIN  # spacing: pending; INSET does not fit three lines
-	frame.content_margin_bottom = UiStyle.FRAME_MARGIN  # spacing: pending; INSET does not fit three lines
-	_box.add_theme_stylebox_override(&"panel", frame)
+	_frame = UiStyle.frame()
+	_frame.content_margin_top = UiStyle.FRAME_MARGIN  # spacing: pending; INSET does not fit three lines
+	_frame.content_margin_bottom = UiStyle.FRAME_MARGIN  # spacing: pending; INSET does not fit three lines
+	_box.add_theme_stylebox_override(&"panel", _frame)
 	_box.position = Vector2(UiStyle.EDGE, SCREEN.y - UiStyle.EDGE - BOX_HEIGHT)
 	_box.size = Vector2(SCREEN.x - 2.0 * UiStyle.EDGE, BOX_HEIGHT)
 	_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -439,6 +449,7 @@ func _build() -> void:
 	balloon.add_child(_chosen_label)
 
 	_voice = AudioStreamPlayer.new()
+	_voice.bus = Music.VOICE_BUS
 	add_child(_voice)
 
 	balloon.gui_input.connect(_on_balloon_gui_input)
@@ -503,7 +514,7 @@ func _build_vote() -> void:
 
 
 func _on_spoke(letter: String, _letter_index: int, _speed: float) -> void:
-	if Story.voice_blips and _voice.stream != null and not _voice.playing and letter != " ":
+	if Story.sound_on and _voice.stream != null and not _voice.playing and letter != " ":
 		_voice.pitch_scale = randf_range(0.95, 1.08)
 		_voice.play()
 

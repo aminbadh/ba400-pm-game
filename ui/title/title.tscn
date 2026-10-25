@@ -52,24 +52,11 @@ layout_mode = 2
 text = "Lycée Ennakhla"
 horizontal_alignment = 1
 
-[node name="Buttons" type="VBoxContainer" parent="Panel/Column"]
+[node name="Start" type="Button" parent="Panel/Column"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_horizontal = 4
-
-[node name="Full" type="Button" parent="Panel/Column/Buttons"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-text = "1  Full     about 30 min"
-alignment = 0
-
-[node name="Short" type="Button" parent="Panel/Column/Buttons"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-text = "2  Short    about 20 min"
-alignment = 0
 
 [node name="KeysPanel" type="PanelContainer" parent="."]
 unique_name_in_owner = true
@@ -85,5 +72,4 @@ grow_vertical = 0
 [node name="Keys" type="Label" parent="KeysPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Move WASD   Talk E   Binder B   Menu Esc"
 horizontal_alignment = 1

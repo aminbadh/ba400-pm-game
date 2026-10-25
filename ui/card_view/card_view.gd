@@ -1,7 +1,8 @@
 class_name CardView
 extends Control
 ## A full-screen page styled like a lecture slide: a number, a title, the slide
-## range, and a body of text. Shows the concept cards and the charter.
+## range, and a body of text. Shows the concept cards, the charter and the
+## region's report.
 ##
 ## Body text marks key terms as **term**; they are drawn in the accent colour.
 ## A card whose text does not fit splits into several pages in cards.json, each
@@ -45,12 +46,19 @@ const PARAGRAPH_GAP: int = UiStyle.GAP
 const BODY_LEADING: int = -1
 ## Room left of the title for the card's number.
 const NUMBER_WIDTH: int = 18
+## The region's report: a tick for a criterion met, a cross for one that was not.
+const MET_MARK: String = Glyphs.TICK
+const NOT_MET_MARK: String = Glyphs.BALLOT
+const MET_COLOR: Color = Palette.RIGHT_CALL
+const NOT_MET_COLOR: Color = Palette.MISS
 
 var _number_label: Label
 var _slides_label: Label
 var _title_label: Label
 var _body_label: RichTextLabel
 var _footer_label: Label
+# Lays out rich text off screen, to measure it as the body would show it.
+var _measure_label: RichTextLabel
 
 
 func _init() -> void:
@@ -92,17 +100,11 @@ func _init() -> void:
 	rule.size = Vector2(BODY_SIZE.x, 1)
 	add_child(rule)
 
-	_body_label = RichTextLabel.new()
-	_body_label.bbcode_enabled = true
-	_body_label.scroll_active = false
-	_body_label.clip_contents = true
-	_body_label.position = Vector2(MARGIN, BODY_TOP)
-	_body_label.size = BODY_SIZE
-	_body_label.add_theme_color_override(&"default_color", INK)
-	_body_label.add_theme_constant_override(&"line_separation", BODY_LEADING)
-	_body_label.add_theme_constant_override(&"paragraph_separation", PARAGRAPH_GAP)
-	_body_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_body_label = _make_body()
 	add_child(_body_label)
+	_measure_label = _make_body()
+	_measure_label.visible = false
+	add_child(_measure_label)
 
 	_footer_label = _make_label(FAINT)
 	_footer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -114,6 +116,32 @@ func _init() -> void:
 ## Show one page of a card or of an exhibit with pages, like the charter.
 ## [param number] may be empty, as may [param slides].
 func show_page(number: String, title: String, slides: String, body: String, page: int, pages: int, footer: String) -> void:
+	_show(number, title, slides, to_bbcode(body), page, pages, footer)
+
+
+## Show one page whose body is already rich text, such as the region's report.
+func show_rich_page(title: String, bbcode: String, page: int, pages: int, footer: String) -> void:
+	_show("", title, "", bbcode, page, pages, footer)
+
+
+## One of the region's report's entries from [method Story.report] as a
+## paragraph of rich text: its mark, its criterion, then its lines.
+static func report_paragraph(entry: Dictionary) -> String:
+	var mark: String = "[color=#%s]%s[/color]" % [(MET_COLOR if entry.met else NOT_MET_COLOR).to_html(false), MET_MARK if entry.met else NOT_MET_MARK]
+	var criterion: String = "[color=#%s]%s:[/color]" % [ACCENT.to_html(false), _escape(entry.criterion)]
+	var lines: PackedStringArray = []
+	for line: String in entry.lines:
+		lines.append(_escape(line))
+	return "%s %s %s" % [mark, criterion, " ".join(lines)]
+
+
+## The height [param paragraphs] of rich text take laid out as the body, one paragraph each.
+func rich_height(paragraphs: Array[String]) -> int:
+	_measure_label.text = "\n".join(paragraphs)
+	return _measure_label.get_content_height()
+
+
+func _show(number: String, title: String, slides: String, bbcode: String, page: int, pages: int, footer: String) -> void:
 	_number_label.text = number
 	_number_label.visible = not number.is_empty()
 	_slides_label.text = slides
@@ -121,7 +149,7 @@ func show_page(number: String, title: String, slides: String, body: String, page
 	var indent: int = 0 if number.is_empty() else NUMBER_WIDTH
 	_title_label.position.x = MARGIN + indent
 	_title_label.size.x = BODY_SIZE.x - indent
-	_body_label.text = to_bbcode(body)
+	_body_label.text = bbcode
 	var page_text: String = "" if pages <= 1 else "%d/%d   " % [page + 1, pages]
 	_footer_label.text = page_text + footer
 
@@ -143,7 +171,7 @@ static func add_border(parent: Control) -> void:
 ## Body text with **terms** turned into the accent colour, and any square
 ## brackets escaped so they show as typed.
 static func to_bbcode(text: String) -> String:
-	var escaped: String = text.replace("[", "[lb]")
+	var escaped: String = _escape(text)
 	var parts: PackedStringArray = escaped.split("**")
 	var result: String = ""
 	for i: int in parts.size():
@@ -168,6 +196,24 @@ func body_content_height() -> int:
 func title_fits() -> bool:
 	var font: Font = _title_label.get_theme_font(&"font")
 	return font.get_string_size(_title_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, _title_label.get_theme_font_size(&"font_size")).x <= _title_label.size.x
+
+
+static func _escape(text: String) -> String:
+	return text.replace("[", "[lb]")
+
+
+func _make_body() -> RichTextLabel:
+	var body: RichTextLabel = RichTextLabel.new()
+	body.bbcode_enabled = true
+	body.scroll_active = false
+	body.clip_contents = true
+	body.position = Vector2(MARGIN, BODY_TOP)
+	body.size = BODY_SIZE
+	body.add_theme_color_override(&"default_color", INK)
+	body.add_theme_constant_override(&"line_separation", BODY_LEADING)
+	body.add_theme_constant_override(&"paragraph_separation", PARAGRAPH_GAP)
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return body
 
 
 func _make_label(color: Color) -> Label:

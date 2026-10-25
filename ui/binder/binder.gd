@@ -1,9 +1,11 @@
 class_name Binder
 extends CanvasLayer
 ## The planning binder: the nine concept cards in order, which is also the quest
-## log. Collected cards can be opened. Opened with B or from the pause menu,
-## and by the story itself: as the quest log in scene 0 and as the debrief at
-## the ending, where each card shows the line for the room's vote.
+## log. Collected cards can be opened. Opened with B (the triangle on a
+## controller) or from the pause menu, and by the story itself: in scene 0 as a
+## read-only overview, card 1 ticked and the rest still to come, and as the
+## debrief at the ending, where each card shows the room's choice, the line for
+## it and the best choice.
 ##
 ## While it is open the game is paused.
 
@@ -29,11 +31,17 @@ const HINT_HEIGHT: int = 12
 const TEXT: Color = Palette.TEXT
 const DIM: Color = Palette.DIM
 const FOCUS: Color = Palette.FOCUS
+const BEST: Color = Palette.NARRATION
 const HEADING: String = "Planning binder"
+const OVERVIEW_HEADING: String = "Planning binder: %d of %d"
 const DEBRIEF_HEADING: String = "Debrief"
-const LIST_HINT: String = "Up/Down  choose    E  open    B  close"
-const CARD_HINT: String = "E  back"
-const DEBRIEF_HINT: String = "E  next"
+## The overview's mark for a card collected; the others are greyed, still to come.
+const COLLECTED_MARK: String = Glyphs.TICK
+## The hints, filled in by [Hints] for the device used last.
+const LIST_HINT: String = "{choose}  choose    {interact}  open    {close_binder}  close"
+const CARD_HINT: String = "{interact}  back"
+const OVERVIEW_HINT: String = "{interact}  continue"
+const DEBRIEF_HINT: String = "{interact}  next"
 
 var _mode: String = ""
 # The story's wait while it shows the quest log or the debrief; dropped, never
@@ -62,6 +70,7 @@ func _ready() -> void:
 	_build()
 	hide()
 	Story.binder = self
+	Hints.device_changed.connect(_on_device_changed)
 
 
 func _exit_tree() -> void:
@@ -79,9 +88,9 @@ func open() -> void:
 	_open("browse")
 
 
-## Open the binder as the quest log and wait until the presenter closes it.
-func open_quest_log() -> void:
-	await _open_for_story("browse")
+## Open the binder as a read-only overview and wait until the presenter goes on.
+func open_overview() -> void:
+	await _open_for_story("overview")
 
 
 ## Open the debrief and wait until the presenter has paged through it.
@@ -150,12 +159,15 @@ func _input(event: InputEvent) -> void:
 				_close()
 			else:
 				_render()
+	elif _mode == "overview":
+		if event.is_action_pressed(&"interact"):
+			_close()
 	else:
 		_handle_list_input(event)
 
 
 func _handle_list_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"binder") or event.is_action_pressed(&"pause"):
+	if event.is_action_pressed(&"binder") or event.is_action_pressed(&"pause") or event.is_action_pressed(&"back"):
 		_close()
 	elif event.is_action_pressed(&"move_up") or event.is_action_pressed(&"ui_up"):
 		_selected = wrapi(_selected - 1, 0, Story.cards.size())
@@ -177,7 +189,7 @@ func _handle_card_input(event: InputEvent) -> void:
 			_card_page += 1
 			_show_card()
 			return
-	elif not (event.is_action_pressed(&"binder") or event.is_action_pressed(&"pause")):
+	elif not (event.is_action_pressed(&"binder") or event.is_action_pressed(&"pause") or event.is_action_pressed(&"back")):
 		return
 	_card = {}
 	_card_view.hide()
@@ -186,22 +198,48 @@ func _handle_card_input(event: InputEvent) -> void:
 
 func _show_card() -> void:
 	var pages: Array = _card.pages
-	_card_view.show_page(str(int(_card.number)), _card.title, _card.slides, pages[_card_page], _card_page, pages.size(), CARD_HINT if _card_page == pages.size() - 1 else Stage.NEXT_HINT)
+	_card_view.show_page(str(int(_card.number)), _card.title, _card.slides, pages[_card_page], _card_page, pages.size(), Hints.text(CARD_HINT if _card_page == pages.size() - 1 else Stage.NEXT_HINT))
 	_card_view.show()
+
+
+func _on_device_changed() -> void:
+	if not visible:
+		return
+	if not _card.is_empty():
+		_show_card()
+	else:
+		_render()
 
 
 func _render() -> void:
 	for child: Node in _rows.get_children():
+		_rows.remove_child(child)
 		child.queue_free()
+	# The nine rows of the list touch; the debrief's cards stand apart.
+	_rows.add_theme_constant_override(&"separation", UiStyle.GAP if _mode == "debrief" else 0)  # spacing: pending; nine rows with TIGHT do not fit
 	if _mode == "debrief":
 		_render_debrief()
+	elif _mode == "overview":
+		_render_overview()
 	else:
 		_render_list()
 
 
+# The nine cards, read-only: those collected ticked, the rest greyed as still to come.
+func _render_overview() -> void:
+	_heading.text = OVERVIEW_HEADING % [GameState.cards.size(), Story.cards.size()]
+	_hint.text = Hints.text(OVERVIEW_HINT)
+	for card: Dictionary in Story.cards:
+		var collected: bool = int(card.number) in GameState.cards
+		var label: Label = Label.new()
+		label.text = "%s %d  %s" % [COLLECTED_MARK if collected else " ", int(card.number), card.title]
+		label.add_theme_color_override(&"font_color", TEXT if collected else DIM)
+		_rows.add_child(label)
+
+
 func _render_list() -> void:
 	_heading.text = HEADING
-	_hint.text = LIST_HINT
+	_hint.text = Hints.text(LIST_HINT)
 	for i: int in Story.cards.size():
 		var card: Dictionary = Story.cards[i]
 		var collected: bool = int(card.number) in GameState.cards
@@ -217,43 +255,53 @@ func _render_list() -> void:
 
 func _render_debrief() -> void:
 	_heading.text = "%s  %d/%d" % [DEBRIEF_HEADING, _debrief_page + 1, _debrief_pages.size()]
-	_hint.text = DEBRIEF_HINT
+	_hint.text = Hints.text(DEBRIEF_HINT)
 	for i: int in _debrief_pages[_debrief_page]:
-		var title: Label = _row_label(FOCUS)
-		title.text = _debrief_title(Story.cards[i])
-		_rows.add_child(title)
-		var line: Label = _row_label(TEXT)
-		line.text = _debrief_text(Story.cards[i])
-		_rows.add_child(line)
+		var card_rows: VBoxContainer = VBoxContainer.new()
+		card_rows.add_theme_constant_override(&"separation", 0)  # spacing: not spacing; the lines of one card's entry
+		for row: Dictionary in debrief_rows(Story.cards[i]):
+			var label: Label = _row_label(row.color)
+			label.text = row.text
+			card_rows.add_child(label)
+		_rows.add_child(card_rows)
 
 
-# Fill each page with as many cards' debrief rows as fit.
-func _paginate_debrief() -> Array[Array]:
+## The debrief's rows for [param card], each a [code]text[/code] and its
+## [code]color[/code]: the card's title, then the room's choice, the line for
+## it and the best choice from [method Story.debrief_rows], where they apply.
+func debrief_rows(card: Dictionary) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = [{ "text": "%d  %s" % [int(card.number), card.title], "color": FOCUS }]
+	var lines: Dictionary = Story.debrief_rows(card)
+	for key: String in ["chose", "line", "best"]:
+		if not (lines[key] as String).is_empty():
+			rows.append({ "text": lines[key], "color": BEST if key == "best" else TEXT })
+	return rows
+
+
+## The height [param card]'s debrief rows take at the row width.
+func debrief_height(card: Dictionary) -> float:
 	var font: Font = _heading.get_theme_font(&"font")
 	var font_size: int = _heading.get_theme_font_size(&"font_size")
+	var height: float = 0.0
+	for row: Dictionary in debrief_rows(card):
+		height += font.get_multiline_string_size(row.text, HORIZONTAL_ALIGNMENT_LEFT, ROW_WIDTH, font_size).y
+	return height
+
+
+# Fill each page with as many cards' debrief rows as fit, a gap between cards.
+func _paginate_debrief() -> Array[Array]:
 	var pages: Array[Array] = [[]]
 	var used: float = 0.0
 	for i: int in Story.cards.size():
-		var card: Dictionary = Story.cards[i]
-		var height: float = 0.0
-		for text: String in [_debrief_title(card), _debrief_text(card)]:
-			height += font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, ROW_WIDTH, font_size).y + 1.0
-		if used + height > DEBRIEF_PAGE_HEIGHT and not pages[-1].is_empty():
+		var height: float = debrief_height(Story.cards[i])
+		var needed: float = height if pages[-1].is_empty() else height + UiStyle.GAP
+		if used + needed > DEBRIEF_PAGE_HEIGHT and not pages[-1].is_empty():
 			pages.append([])
 			used = 0.0
+			needed = height
 		pages[-1].append(i)
-		used += height
+		used += needed
 	return pages
-
-
-func _debrief_title(card: Dictionary) -> String:
-	return "%d  %s" % [int(card.number), card.title]
-
-
-# The room's option, then the line for it.
-func _debrief_text(card: Dictionary) -> String:
-	var vote: String = GameState.votes.get(int(card.scene), "")
-	return ("%s: " % vote if not vote.is_empty() else "") + Story.debrief_line(card)
 
 
 func _row_label(color: Color) -> Label:

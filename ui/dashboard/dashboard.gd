@@ -2,10 +2,12 @@ class_name Dashboard
 extends CanvasLayer
 ## The project dashboard, a strip as wide as the screen along its top:
 ## Integrity, Fairness, Team and Budget, left to right, each cell with an icon,
-## a name and a number over a bar, so no meter is read by colour alone. Hidden
-## until scene 3 puts it on screen; meters the chosen metrics do not light stay
-## greyed out. With metrics_passrate it shows every meter green and full until
-## the ending reveals the real values.
+## a name and a number over a bar, so no meter is read by colour alone. On
+## screen from the first scene with every meter greyed out and "?" for its
+## number; scene 3 flashes it and lights the meters the room's metrics measure,
+## and the others stay greyed out until the ending reveals them all. With
+## metrics_passrate it shows every meter green and full until the ending
+## reveals the real values.
 ##
 ## At the bottom, while the player walks, a line says who to talk to next, in a
 ## strip as wide as the screen. The map's camera stops [constant STRIP_HEIGHT]
@@ -36,6 +38,12 @@ const WIDEST_VALUE: String = "100"
 const WIDEST_BUDGET: String = "3000 TND"
 ## The height of the strip at the bottom; world/centre.tscn's camera keeps it clear.
 const HINT_HEIGHT: int = 14
+## What an unlit meter shows in place of its number.
+const UNKNOWN: String = "?"
+## The flash: the strip's outline turns to the heading colour this many
+## times, leaving the text on its panel colour.
+const FLASHES: int = 3
+const FLASH_SECONDS: float = 0.2
 const GOOD: Color = Palette.METER_GOOD
 const WARN: Color = Palette.METER_WARN
 const BAD: Color = Palette.METER_BAD
@@ -55,6 +63,7 @@ func _ready() -> void:
 	_build()
 	GameState.changed.connect(_refresh)
 	Story.scene_changed.connect(_refresh)
+	Story.dashboard_flashed.connect(flash)
 	_refresh()
 
 
@@ -66,11 +75,29 @@ static func display(meter: String) -> Dictionary:
 	var value: int = GameState.budget if meter == "budget" else scaled
 	if faked and meter == "budget":
 		value = GameState.BUDGET_START
-	var color: Color = GREY
-	if lit:
-		color = GOOD if scaled >= GameState.SMOOTH_FROM else (WARN if scaled >= GameState.NEWS_BELOW else BAD)
+	if not lit:
+		# Greyed out, with nothing to read in the bar either.
+		return { "fill": 1.0, "color": GREY, "text": UNKNOWN, "lit": false }
+	var color: Color = GOOD if scaled >= GameState.SMOOTH_FROM else (WARN if scaled >= GameState.NEWS_BELOW else BAD)
 	var text: String = str(value) if meter != "budget" else "%d TND" % value
-	return { "fill": scaled / 100.0, "color": color, "text": text, "lit": lit }
+	return { "fill": scaled / 100.0, "color": color, "text": text, "lit": true }
+
+
+## True while the strip at the top is on screen.
+func strip_shown() -> bool:
+	return _strip.visible
+
+
+## Flash the strip, to point the room at it.
+func flash() -> void:
+	var lit: StyleBoxFlat = UiStyle.plate()
+	lit.border_color = Palette.FOCUS
+	var tween: Tween = create_tween()
+	for i: int in FLASHES:
+		tween.tween_callback(_strip.add_theme_stylebox_override.bind(&"panel", lit))
+		tween.tween_interval(FLASH_SECONDS)
+		tween.tween_callback(_strip.add_theme_stylebox_override.bind(&"panel", UiStyle.plate()))
+		tween.tween_interval(FLASH_SECONDS)
 
 
 ## The screen area the strip at the top covers, so nothing else is drawn under it.
@@ -84,7 +111,6 @@ func hint_rect() -> Rect2:
 
 
 func _refresh() -> void:
-	_strip.visible = GameState.dashboard_shown or GameState.scene > 3
 	for meter: String in GameState.METERS:
 		var shown: Dictionary = display(meter)
 		_bars[meter].anchor_right = float(shown.fill)
