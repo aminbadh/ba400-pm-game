@@ -55,54 +55,129 @@ func _draw() -> void:
 
 
 func _draw_org_chart() -> void:
-	# Lay the nodes out level by level, each level spread across the width.
+	var layout: Dictionary = org_chart_layout()
+	for line: Rect2 in layout.lines:
+		draw_rect(line, CardView.ACCENT)
+	var font_height: float = get_theme_default_font().get_height(FONT_SIZE)
+	for id: String in layout.boxes:
+		var box: Rect2 = layout.boxes[id]
+		var lines: PackedStringArray = layout.text[id]
+		# An outline one pixel wide inside the box's edge, then the plate.
+		draw_rect(box, CardView.INK)
+		draw_rect(box.grow(-UiStyle.PLATE_BORDER), Palette.WHITE)
+		var text_top: float = box.position.y + roundf((box.size.y - font_height * lines.size()) / 2.0)
+		for l: int in lines.size():
+			_text(Vector2(box.position.x, text_top + l * font_height), lines[l], CardView.INK, box.size.x, HORIZONTAL_ALIGNMENT_CENTER)
+
+
+## The organisational chart laid out as a tree, in whole pixels: each level's
+## boxes as wide and as tall as each other, a node with one child straight above
+## it and the children of a node with more spread evenly across the width.
+## Returns "boxes" and "text" by node id, the box's Rect2 and its lines, and
+## "lines", the connecting lines as Rect2s one pixel wide: a vertical line from
+## the bottom edge of a parent to the top edge of an only child, or from the
+## parent down to a horizontal line across its children, with a drop from it
+## into the top edge of each.
+func org_chart_layout() -> Dictionary:
 	var nodes: Array = _exhibit.nodes
-	var depth_of: Dictionary = {}
+	var depth_of: Dictionary[String, int] = {}
 	var levels: Array[Array] = []
+	var children: Dictionary[String, Array] = {}
 	for node: Dictionary in nodes:
-		var depth: int = 0 if node.parent.is_empty() else int(depth_of[node.parent]) + 1
+		var depth: int = 0 if node.parent.is_empty() else depth_of[node.parent] + 1
 		depth_of[node.id] = depth
 		while levels.size() <= depth:
 			levels.append([])
 		levels[depth].append(node)
+		if not node.parent.is_empty():
+			if not children.has(node.parent):
+				children[node.parent] = []
+			children[node.parent].append(node)
 
-	# A label too wide for its box breaks after its comma.
-	var box_height: float = LINE_HEIGHT * 2.0 + 4.0
-	var gap: float = (size.y - TOP - 24.0 - box_height * levels.size()) / maxf(levels.size() - 1, 1.0)
-	var centres: Dictionary = {}
+	# Each level: one line per label where they all fit their share of the
+	# width, otherwise every label breaks after its comma, so the level's boxes
+	# keep one width and one height.
+	var padding: Vector2 = 2.0 * Vector2(UiStyle.PLATE_BORDER + UiStyle.PLATE_X, UiStyle.PLATE_BORDER + UiStyle.PLATE_Y)
+	var font_height: float = get_theme_default_font().get_height(FONT_SIZE)
+	var text: Dictionary[String, PackedStringArray] = {}
+	var box_sizes: Array[Vector2] = []
+	for level: Array in levels:
+		var room: float = (WIDTH - UiStyle.GAP * (level.size() - 1)) / level.size()
+		var widest: float = 0.0
+		for node: Dictionary in level:
+			widest = maxf(widest, _width(node.label))
+		var line_count: int = 1 if widest + padding.x <= room else 2
+		widest = 0.0
+		for node: Dictionary in level:
+			var label_lines: PackedStringArray = [node.label]
+			if line_count == 2:
+				label_lines = _break_label(node.label)
+			text[node.id] = label_lines
+			for line: String in label_lines:
+				widest = maxf(widest, _width(line))
+		# An odd width puts a pixel column at the centre for the lines.
+		var box_width: int = int(ceilf(widest + padding.x))
+		box_width += 1 - box_width % 2
+		box_sizes.append(Vector2(box_width, font_height * line_count + padding.y))
+
+	# The levels evenly down the room between the rule and the footer.
+	var chart_top: float = TOP + UiStyle.GAP
+	var chart_bottom: float = size.y - FOOTER_BOTTOM - UiStyle.GAP
+	var used: float = 0.0
+	for box_size: Vector2 in box_sizes:
+		used += box_size.y
+	var level_gap: float = floorf((chart_bottom - chart_top - used) / maxf(levels.size() - 1, 1.0))
+	var boxes: Dictionary[String, Rect2] = {}
+	var y: float = chart_top
 	for depth: int in levels.size():
 		var level: Array = levels[depth]
-		var slot: float = WIDTH / level.size()
-		var y: float = TOP + 6.0 + depth * (box_height + gap)
-		for i: int in level.size():
-			var node: Dictionary = level[i]
-			var lines: PackedStringArray = [node.label]
-			if _width(node.label) > slot - 10.0 and ", " in node.label:
-				lines = (node.label as String).split(", ", true, 1)
-				lines[0] += ","
-			var widest: float = 0.0
-			for line: String in lines:
-				widest = maxf(widest, _width(line))
-			var box_width: float = minf(slot - 4.0, widest + 10.0)
-			var height: float = LINE_HEIGHT * lines.size() + 4.0
-			var x: float = roundf(LEFT + slot * i + (slot - box_width) / 2.0)
-			var box: Rect2 = Rect2(x, roundf(y + (box_height - height) / 2.0), roundf(box_width), height)
-			centres[node.id] = box
-			draw_rect(box, Palette.WHITE)
-			draw_rect(box, CardView.INK, false, 1.0)
-			for l: int in lines.size():
-				_text(Vector2(x, box.position.y + 1.0 + l * LINE_HEIGHT), lines[l], CardView.INK, box_width, HORIZONTAL_ALIGNMENT_CENTER)
-	for node: Dictionary in nodes:
-		if node.parent.is_empty():
+		var box_size: Vector2 = box_sizes[depth]
+		for node: Dictionary in level:
+			var centre: float = LEFT + WIDTH / 2.0
+			if not node.parent.is_empty():
+				var siblings: Array = children[node.parent]
+				var parent: Rect2 = boxes[node.parent]
+				centre = parent.position.x + floorf(parent.size.x / 2.0) + 0.5
+				if siblings.size() > 1:
+					var slot: float = WIDTH / siblings.size()
+					centre = LEFT + slot * (siblings.find(node) + 0.5)
+			boxes[node.id] = Rect2(floorf(centre - box_size.x / 2.0), y, box_size.x, box_size.y)
+		y += box_size.y + level_gap
+
+	var lines: Array[Rect2] = []
+	for parent_id: String in children:
+		var parent: Rect2 = boxes[parent_id]
+		var from_x: float = parent.position.x + floorf(parent.size.x / 2.0)
+		var kids: Array = children[parent_id]
+		var child_top: float = boxes[kids[0].id].position.y
+		if kids.size() == 1:
+			lines.append(Rect2(from_x, parent.end.y, 1, child_top - parent.end.y))
 			continue
-		var parent: Rect2 = centres[node.parent]
-		var child: Rect2 = centres[node.id]
-		var from: Vector2 = Vector2(roundf(parent.get_center().x), parent.end.y)
-		var to: Vector2 = Vector2(roundf(child.get_center().x), child.position.y)
-		var mid_y: float = roundf((from.y + to.y) / 2.0)
-		draw_line(from, Vector2(from.x, mid_y), CardView.ACCENT)
-		draw_line(Vector2(from.x, mid_y), Vector2(to.x, mid_y), CardView.ACCENT)
-		draw_line(Vector2(to.x, mid_y), to, CardView.ACCENT)
+		var bus_y: float = parent.end.y + floorf((child_top - parent.end.y) / 2.0)
+		lines.append(Rect2(from_x, parent.end.y, 1, bus_y - parent.end.y))
+		var first: Rect2 = boxes[kids[0].id]
+		var last: Rect2 = boxes[kids[-1].id]
+		var left_x: float = first.position.x + floorf(first.size.x / 2.0)
+		var right_x: float = last.position.x + floorf(last.size.x / 2.0)
+		lines.append(Rect2(left_x, bus_y, right_x - left_x + 1, 1))
+		for kid: Dictionary in kids:
+			var child: Rect2 = boxes[kid.id]
+			var x: float = child.position.x + floorf(child.size.x / 2.0)
+			lines.append(Rect2(x, bus_y + 1, 1, child.position.y - bus_y - 1))
+	return { "boxes": boxes, "text": text, "lines": lines }
+
+
+# A label on two lines: broken after its comma, or else at its middle space.
+func _break_label(label: String) -> PackedStringArray:
+	if ", " in label:
+		var parts: PackedStringArray = label.split(", ", true, 1)
+		parts[0] += ","
+		return parts
+	var words: PackedStringArray = label.split(" ")
+	if words.size() < 2:
+		return [label]
+	var half: int = floori(words.size() / 2.0)
+	return [" ".join(words.slice(0, half)), " ".join(words.slice(half))]
 
 
 func _draw_raci() -> void:
