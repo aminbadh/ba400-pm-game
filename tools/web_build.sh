@@ -23,18 +23,26 @@ if grep -q 'ERROR:' "$out.import.log"; then
 	exit 1
 fi
 
-echo "== story test"
-"$godot" --headless --path . -s tests/story_test.gd
-echo "== flow test"
-"$godot" --headless --path . -s tests/flow_test.gd
-echo "== route test"
-"$godot" --headless --path . --fixed-fps 60 -s tests/route_test.gd
-echo "== content test"
-"$godot" --headless --path . -s tests/content_test.gd
-echo "== contrast test"
-"$godot" --headless --path . -s tests/contrast_test.gd
-echo "== spacing test"
-"$godot" --headless --path . -s tests/spacing_test.gd
+# Godot exits 0 when a test script fails to compile, so a script error fails the step too.
+run_test() {
+	echo "== $1"
+	shift
+	"$godot" --headless --path . "$@" 2>&1 | tee "$out.test.log"
+	local status=${PIPESTATUS[0]}
+	if [ "$status" -ne 0 ] || grep -q 'SCRIPT ERROR' "$out.test.log"; then
+		echo "The test failed." >&2
+		exit 1
+	fi
+}
+
+run_test "story test" -s tests/story_test.gd
+run_test "flow test" -s tests/flow_test.gd
+run_test "route test" --fixed-fps 60 -s tests/route_test.gd
+run_test "content test" -s tests/content_test.gd
+run_test "contrast test" -s tests/contrast_test.gd
+run_test "spacing test" -s tests/spacing_test.gd
+run_test "sound test" -s tests/sound_test.gd
+run_test "controls test" -s tests/controls_test.gd
 
 echo "== export"
 "$godot" --headless --path . --export-release Web "$out/index.html"
