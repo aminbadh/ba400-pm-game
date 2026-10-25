@@ -15,7 +15,9 @@ from the pack's tilesets in art/ninja_adventure/. Then:
 - writes the TileSet, with collision on walls and solid props, to world/centre_tiles.tres,
 - fills the map's tile layers in world/centre.tscn from the layout below,
 - checks the map can be walked (see check_map),
-- paints the title screen's picture of the lycée to art/ui/title.png.
+- paints the title screen's picture of the lycée to art/ui/title.png, and the
+  same front with no trees or benches, for the last screen's line-up, to
+  art/ui/last_screen.png.
 
 Run from the project root: uv run tools/build_map.py
 To check the map without writing anything: uv run tools/build_map.py --check
@@ -42,6 +44,7 @@ TILESET_PATH = ROOT / "world" / "centre_tiles.tres"
 MAP_PATH = ROOT / "world" / "centre.tscn"
 ATLAS_COLUMNS = 16
 TITLE_PATH = ROOT / "art" / "ui" / "title.png"
+LAST_SCREEN_PATH = ROOT / "art" / "ui" / "last_screen.png"
 
 C = load_palette()
 O = C["OUTLINE"]
@@ -986,6 +989,7 @@ def build(check_only: bool = False) -> None:
     write_tileset(atlas)
     write_layers(layers)
     title_backdrop().image().save(TITLE_PATH)
+    title_backdrop(props=False).image().save(LAST_SCREEN_PATH)
     print(f"atlas: {len(atlas.tiles)} tiles in {ATLAS_PATH.relative_to(ROOT)}")
     print(f"layers: " + ", ".join(f"{k} {len(v)} cells" for k, v in layers.items()))
 
@@ -1000,8 +1004,10 @@ def _merge(under: Canvas, over: Canvas) -> Canvas:
     return out
 
 
-def title_backdrop() -> Canvas:
-    """The title screen's picture: the lycée's front under a bright sky, from the map's pieces."""
+def title_backdrop(props: bool = True) -> Canvas:
+    """The title screen's picture: the lycée's front under a bright sky, from the
+    map's pieces. Without [props], the trees and benches, for the last screen,
+    where the cast lines up in front of the wall and their names below."""
     w, h = 320, 180
     c = Canvas(w, h)
     # Sky, lighter towards the horizon, with a few clouds.
@@ -1039,12 +1045,13 @@ def title_backdrop() -> Canvas:
     for y in range(bottom, h, T):
         for x in range(0, w, T):
             c.blit(paving(True, True, True, True, (x // T + y // T) % 2), x, y)
-    c.blit(palm_tree(), 6, bottom - 40)
-    c.blit(palm_tree(), w - 38, bottom - 40)
-    c.blit(olive_tree(), 70, bottom - 22)
-    c.blit(olive_tree(), w - 102, bottom - 22)
-    c.blit(bench(), 40, bottom + 20)
-    c.blit(bench(), w - 72, bottom + 20)
+    if props:
+        c.blit(palm_tree(), 6, bottom - 40)
+        c.blit(palm_tree(), w - 38, bottom - 40)
+        c.blit(olive_tree(), 70, bottom - 22)
+        c.blit(olive_tree(), w - 102, bottom - 22)
+        c.blit(bench(), 40, bottom + 20)
+        c.blit(bench(), w - 72, bottom + 20)
     return c
 
 

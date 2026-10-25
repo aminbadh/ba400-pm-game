@@ -1,20 +1,24 @@
 class_name LastScreen
 extends Control
 ## The game's last screen: the whole cast in a row on the courtyard, the centre
-## head and the eight characters, each waving, with their name plates; a
-## thank-you above them and the hand-off to the next team below. The picture
-## behind is the title screen's, raised so the cast stands on the paving, with
-## its last rows of paving repeated below it.
+## head and the eight characters, each waving, with their name plates below
+## them; a thank-you above and the hand-off to the next team below. The picture
+## behind is the title screen's lycée with no trees or benches, drawn by
+## tools/build_map.py, raised so the cast stands on the paving, with its paving
+## repeated below it.
 ##
 ## Everything stacks from below the dashboard's strip to [constant UiStyle.EDGE]
-## above the screen's bottom, [constant UiStyle.GAP] apart. The name plates
-## alternate above and below the row, since nine side by side do not fit, and
-## shift sideways where two in a row would touch.
+## above the screen's bottom, [constant UiStyle.GAP] apart. Every name plate
+## is under its character, in two staggered rows, since nine side by side do not
+## fit, [constant UiStyle.GAP] apart, shifted sideways where two would touch.
 
 
-const PICTURE_PATH: String = "res://art/ui/title.png"
-## How far the picture is raised, so its paving comes under the cast's feet.
-const PICTURE_RAISE: int = 24
+const PICTURE_PATH: String = "res://art/ui/last_screen.png"
+## How far the picture is raised, so the foot of its wall comes under the cast's feet.
+const PICTURE_RAISE: int = 40
+## The paving's pattern repeats every this many rows, two tiles of its bond,
+## and runs to the picture's bottom edge: the band below repeats its last period.
+const PAVING_PERIOD: int = 32
 ## Each character's two waving frames, side by side, drawn by tools/draw_characters.py.
 const WAVE_PATH: String = "res://art/characters/%s_wave.png"
 const SPRITE_SIZE: int = 16
@@ -25,8 +29,10 @@ const TITLE_SIZE: int = 20
 const SCREEN: Vector2 = Vector2(320, 180)
 ## The height of a name plate: a line of text with [constant UiStyle.PLATE_Y] above and below.
 const NAME_PLATE_HEIGHT: float = Balloon.NAME_PLATE_HEIGHT
-## The row: the plates above, the sprites [constant UiStyle.TIGHT] from them, the plates below.
-const CAST_HEIGHT: float = 2.0 * NAME_PLATE_HEIGHT + 2.0 * UiStyle.TIGHT + SPRITE_SIZE
+## The row: the sprites, then [constant UiStyle.TIGHT] below them the first row
+## of plates, then [constant UiStyle.GAP] below that the second.
+const PLATE_ROWS_TOP: Array[float] = [SPRITE_SIZE + UiStyle.TIGHT, SPRITE_SIZE + UiStyle.TIGHT + NAME_PLATE_HEIGHT + UiStyle.GAP]
+const CAST_HEIGHT: float = SPRITE_SIZE + UiStyle.TIGHT + 2.0 * NAME_PLATE_HEIGHT + UiStyle.GAP
 
 var _title: Label
 var _subtitle: Label
@@ -47,16 +53,17 @@ func _init() -> void:
 	picture.position = Vector2(0, -PICTURE_RAISE)
 	picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(picture)
-	# The band the raised picture leaves at the bottom, filled with its own
-	# bottom rows, the paving.
+	# The band the raised picture leaves at the bottom, filled with its last
+	# period of paving, as often as it takes, so the pattern runs on unbroken.
 	var paving: AtlasTexture = AtlasTexture.new()
 	paving.atlas = picture.texture
-	paving.region = Rect2(0, SCREEN.y - PICTURE_RAISE, SCREEN.x, PICTURE_RAISE)
-	var below: TextureRect = TextureRect.new()
-	below.texture = paving
-	below.position = Vector2(0, SCREEN.y - PICTURE_RAISE)
-	below.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(below)
+	paving.region = Rect2(0, SCREEN.y - PAVING_PERIOD, SCREEN.x, PAVING_PERIOD)
+	for top: int in range(int(SCREEN.y) - PICTURE_RAISE, int(SCREEN.y), PAVING_PERIOD):
+		var below: TextureRect = TextureRect.new()
+		below.texture = paving
+		below.position = Vector2(0, top)
+		below.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(below)
 
 	_column = VBoxContainer.new()
 	_column.position = Vector2(UiStyle.EDGE, Dashboard.STRIP_HEIGHT + UiStyle.GAP)
@@ -82,11 +89,6 @@ func _init() -> void:
 	_cast.custom_minimum_size = Vector2(0, CAST_HEIGHT)
 	_cast.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_column.add_child(_cast)
-
-	var spacer: Control = Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_column.add_child(spacer)
 
 	var body_plate: PanelContainer = PanelContainer.new()
 	body_plate.add_theme_stylebox_override(&"panel", UiStyle.plate())
@@ -158,7 +160,7 @@ func _build_cast(cast: Array) -> void:
 		var centre: float = roundf(slot * (i + 0.5))
 		var sprite: TextureRect = TextureRect.new()
 		sprite.texture = frames[0]
-		sprite.position = Vector2(centre - SPRITE_SIZE / 2.0, NAME_PLATE_HEIGHT + UiStyle.TIGHT)
+		sprite.position = Vector2(centre - SPRITE_SIZE / 2.0, 0)
 		sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_cast.add_child(sprite)
 		_sprites.append(sprite)
@@ -170,8 +172,7 @@ func _build_cast(cast: Array) -> void:
 		plate.add_theme_color_override(&"font_color", colors.text)
 		_cast.add_child(plate)
 		plate.size = plate.get_minimum_size()
-		var top: float = 0.0 if i % 2 == 0 else CAST_HEIGHT - NAME_PLATE_HEIGHT
-		plate.position = Vector2(roundf(centre - plate.size.x / 2.0), top)
+		plate.position = Vector2(roundf(centre - plate.size.x / 2.0), PLATE_ROWS_TOP[i % 2])
 		_plates.append(plate)
 	for row: int in 2:
 		_spread(_plates.filter(func(plate: Label) -> bool: return _plates.find(plate) % 2 == row), width)

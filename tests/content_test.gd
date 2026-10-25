@@ -479,8 +479,9 @@ func _check_report_fits(stage: Object) -> void:
 	view.hide()
 
 
-# The last screen, with the ending's own text: everything inside the screen,
-# below the strip, and no two parts overlapping.
+# The last screen, with the ending's own text: everything inside the screen and
+# its bottom edge margin, below the strip, no two parts overlapping, name plates
+# at least GAP apart, each below its own character.
 func _check_last_screen(sources: Dictionary, stage: Object, dashboard: Object) -> void:
 	if stage == null:
 		return
@@ -494,7 +495,8 @@ func _check_last_screen(sources: Dictionary, stage: Object, dashboard: Object) -
 		await process_frame
 	var areas: Dictionary = (stage.call(&"last_screen") as Object).call(&"areas")
 	var strip_bottom: float = (dashboard.call(&"strip_rect") as Rect2).end.y
-	var screen: Rect2 = Rect2(Vector2.ZERO, Vector2(320, 180))
+	# The screen, less its edge margin at the bottom; the strip is checked apart.
+	var screen: Rect2 = Rect2(Vector2.ZERO, Vector2(320, 180 - UiStyle.EDGE))
 	var names: Array = areas.keys()
 	for name: String in names:
 		var area: Rect2 = areas[name]
@@ -502,8 +504,19 @@ func _check_last_screen(sources: Dictionary, stage: Object, dashboard: Object) -
 			_problems.append("the last screen's %s at %s is not inside the screen below the strip" % [name, area])
 	for i: int in names.size():
 		for j: int in range(i + 1, names.size()):
-			if (areas[names[i]] as Rect2).intersects(areas[names[j]]):
+			var first: Rect2 = areas[names[i]]
+			var second: Rect2 = areas[names[j]]
+			if first.intersects(second):
 				_problems.append("the last screen's %s and %s overlap" % [names[i], names[j]])
+			elif (names[i] as String).begins_with("plate") and (names[j] as String).begins_with("plate") and first.grow(UiStyle.GAP - 0.5).intersects(second):
+				_problems.append("the last screen's %s and %s are closer than %d px" % [names[i], names[j], UiStyle.GAP])
+	# Each name plate is below its own character.
+	for name: String in names:
+		if name.begins_with("plate"):
+			var plate: Rect2 = areas[name]
+			var sprite: Rect2 = areas["sprite" + name.trim_prefix("plate")]
+			if plate.position.y < sprite.end.y:
+				_problems.append("the last screen's %s is not below its character" % name)
 	print("last screen: %d parts, all inside the screen below y %d: heading %s, body %s" % [names.size(), strip_bottom, areas.heading, areas.body])
 	(stage.call(&"last_screen") as Control).hide()
 

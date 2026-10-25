@@ -14,6 +14,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `autoload/game_state.gd` | `GameState`: the four meters, the story flags, the room's votes, the cards collected, the current scene |
 | `autoload/music.gd` | `Music`: the background music, one constant per track, crossfaded, quiet under speech on its own bus, faded out while a card shows; mutes music and voices for the Sound switch |
 | `autoload/hints.gd` | `Hints`: whether the last input came from the keyboard or a controller, and the on-screen hints for it |
+| `autoload/stick.gd` | `Stick`: turns each push of the left stick into one D-pad press for menus, the binder, the votes and the gate, repeating while held |
 | `autoload/story.gd` | `Story`: sets the pixel font, loads the content files, starts each scene and its music, and gives the dialogue its calls (`show_card`, `show_exhibit`, `open_overview`, `flash_dashboard`, `run_inspection`, `show_report`, `backdrop`, `open_debrief`, `show_last_screen`); builds the debrief's lines and the region's report |
 | `dialogue/` | The story, one Dialogue Manager `.dialogue` file per scene (`s00_charter` to `s10_ending`) |
 | `content/cards.json` | The nine concept cards, each vote's debrief line per option and its best choice |
@@ -57,7 +58,7 @@ The keyboard and a PlayStation-style controller work side by side, with no setti
 | Pause menu | Escape | Start; ○ backs out |
 | Choose in the binder and menus | Up and Down, then E | D-pad, then ✕ |
 
-A controller never picks a vote with one button per letter: the presenter points at the room's option and confirms it. Votes are never picked for the presenter: the bar fills over 20 seconds and turns red, and waits. Cards and charts stay until the presenter presses E or ✕.
+In menus, the binder, the votes and the gate, one push of the left stick moves one step, like the D-pad; held, it repeats after 0.4 s and then every 0.15 s. A controller never picks a vote with one button per letter: the presenter points at the room's option and confirms it. Votes are never picked for the presenter: the bar fills over 20 seconds and turns red, and waits. Cards and charts stay until the presenter presses E or ✕.
 
 **Controller check**, in the pause menu, shows the name Godot reports for each connected controller and, live, the last button or direction pressed. Run it on the PC the game is played on. If the buttons come out wrong, Steam's "Add a non-Steam game" with Steam Input presents the pad as an Xbox controller; a genuine DualShock 3 on Windows needs the DsHidMini driver either way.
 

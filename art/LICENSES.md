@@ -34,6 +34,7 @@ Drawn in code by the generators in `tools/`, in the pack's palette (see `ui/pale
 | --- | --- | --- |
 | `art/tiles/centre.png` | `tools/build_map.py` | The map's tile atlas: the drawn walls, doors, windows, gate, guard post, trees, flag, furniture, notice boards, blackboard, clock, rugs and paving, with the pack tiles listed above placed beside them |
 | `art/ui/title.png` | `tools/build_map.py` | The title screen's picture of the lycée |
+| `art/ui/last_screen.png` | `tools/build_map.py` | The same picture with no trees or benches, behind the last screen's line-up |
 | `art/characters/player.png` | `tools/draw_characters.py` | The player's walk frames |
 | `art/characters/jlassi.png` | `tools/draw_characters.py` | M. Jlassi's frames |
 | `art/characters/kchaou.png` | `tools/draw_characters.py` | Mme Kchaou's frames |

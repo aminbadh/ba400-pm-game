@@ -195,7 +195,13 @@ func _main() -> void:
 	await _press()
 	await _seconds(0.5)
 	await _capture("debrief_page_2")
-	_story.call(&"skip_scene")
+	# The presenter pages through the debrief; the last screen follows.
+	var binder_view: Node = map.get_node("Binder")
+	for i: int in 20:
+		if not binder_view.call(&"is_open"):
+			break
+		await _press()
+		await _seconds(0.4)
 	await _seconds(1.0)
 	await _capture("last_screen")
 
