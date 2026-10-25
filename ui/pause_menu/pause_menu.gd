@@ -1,17 +1,22 @@
 class_name PauseMenu
 extends CanvasLayer
 ## The presenter's menu, on Escape or the controller's Start: resume, open the
-## binder, switch the sound on or off, check the controller, skip to the next
-## scene, or restart from the title. The game is paused while it is open.
+## binder, switch the sound or full screen on or off, check the controller,
+## skip to the next scene, or restart from the title. The game is paused while
+## it is open.
+##
+## The panel sits between the dashboard's strip at the top and the hint, which
+## covers the dashboard's strip at the bottom in the same plate.
 ##
 ## The controller check shows the name Godot reports for each connected
 ## controller and, live, the last button or direction pressed, so the mapping
 ## can be checked on the presenting PC.
 
 
-const OPTIONS: Array[String] = ["Resume", "Binder", "Sound", "Controller check", "Skip to next scene", "Restart to title"]
-## How the Sound option reads, with the sound off and on.
+const OPTIONS: Array[String] = ["Resume", "Binder", "Sound", "Full screen", "Controller check", "Skip to next scene", "Restart to title"]
+## How the Sound and Full screen options read, off and on.
 const SOUND_TEXT: Array[String] = ["Sound: Off", "Sound: On"]
+const FULL_SCREEN_TEXT: Array[String] = ["Full screen: Off", "Full screen: On"]
 const TEXT: Color = Palette.TEXT
 const FOCUS: Color = Palette.FOCUS
 ## The hints, filled in by [Hints] for the device used last.
@@ -49,9 +54,9 @@ const AXIS_NAMES: Dictionary[int, Array] = {
 	JOY_AXIS_TRIGGER_LEFT: ["L2", "L2"],
 	JOY_AXIS_TRIGGER_RIGHT: ["R2", "R2"],
 }
-const PANEL_SIZE: Vector2 = Vector2(176, 124)
+## The panel's narrowest width; its height follows what it shows.
+const PANEL_WIDTH: float = 176.0
 const SCREEN: Vector2 = Vector2(320, 180)
-const HEADING_SIZE: int = 20
 
 @export var binder: Binder
 
@@ -64,7 +69,7 @@ var _check: VBoxContainer
 var _controller_label: Label
 var _pressed_label: Label
 var _hint: Label
-var _hint_panel: PanelContainer
+var _hint_panel: Panel
 var _checking: bool = false
 
 
@@ -74,6 +79,7 @@ func _ready() -> void:
 	_build()
 	hide()
 	Hints.device_changed.connect(_refresh_hint)
+	Screen.changed.connect(_on_screen_changed)
 	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
 
@@ -153,6 +159,8 @@ func _choose(index: int) -> void:
 		"Sound":
 			Story.sound_on = not Story.sound_on
 			_select(index)
+		"Full screen":
+			Screen.toggle()
 		"Controller check":
 			_show_check()
 		"Skip to next scene":
@@ -208,10 +216,25 @@ func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
 		_place()
 
 
+# F11 or Alt+Enter while the menu is open changes what its item reads.
+func _on_screen_changed() -> void:
+	_select(_selected)
+
+
+## How option [param index] reads now.
+func option_text(index: int) -> String:
+	match OPTIONS[index]:
+		"Sound":
+			return SOUND_TEXT[int(Story.sound_on)]
+		"Full screen":
+			return FULL_SCREEN_TEXT[int(Screen.is_full_screen())]
+	return OPTIONS[index]
+
+
 func _select(index: int) -> void:
 	_selected = wrapi(index, 0, OPTIONS.size())
 	for i: int in _labels.size():
-		var option: String = SOUND_TEXT[int(Story.sound_on)] if OPTIONS[i] == "Sound" else OPTIONS[i]
+		var option: String = option_text(i)
 		_labels[i].text = ("> " if i == _selected else "  ") + option
 		_labels[i].add_theme_color_override(&"font_color", FOCUS if i == _selected else TEXT)
 		_labels[i].add_theme_stylebox_override(&"normal", UiStyle.flat(Palette.PANEL_RAISED if i == _selected else Palette.PANEL))
@@ -221,28 +244,37 @@ func _refresh_hint() -> void:
 	_hint.text = Hints.text(CHECK_HINT if _checking else HINT)
 
 
-# The menu's panel, centred in the room above the hint bar at the bottom.
+# The menu's panel, centred across the screen and in the room between the
+# strip at the top and the hint at the bottom.
 func _place() -> void:
 	_panel.reset_size()
-	_hint_panel.reset_size()
 	var panel_size: Vector2 = _panel.get_combined_minimum_size()
-	var room_bottom: float = SCREEN.y - UiStyle.EDGE - _hint_panel.get_combined_minimum_size().y - UiStyle.GAP
-	_panel.position = (Vector2(SCREEN.x - panel_size.x, UiStyle.EDGE + room_bottom - panel_size.y) / 2.0).floor()
+	var room_top: float = Dashboard.STRIP_HEIGHT + UiStyle.EDGE
+	var room_bottom: float = SCREEN.y - Dashboard.HINT_HEIGHT - UiStyle.GAP
+	_panel.position = (Vector2(SCREEN.x - panel_size.x, room_top + room_bottom - panel_size.y) / 2.0).floor()
+
+
+# A label that wraps at the panel's narrowest inner width.
+func _wrapping_label(color: Color) -> Label:
+	var made: Label = UiStyle.label(color)
+	made.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	made.custom_minimum_size.x = PANEL_WIDTH - 2 * (UiStyle.FRAME_MARGIN + UiStyle.INSET)
+	return made
 
 
 func _build() -> void:
 	_panel = PanelContainer.new()
 	_panel.add_theme_stylebox_override(&"panel", UiStyle.frame())
-	_panel.custom_minimum_size = PANEL_SIZE
+	_panel.custom_minimum_size.x = PANEL_WIDTH
 	add_child(_panel)
 	var column: VBoxContainer = VBoxContainer.new()
 	column.add_theme_constant_override(&"separation", UiStyle.GAP)
 	_panel.add_child(column)
+	# The title at the font's base size, as the binder's heading.
 	_heading = UiStyle.label(FOCUS, HORIZONTAL_ALIGNMENT_CENTER)
-	_heading.add_theme_font_size_override(&"font_size", HEADING_SIZE)
 	column.add_child(_heading)
 	_items = VBoxContainer.new()
-	_items.add_theme_constant_override(&"separation", UiStyle.TIGHT)
+	_items.add_theme_constant_override(&"separation", 0)  # spacing: pending; seven items with TIGHT do not fit between the strip and the hint
 	column.add_child(_items)
 	for option: String in OPTIONS:
 		var label: Label = UiStyle.label()
@@ -252,22 +284,26 @@ func _build() -> void:
 	_check.add_theme_constant_override(&"separation", UiStyle.GAP)
 	_check.hide()
 	column.add_child(_check)
-	_controller_label = UiStyle.label()
+	# A long controller name wraps inside the panel rather than widen it.
+	_controller_label = _wrapping_label(TEXT)
 	_check.add_child(_controller_label)
-	_pressed_label = UiStyle.label(FOCUS)
+	_pressed_label = _wrapping_label(FOCUS)
 	_check.add_child(_pressed_label)
 
-	_hint_panel = PanelContainer.new()
-	_hint_panel.add_theme_stylebox_override(&"panel", UiStyle.frame())
-	_hint_panel.anchor_left = 0.5
-	_hint_panel.anchor_right = 0.5
+	# The hint, in a plate over the dashboard's strip at the bottom, as wide
+	# as the screen with its line centred, as the dashboard's own.
+	_hint_panel = Panel.new()
+	_hint_panel.add_theme_stylebox_override(&"panel", UiStyle.plate())
+	_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hint_panel.anchor_left = 0.0
+	_hint_panel.anchor_right = 1.0
 	_hint_panel.anchor_top = 1.0
 	_hint_panel.anchor_bottom = 1.0
-	_hint_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_hint_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_hint_panel.offset_bottom = -UiStyle.EDGE
+	_hint_panel.offset_top = -Dashboard.HINT_HEIGHT
 	add_child(_hint_panel)
-	_hint = UiStyle.label(Palette.DIM)
+	_hint = UiStyle.label(Palette.DIM, HORIZONTAL_ALIGNMENT_CENTER)
+	_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hint.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_hint_panel.add_child(_hint)
 
 	# The options' text sets the panel's size.

@@ -43,6 +43,7 @@ run_test "contrast test" -s tests/contrast_test.gd
 run_test "spacing test" -s tests/spacing_test.gd
 run_test "sound test" -s tests/sound_test.gd
 run_test "controls test" -s tests/controls_test.gd
+run_test "layout test" -s tests/layout_test.gd
 
 echo "== export"
 "$godot" --headless --path . --export-release Web "$out/index.html"
