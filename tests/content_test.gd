@@ -277,6 +277,7 @@ func _check_map(sources: Dictionary) -> void:
 	await _check_am_lassaad(_story.get(&"stage"))
 	await _check_backdrop_titles(sources, _story.get(&"stage"), map.get_node("Dashboard"))
 	await _check_report_fits(_story.get(&"stage"))
+	await _check_debrief_pages(_story.get(&"binder"))
 	await _check_last_screen(sources, _story.get(&"stage"), map.get_node("Dashboard"))
 	map.queue_free()
 	await process_frame
@@ -411,6 +412,47 @@ func _check_strip_from_start(dashboard: Object) -> void:
 		if cell.get("icon_tint") == Color.WHITE:
 			_problems.append("in scene 0 the %s meter's icon is not dimmed" % meter)
 	print("strip in scene 0: %s" % ", ".join(seen))
+
+
+# Every debrief page, rendered with each vote at its longest option, ends
+# above the hint at the binder's bottom, and every card is on a page.
+func _check_debrief_pages(binder: Object) -> void:
+	if binder == null:
+		return
+	var game_state: Node = root.get_node("GameState")
+	game_state.call(&"reset")
+	for card: Dictionary in _story.get(&"cards"):
+		var scene: int = int(card.scene)
+		if scene not in VOTE_SCENES:
+			continue
+		var longest: String = OPTIONS[0]
+		for option: String in OPTIONS:
+			var length: int = (_story.call(&"option_text", scene, option) as String).length() + (card.debrief[option] as String).length()
+			if length > (_story.call(&"option_text", scene, longest) as String).length() + (card.debrief[longest] as String).length():
+				longest = option
+		game_state.call(&"record_vote", scene, longest)
+	for i: int in (_story.get(&"inspection").candidates as Array).size():
+		(game_state.get(&"inspection_calls") as Dictionary)[i] = true
+	binder.call(&"open_debrief")
+	await process_frame
+	var pages: Array = binder.get(&"_debrief_pages")
+	var rows: Control = binder.get(&"_rows")
+	var hint_top: float = (binder.get(&"_hint") as Control).get_global_rect().position.y
+	var placed: Array = []
+	for page: int in pages.size():
+		binder.set(&"_debrief_page", page)
+		binder.call(&"_render")
+		await process_frame
+		await process_frame
+		var bottom: float = (rows.get_child(rows.get_child_count() - 1) as Control).get_global_rect().end.y
+		placed.append_array(pages[page])
+		print("debrief page %d of %d: cards %s, rows end at y %d, the hint starts at y %d" % [page + 1, pages.size(), pages[page], bottom, hint_top])
+		if bottom > hint_top:
+			_problems.append("debrief page %d runs to y %d, past the hint at y %d" % [page + 1, bottom, hint_top])
+	if placed.size() != (_story.get(&"cards") as Array).size():
+		_problems.append("the debrief pages hold cards %s, not all nine" % [placed])
+	binder.call(&"cancel")
+	game_state.call(&"reset")
 
 
 # The report at its longest, every reason shown, fits its pages: each page's

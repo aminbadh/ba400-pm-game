@@ -58,6 +58,8 @@ var _root: Control
 var _heading: Label
 var _rows: VBoxContainer
 var _hint: Label
+# Lays out a debrief row off screen, to measure it as it will show.
+var _measure: Label
 var _card_view: CardView
 var _card: Dictionary = {}
 var _card_page: int = 0
@@ -278,13 +280,14 @@ func debrief_rows(card: Dictionary) -> Array[Dictionary]:
 	return rows
 
 
-## The height [param card]'s debrief rows take at the row width.
+## The height [param card]'s debrief rows take at the row width, laid out as
+## the rows are, line spacing included.
 func debrief_height(card: Dictionary) -> float:
-	var font: Font = _heading.get_theme_font(&"font")
-	var font_size: int = _heading.get_theme_font_size(&"font_size")
 	var height: float = 0.0
 	for row: Dictionary in debrief_rows(card):
-		height += font.get_multiline_string_size(row.text, HORIZONTAL_ALIGNMENT_LEFT, ROW_WIDTH, font_size).y
+		_measure.text = row.text
+		_measure.size = Vector2(ROW_WIDTH, 0)
+		height += _measure.get_minimum_size().y
 	return height
 
 
@@ -338,6 +341,9 @@ func _build() -> void:
 	_hint.position = Vector2(LEFT, HINT_TOP)
 	_hint.size = Vector2(ROW_WIDTH, HINT_HEIGHT)
 	_root.add_child(_hint)
+	_measure = _row_label(TEXT)
+	_measure.visible = false
+	_root.add_child(_measure)
 	_card_view = CardView.new()
 	_card_view.hide()
 	add_child(_card_view)
