@@ -15,6 +15,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `autoload/music.gd` | `Music`: the background music, one constant per track, crossfaded, quiet under speech on its own bus, faded out while a card shows; mutes music and voices for the Sound switch |
 | `autoload/hints.gd` | `Hints`: whether the last input came from the keyboard or a controller, and the on-screen hints for it |
 | `autoload/stick.gd` | `Stick`: turns each push of the left stick into one D-pad press for menus, the binder, the votes and the gate, repeating while held |
+| `autoload/screen.gd` | `Screen`: full screen on or off, on F11, Alt+Enter or the pause menu's item |
 | `autoload/story.gd` | `Story`: sets the pixel font, loads the content files, starts each scene and its music, and gives the dialogue its calls (`show_card`, `show_exhibit`, `open_overview`, `flash_dashboard`, `run_inspection`, `show_report`, `backdrop`, `open_debrief`, `show_last_screen`); builds the debrief's lines and the region's report |
 | `dialogue/` | The story, one Dialogue Manager `.dialogue` file per scene (`s00_charter` to `s10_ending`) |
 | `content/cards.json` | The nine concept cards, each vote's debrief line per option and its best choice |
@@ -29,9 +30,9 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `ui/balloon/` | The dialogue box: portrait, name plate, typed pages of three lines, voices; the votes as A/B/C cards with the 20-second bar, "The room chose B" |
 | `ui/stage/` | Full-screen moments: cards, charts, the gate inspection, the region's report, the ending backdrop, and the last screen (`last_screen.gd`) |
 | `ui/card_view/` | A card, the charter or the region's report drawn as a lecture slide |
-| `ui/dashboard/` | The four meters in a strip along the top, each cell with an icon, name, number and a bar under it, greyed out with "?" until scene 3 lights them; who to talk to next, in a strip at the bottom. The map's camera keeps both strips clear of the map |
+| `ui/dashboard/` | The four meters in a strip along the top, each cell with an icon, name, number and a bar under it, greyed out with "?" until scene 3 lights Budget and the ones the room's metrics measure; who to talk to next, in a strip at the bottom. The map's camera keeps both strips clear of the map |
 | `ui/binder/` | The planning binder: quest log, card viewer, scene 0's read-only overview, debrief |
-| `ui/pause_menu/` | Resume, Binder, Sound on or off, Controller check, Skip to next scene, Restart to title |
+| `ui/pause_menu/` | Resume, Binder, Sound on or off, Full screen on or off, Controller check, Skip to next scene, Restart to title; its hint covers the dashboard's strip at the bottom |
 | `world/centre.tscn` | The map: gate, courtyard, admin office, Room 12, staff room, deposit room; the characters; the scene spots. Its tile layers are filled by `tools/build_map.py` |
 | `actors/player/` | The player: four-direction movement and walk frames, collision, and a probe for the character in front |
 | `actors/npc/` | A character: set **Character** to an id from `content/scenes.json`; it faces down, and turns to the player who talks to it |
@@ -41,7 +42,7 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `tools/` | The art generators (Python, run with `uv`), the screenshot capture and its washed-out filter, the licence check |
 | `fonts/` | Ark Pixel 10 px and its licence |
 | `addons/dialogue_manager/` | [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager) v4.1.0, vendored |
-| `tests/` | `story_test.gd` plays the story to each ending and with scene 8 skipped; `flow_test.gd` drives restart, skip and the ending; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files, and compares the votes and debrief with the story script when it can read it; `contrast_test.gd` checks every text colour reaches 7:1; `spacing_test.gd` checks every margin, separation and offset under `ui/` comes from `UiStyle`'s constants; `sound_test.gd` checks the music and the Sound switch; `controls_test.gd` checks every action has a key and a controller button, and that the hints follow the device |
+| `tests/` | `story_test.gd` plays the story to each ending and with scene 8 skipped; `flow_test.gd` drives restart, skip and the ending; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files, and compares the votes and debrief with the story script when it can read it; `contrast_test.gd` checks every text colour reaches 7:1; `spacing_test.gd` checks every margin, separation and offset under `ui/` comes from `UiStyle`'s constants; `sound_test.gd` checks the music and the Sound switch; `controls_test.gd` checks every action has a key and a controller button, that the hints follow the device, and the full screen keys; `layout_test.gd` checks the pause menu fits between the strip and its hint, and the organisational chart's boxes and lines |
 | `export_presets.cfg` | The `Windows` preset (64-bit, one executable with the game inside) and the `Web` preset (single-threaded) |
 
 ## Controls
@@ -56,11 +57,14 @@ The keyboard and a PlayStation-style controller work side by side, with no setti
 | Gate inspection: admit or stop | 1 admit, 2 stop, or Left/Right then E | D-pad left for Admit, right for Stop, then ✕ |
 | Open or close the binder | B | △ to open, ○ to close |
 | Pause menu | Escape | Start; ○ backs out |
+| Full screen on or off | F11 or Alt+Enter, anywhere | The pause menu's Full screen item |
 | Choose in the binder and menus | Up and Down, then E | D-pad, then ✕ |
 
 In menus, the binder, the votes and the gate, one push of the left stick moves one step, like the D-pad; held, it repeats after 0.4 s and then every 0.15 s. A controller never picks a vote with one button per letter: the presenter points at the room's option and confirms it. Votes are never picked for the presenter: the bar fills over 20 seconds and turns red, and waits. Cards and charts stay until the presenter presses E or ✕.
 
 **Controller check**, in the pause menu, shows the name Godot reports for each connected controller and, live, the last button or direction pressed. Run it on the PC the game is played on. If the buttons come out wrong, Steam's "Add a non-Steam game" with Steam Input presents the pad as an Xbox controller; a genuine DualShock 3 on Windows needs the DsHidMini driver either way.
+
+**Full screen**, in the pause menu, or F11 or Alt+Enter at any time, switches the game between full screen and a window. The Windows build always starts full screen; the setting is not saved between runs. On the web it asks the browser for its own full screen, which Escape also leaves.
 
 **Sound**, in the pause menu, switches the music and the characters' voices together; it is on by default. The music plays quietly under speech: a calm loop on the map, a tenser one on exam day, the end theme from the ending on. It fades out while a concept card or the charter is on screen and comes back when it closes; it keeps playing during votes. Each track is one constant at the top of `autoload/music.gd`.
 
@@ -68,7 +72,7 @@ In menus, the binder, the votes and the gate, one push of the left stick moves o
 
 On the title screen, press **E** or **✕**. The story takes about 30 minutes.
 
-Walk to the character with the marker over them and press E; the line at the bottom of the screen says who and where. Only that character answers. The dashboard strip along the top shows all four meters greyed out with "?" from the first scene; scene 3 lights the ones the room's metrics measure. In scene 0, after the first card, the binder opens as a read-only overview of the nine cards. After scene 9 the ending starts on its own: M. Jlassi's call, the region's report on the charter's success criteria, the ending, the debrief and the last screen.
+Walk to the character with the marker over them and press E; the line at the bottom of the screen says who and where. Only that character answers. The dashboard strip along the top shows all four meters greyed out with "?" from the first scene; scene 3 lights Budget, which every project tracks, and the ones the room's metrics measure. In scene 0, after the first card, the binder opens as a read-only overview of the nine cards. After scene 9 the ending starts on its own: M. Jlassi's call, the region's report on the charter's success criteria, the ending, the debrief and the last screen.
 
 The debrief shows each card with the room's choice ("You chose B: ..."), the line for that choice and the best choice ("Best: ..."). Card 5 shows how many gate calls were right instead.
 
@@ -130,7 +134,8 @@ godot --headless --path . -s tests/content_test.gd   # cards, debrief and best l
 godot --headless --path . -s tests/contrast_test.gd  # every text colour pair at 7:1 or more; exits 1 on failure
 godot --headless --path . -s tests/spacing_test.gd   # no number literal for a margin, separation or offset under ui/; exits 1 on failure
 godot --headless --path . -s tests/sound_test.gd     # the Sound switch, each scene's track, the fade during a card; exits 1 on failure
-godot --headless --path . -s tests/controls_test.gd  # a key and a controller button for every action, hints that follow the device; exits 1 on failure
+godot --headless --path . -s tests/controls_test.gd  # a key and a controller button for every action, hints that follow the device, full screen's keys; exits 1 on failure
+godot --headless --path . -s tests/layout_test.gd    # the pause menu and the controller check fit the screen, the org chart is a clean tree; exits 1 on failure
 ```
 
 Godot exits 0 when a test script fails to compile, so read the output for `SCRIPT ERROR` too; `tools/web_build.sh` does.
@@ -146,7 +151,7 @@ mkdir -p build/windows && touch build/.gdignore
 godot --headless --path . --export-release Windows build/windows/ba400-pm-game.exe
 ```
 
-Copy `build/windows/ba400-pm-game.exe` to the PC. Windows may warn that the file is from an unknown publisher, since it is not signed: choose **More info**, then **Run anyway**.
+Copy `build/windows/ba400-pm-game.exe` to the PC. It starts full screen (`window/size/mode.windows` in `project.godot`); F11 or Alt+Enter gives a window. Windows may warn that the file is from an unknown publisher, since it is not signed: choose **More info**, then **Run anyway**.
 
 ## Web build
 
