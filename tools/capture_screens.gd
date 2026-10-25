@@ -1,9 +1,11 @@
 extends SceneTree
 ## Captures one screenshot of each kind of screen, for the projector check:
-## the title, the map, a line with a portrait, a long line paging, a vote as it
-## appears and after an arrow key, a card, a chart, the gate
-## inspection and Am Lassaad's longest line there, the dashboard, the binder, the pause menu, the ending and the
-## debrief. Each is saved at 1920x1080, the game's 320x180 scaled x6 as on a
+## the title, the map in scene 0 with the strip greyed out, a line with a
+## portrait, a long line paging, a vote as it appears and after an arrow key,
+## a card, the same card with the controller's hints, a chart, the gate
+## inspection and Am Lassaad's longest line there, the dashboard, the binder,
+## the pause menu and its controller check, M. Jlassi's call, the region's
+## report, the ending, the debrief and the last screen. Each is saved at 1920x1080, the game's 320x180 scaled x6 as on a
 ## 1920x1080 projector, to build/screens/. Needs a window, not --headless:
 ##
 ##   Godot --path . -s tools/capture_screens.gd
@@ -39,7 +41,7 @@ func _main() -> void:
 	var player: Node2D = map.get_node("Actors/Player")
 	player.position = Vector2(200, 200)
 	await _frames(10)
-	await _capture("map")
+	await _capture("map_scene0_strip")
 	# At the bottom of the map, by the gate, the camera's lowest.
 	player.position = Vector2(200, 296)
 	await _frames(10)
@@ -74,6 +76,12 @@ func _main() -> void:
 		var stage: Node = _story.get(&"stage")
 		if not card_taken and (stage.get(&"_card_view") as Control).visible:
 			await _capture("card")
+			# The same card's hint after a controller press: the cross button.
+			Input.parse_input_event(_joypad_button(JOY_BUTTON_X))
+			await _frames(5)
+			await _capture("card_controller_hint")
+			await _key(KEY_Q)
+			await _frames(5)
 			card_taken = true
 		if _vote_showing():
 			break
@@ -154,22 +162,42 @@ func _main() -> void:
 	pause.call(&"_open")
 	await _frames(5)
 	await _capture("pause")
+	pause.call(&"_show_check")
+	Input.parse_input_event(_joypad_button(JOY_BUTTON_DPAD_LEFT))
+	await _frames(5)
+	await _capture("pause_controller_check")
+	await _key(KEY_Q)
 	pause.call(&"_resume")
 	await _frames(5)
 
-	# The ending: its title over the backdrop with the line under it, then the
-	# real 2026 title, then the debrief.
+	# The ending: M. Jlassi's call, the region's report, the ending's title
+	# with its line, the debrief, then the last screen.
 	_game_state.set(&"scene", 10)
 	_story.call(&"start_scene", 10)
-	await _seconds(4.0)
-	await _capture("ending")
-	for i: int in 3:
+	await _seconds(3.0)
+	await _capture("ending_call")
+	await _press()
+	await _seconds(1.0)
+	await _capture("report")
+	var card_view: Control = stage.get(&"_card_view")
+	for i: int in 5:
+		if not card_view.visible:
+			break
 		await _press()
-		await _seconds(2.5)
-	await _capture("ending_2026")
+		await _seconds(0.6)
+		if card_view.visible:
+			await _capture("report_page_%d" % (i + 2))
+	await _seconds(3.0)
+	await _capture("ending")
 	_story.call(&"skip_scene")
 	await _seconds(1.0)
 	await _capture("debrief")
+	await _press()
+	await _seconds(0.5)
+	await _capture("debrief_page_2")
+	_story.call(&"skip_scene")
+	await _seconds(1.0)
+	await _capture("last_screen")
 
 	print("captured %d screens in %s" % [_count, ProjectSettings.globalize_path(OUT_DIR)])
 	quit(0)
@@ -188,6 +216,13 @@ func _capture(screen_name: String) -> void:
 	var path: String = OUT_DIR + "%02d_%s.png" % [_count, screen_name]
 	image.save_png(path)
 	print("saved " + path)
+
+
+func _joypad_button(button: JoyButton) -> InputEventJoypadButton:
+	var event: InputEventJoypadButton = InputEventJoypadButton.new()
+	event.button_index = button
+	event.pressed = true
+	return event
 
 
 func _press() -> void:
