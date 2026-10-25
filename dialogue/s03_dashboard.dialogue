@@ -1,30 +1,34 @@
 # Scene 3: The dashboard. Admin office; M. Jlassi, on speaker.
-# Core; trade-off vote. The dashboard stays on screen from here on.
+# Trade-off vote. The strip along the top has shown every meter greyed out
+# with "?" since scene 0; it flashes here, and the room's metrics light it.
 
 ~ start
 M. Jlassi: The region tracks every centre on a dashboard during exam week. What will yours report?
-do GameState.show_dashboard()
+do Story.flash_dashboard()
+The dashboard strip flashes\: this is what it is for.
 do Story.show_card(4)
 Which metrics feed your dashboard?
-- Supervisors present each day.
+- The centre's pass rate\: the number everyone will ask about.
 	do GameState.record_vote(3, "A")
-	do GameState.team += 10
-	do GameState.set_flag("metrics_people")
-	do GameState.light_meter("team")
-	M. Jlassi: People count. But will you see a late paper on that?
-- Papers started on time, incidents logged, fraud cases detected.
-	do GameState.record_vote(3, "B")
-	do GameState.integrity += 10
-	do GameState.set_flag("metrics_exam")
-	do GameState.light_meter("integrity")
-	do GameState.light_meter("fairness")
-	M. Jlassi: That's what the region needs.
-- The centre's pass rate.
-	do GameState.record_vote(3, "C")
 	do GameState.set_flag("metrics_passrate")
 	do GameState.light_meter("integrity")
 	do GameState.light_meter("fairness")
 	do GameState.light_meter("team")
 	do GameState.light_meter("budget")
 	M. Jlassi: Fine, fine.
+- Supervisors present each day, room by room.
+	do GameState.record_vote(3, "B")
+	do GameState.team += 10
+	do GameState.set_flag("metrics_people")
+	do GameState.light_meter("team")
+	M. Jlassi: People count. But will you see a late paper on that?
+	Meters not lit stay greyed out until the ending.
+- Papers on time, incidents logged, fraud detected.
+	do GameState.record_vote(3, "C")
+	do GameState.integrity += 10
+	do GameState.set_flag("metrics_exam")
+	do GameState.light_meter("integrity")
+	do GameState.light_meter("fairness")
+	M. Jlassi: That's what the region needs.
+	Meters not lit stay greyed out until the ending.
 => END

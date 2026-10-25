@@ -7,8 +7,10 @@
 		"aziz": { "name": "Aziz", "color": "#e0c23a" },
 		"fethi": { "name": "Agent Fethi", "color": "#2f3a4a" },
 		"nour": { "name": "Nour", "color": "#d84a8a" },
-		"lassaad": { "name": "Am Lassaad", "color": "#a8642e" }
+		"lassaad": { "name": "Am Lassaad", "color": "#a8642e" },
+		"player": { "name": "You", "color": "#4a5270" }
 	},
+	"cast": ["jlassi", "kchaou", "salma", "hedi", "player", "aziz", "fethi", "nour", "lassaad"],
 	"places": {
 		"admin": "Admin office",
 		"room12": "Room 12",
@@ -28,6 +30,6 @@
 		{ "number": 7, "title": "The staffing peak", "character": "salma", "spot": "staff_chart", "place": "staff", "dialogue": "res://dialogue/s07_staffing_peak.dialogue" },
 		{ "number": 8, "title": "The veteran's worry", "character": "hedi", "spot": "courtyard_bench", "place": "courtyard", "dialogue": "res://dialogue/s08_veterans_worry.dialogue" },
 		{ "number": 9, "title": "Exam day, 3 June", "character": "fethi", "spot": "gate_post", "place": "gate", "dialogue": "res://dialogue/s09_exam_day.dialogue" },
-		{ "number": 10, "title": "June 2026, what really happened", "character": "", "spot": "", "place": "", "dialogue": "res://dialogue/s10_ending.dialogue" }
+		{ "number": 10, "title": "The region's report", "character": "", "spot": "", "place": "", "dialogue": "res://dialogue/s10_ending.dialogue" }
 	]
 }

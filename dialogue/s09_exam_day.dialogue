@@ -1,5 +1,5 @@
 # Scene 9: Exam day, 3 June. The centre at 7:00, a montage of short beats.
-# Each beat depends on earlier flags. Short mode keeps only the beats a flag sets.
+# Each beat depends on earlier flags.
 # Each beat's time is written where a character's name goes, so it shows as the speaker.
 
 ~ start
@@ -11,12 +11,11 @@ elif GameState.has_flag("raci_double")
 elif GameState.has_flag("raci_none")
 	do GameState.integrity -= 10
 	7:00, envelopes: An envelope sits on a desk unsigned for ten minutes. Mme Kchaou sees it.
-# The device line was missing: scene 4's check vote, answered wrongly in short mode.
-if GameState.voted(4, "B") or GameState.voted(4, "C")
+7:30, the gate: The checklist works as well as the rehearsal went.
+# The switched-off phone admitted at scene 4's rehearsal.
+if GameState.has_flag("phone_admitted")
 	do GameState.integrity -= 5
 	7:30, the gate: Two phones get in.
-elif not GameState.short_mode
-	7:30, the gate: The checklist works as well as the rehearsal went.
 if GameState.has_flag("staff_thin")
 	do GameState.integrity -= 10
 	8:00, the rooms: A supervisor alone with forty candidates misses a smartwatch.
@@ -25,7 +24,7 @@ elif GameState.has_flag("rooms_crowded")
 	8:00, the rooms: Nour's quiet desk is gone; she finishes, but the doors bang.
 elif GameState.has_flag("staff_borrowed")
 	8:00, the rooms: The borrowed teachers arrive with sandwiches from the region. Everyone is in place.
-# The incident shows only when scene 8 set a flag, in both modes.
+# The incident shows only when scene 8 set a flag.
 if GameState.has_flag("staff_trained") or GameState.has_flag("staff_protected") or GameState.has_flag("bought_tech")
 	10:15, an incident: A candidate is found with an earpiece.
 if GameState.has_flag("staff_trained")

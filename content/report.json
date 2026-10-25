@@ -1,0 +1,45 @@
+{
+	"title": "The region's report: Bac 2026, centre 26",
+	"criteria": [
+		{
+			"criterion": "Every paper starts on time",
+			"met": "Every envelope signed and opened on time.",
+			"reasons": [
+				{ "flag": "raci_double", "text": "The escort waited twenty minutes: each signer thought the other had signed." }
+			]
+		},
+		{
+			"criterion": "No paper leaves its envelope early, and the exam stays secure",
+			"met": "Envelopes sealed, devices kept out.",
+			"met_also": { "flags": ["staff_trained", "staff_protected"], "text": "The earpiece was caught." },
+			"reasons": [
+				{ "flag": "raci_none", "text": "An envelope sat unsigned on a desk." },
+				{ "flag": "phone_admitted", "text": "Two phones got in at the gate." },
+				{ "flag": "staff_thin", "text": "A smartwatch was missed in a thin room." },
+				{ "flag": "bought_tech", "text": "The earpiece went unnoticed." }
+			]
+		},
+		{
+			"criterion": "Every candidate can sit every paper, special arrangements included",
+			"met": "Nour had her quiet desk and her extra time.",
+			"reasons": [
+				{ "flag": "rooms_crowded", "text": "Nour lost her quiet desk in a crowded room." }
+			]
+		},
+		{
+			"criterion": "The centre stays within budget",
+			"met": "Within budget: {budget} TND left.",
+			"reasons": [
+				{ "budget_spent": true, "text": "The budget ran out." }
+			]
+		},
+		{
+			"criterion": "The dashboard told the truth",
+			"only_with": "metrics_passrate",
+			"met": "",
+			"reasons": [
+				{ "flag": "metrics_passrate", "text": "Your dashboard showed green all day, on a number the centre didn't control." }
+			]
+		}
+	]
+}

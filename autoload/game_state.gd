@@ -45,13 +45,10 @@ var budget: int = BUDGET_START:
 		budget = clampi(value, 0, BUDGET_START)
 		changed.emit()
 
-## Set on the title screen: the 20-minute path that drops the optional moments.
-var short_mode: bool = false
-
 ## The story flags that are set, as keys (the values are always true).
 var flags: Dictionary[String, bool] = {}
 ## The room's vote in each scene, by scene number: "A", "B" or "C".
-## A scene with no entry was not voted (skipped, or optional in short mode).
+## A scene with no entry was not voted: skipped from the pause menu.
 var votes: Dictionary[int, String] = {}
 ## The cards the player has been shown, by number, in the order first shown.
 var cards: Array[int] = []
@@ -60,15 +57,13 @@ var inspection_calls: Dictionary[int, bool] = {}
 ## The scene to play next, 0 to 10; 11 once the story is over.
 var scene: int = 0
 
-## True once scene 3 has put the dashboard on screen.
-var dashboard_shown: bool = false
 ## The meters the chosen metrics light up; the others stay greyed out.
 var lit_meters: Array[String] = []
 ## True once the ending shows the dashboard's real values.
 var dashboard_revealed: bool = false
 
 
-## Put everything back to how a new game starts. Keeps [member short_mode].
+## Put everything back to how a new game starts.
 func reset() -> void:
 	integrity = METER_START
 	fairness = METER_START
@@ -79,7 +74,6 @@ func reset() -> void:
 	cards = []
 	inspection_calls = {}
 	scene = 0
-	dashboard_shown = false
 	lit_meters = []
 	dashboard_revealed = false
 	changed.emit()
@@ -110,12 +104,6 @@ func collect_card(number: int) -> void:
 	if number not in cards:
 		cards.append(number)
 		changed.emit()
-
-
-## Put the dashboard on screen, every meter greyed out until [method light_meter].
-func show_dashboard() -> void:
-	dashboard_shown = true
-	changed.emit()
 
 
 ## Light up one meter on the dashboard: "integrity", "fairness", "team" or "budget".
@@ -172,7 +160,6 @@ func snapshot() -> Dictionary:
 		"votes": votes.duplicate(),
 		"cards": cards.duplicate(),
 		"inspection_calls": inspection_calls.duplicate(),
-		"dashboard_shown": dashboard_shown,
 		"lit_meters": lit_meters.duplicate(),
 		"dashboard_revealed": dashboard_revealed,
 	}
@@ -188,7 +175,6 @@ func restore(saved: Dictionary) -> void:
 	votes = saved.votes
 	cards = saved.cards
 	inspection_calls = saved.inspection_calls
-	dashboard_shown = saved.dashboard_shown
 	lit_meters = saved.lit_meters
 	dashboard_revealed = saved.dashboard_revealed
 	changed.emit()

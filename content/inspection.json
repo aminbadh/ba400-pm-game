@@ -29,6 +29,7 @@
 			"shows": "Phone switched off in a pocket.",
 			"answer": "stop",
 			"after": "\"It's off!\" \"Off still counts.\" Sent to the deposit desk.",
+			"admit_flag": "phone_admitted",
 			"lines": [2, 3]
 		},
 		{

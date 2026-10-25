@@ -1,5 +1,5 @@
 # Scene 6: The sealed envelopes. The deposit room: a locked cabinet, a stack of sealed envelopes.
-# Core; trade-off vote, paid off in scene 9.
+# Trade-off vote, paid off in scenes 9 and 10.
 
 ~ start
 Agent Fethi: Envelopes arrive at 7:00 under escort. They stay sealed until 8:00, opened in front of the candidates.
@@ -9,16 +9,16 @@ Si Hédi: Two people signing means nobody's signing.
 do Story.show_card(7)
 do Story.show_exhibit("raci")
 Who is Accountable for receiving the envelopes?
-- You, the centre head\: one signature, and the authority behind it.
+- You, the centre head\: one signature, and the authority with it.
 	do GameState.record_vote(6, "A")
 	do GameState.integrity += 10
 	do GameState.set_flag("raci_clear")
 	Si Hédi: One name in the A column. That's how it should be.
-- Mme Salma and Agent Fethi\: two signatures are safer.
+- Mme Salma and Agent Fethi together\: two signatures, two checks.
 	do GameState.record_vote(6, "B")
 	do GameState.set_flag("raci_double")
 	=> shrug
-- Nobody needs to be Accountable; everyone is careful.
+- Whoever is on duty at 7:00\: the escort can't wait for anyone.
 	do GameState.record_vote(6, "C")
 	do GameState.integrity -= 10
 	do GameState.set_flag("raci_none")

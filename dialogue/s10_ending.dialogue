@@ -1,12 +1,13 @@
-# Scene 10: June 2026, what really happened. Starts on its own after scene 9.
-# The ending for the meters, then the real Bac 2026 credited to the press, then
-# the debrief in the binder, then the last screen. Short mode keeps the ending
-# line, three real figures, the flag payoffs, the debrief and the last screen.
-# Skipping the ending (pause menu) jumps to the debrief cue, or from the debrief
-# to the last screen.
+# Scene 10: The region's report. Starts on its own after scene 9.
+# M. Jlassi's call, the region's report on the charter's success criteria
+# (content/report.json), the ending card for the meters, the debrief in the
+# binder, then the last screen. Skipping the ending (pause menu) jumps to the
+# debrief cue, or from the debrief to the last screen.
 
 ~ start
 do GameState.reveal_dashboard()
+M. Jlassi: (Phone.) The region's report on centre 26 is in.
+do Story.show_report()
 if GameState.ending() == "smooth"
 	do Story.backdrop("A smooth session")
 	Every paper on time, every candidate seated. The region asks for your plan as a template.
@@ -16,18 +17,6 @@ elif GameState.ending() == "strained"
 else
 	do Story.backdrop("The centre made the news")
 	A photo of an unsigned envelope is on Facebook by noon.
-do Story.backdrop("June 2026, what really happened")
-if not GameState.short_mode
-	The press: 162,435 candidates registered; more than 20,000 teachers marked the copies in 32 centres.
-The press: 955 fraud cases in the main session, about double the year before.
-The press: Signal jammers were dropped for good as ineffective; the ministry turned to real-time phone detection.
-if GameState.has_flag("bought_tech")
-	Si Hédi: Told you. Boxes don't supervise. The machines weren't the answer; trained people were.
-if not GameState.short_mode
-	The press: Results reached candidates by SMS on 20 June, three days before the announced date.
-The press: 35.67% passed the main session, the lowest in five years; 50.72% after the control session.
-if GameState.has_flag("metrics_passrate")
-	You chose the pass rate as your metric. Your centre didn't control it, and it arrived after your project ended. A metric has to measure your project's performance.
 => debrief
 
 ~ debrief
@@ -36,5 +25,6 @@ do Story.open_debrief()
 => last_screen
 
 ~ last_screen
-do Story.backdrop("", "Your centre's quality plan and staffing plan are done. But who tells the parents? What could still go wrong? Who prints the papers? Over to Team 2.")
+do Story.backdrop("")
+do Story.show_last_screen("Thank you!", "Ya3tikom essa7a", "Your centre's quality plan and staffing plan are done. But who tells the parents? What could still go wrong? Who prints the papers?", "Over to Team 2.")
 => END

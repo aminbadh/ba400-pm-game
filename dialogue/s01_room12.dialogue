@@ -1,5 +1,5 @@
 # Scene 1: Room 12. Mme Kchaou with a clipboard; Nour sits at the desk by the door.
-# Core; check vote.
+# Check vote.
 
 ~ start
 Mme Kchaou: Desks spaced. Seating plan posted. Room number on the door. Every written rule, met.
@@ -7,16 +7,16 @@ Nour: Excuse me... the clock is behind us. And I have extra time. When everyone 
 Mme Kchaou: The rules say nothing about clocks or doors.
 do Story.show_card(2)
 Room 12 meets every written rule, yet a candidate can't work in it. Which part of quality fails?
-- Conformance to requirements.
+- Fitness for use\: a candidate can't use it as intended.
 	do GameState.record_vote(1, "A")
-	=> wrong
-- Fitness for use.
-	do GameState.record_vote(1, "B")
 	do GameState.fairness += 15
 	do GameState.set_flag("room12_fixed")
 	You move the clock to the front and give Nour the quiet desk at the back.
 	Mme Kchaou: Hm. The rules didn't ask for that. (Writes something down.) Good.
-- Neither\: it passes.
+- Conformance to requirements\: the room breaks the specification.
+	do GameState.record_vote(1, "B")
+	=> wrong
+- Neither\: it meets every written rule, so it passes.
 	do GameState.record_vote(1, "C")
 	=> wrong
 => END

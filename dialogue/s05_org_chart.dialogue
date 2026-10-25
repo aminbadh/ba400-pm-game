@@ -1,26 +1,25 @@
 # Scene 5: The org chart. The staff room; the cast is gathered.
-# Core card; the vote is optional and skipped in short mode.
+# A warm-up check vote.
 
 ~ start
 Mme Salma: Up to a hundred and twenty supervisors on the busiest day. They need to know who answers to whom.
 do Story.show_exhibit("org_chart")
 do Story.show_card(6)
-if not GameState.short_mode
-	A supervisor finds a candidate with a phone. Who does she report to first?
-	- The regional office, directly.
-		do GameState.record_vote(5, "A")
-		=> wrong
-	- The deputy head, following the chart.
-		do GameState.record_vote(5, "B")
-		do GameState.team += 5
-		Aziz: Deputy first. Got it. Writing it on my hand.
-	- Whoever is nearest.
-		do GameState.record_vote(5, "C")
-		=> wrong
+A supervisor finds a candidate with a phone. Who does she report to first?
+- M. Jlassi, at the regional office.
+	do GameState.record_vote(5, "A")
+	=> wrong
+- Mme Salma, the deputy head.
+	do GameState.record_vote(5, "B")
+	do GameState.team += 5
+	Aziz: Deputy first. Got it. Writing it on my hand.
+- You, the centre head.
+	do GameState.record_vote(5, "C")
+	=> wrong
 => END
 
 ~ wrong
-# No cost: story.md's vote rules say a wrong optional warm-up vote costs nothing.
-Mme Salma: Then the region hears it before I do, and nobody acts. The chart says\: to me first.
+# No cost: story.md's vote rules say a wrong warm-up vote costs nothing.
+Mme Salma: Skip me, and the one person who can act in that corridor right now never hears it. The chart says\: to me first.
 do Story.show_card(6)
 => END

@@ -1,25 +1,24 @@
 # Scene 2: The quality plan. Admin office; Mme Salma with a folder.
-# Core card; the vote is optional and skipped in short mode.
+# A warm-up check vote.
 
 ~ start
 Mme Salma: The region wants our quality management plan by Friday. I've started it.
 do Story.show_card(3)
-if not GameState.short_mode
-	Mme Salma's plan lists the ministry's exam rules and our metrics. What's missing?
-	- How a supervisor reports a problem, and who acts on it.
-		do GameState.record_vote(2, "A")
-		do GameState.integrity += 5
-		Mme Salma: Right. Supervisor to deputy, deputy to you, you to the region. Added. And the papers come from outside\: supplier quality. Added too.
-	- The colour of the candidates' pens.
-		do GameState.record_vote(2, "B")
-		=> wrong
-	- Nothing.
-		do GameState.record_vote(2, "C")
-		=> wrong
+Mme Salma's plan lists the ministry's exam rules and our metrics. What's missing?
+- A seating plan for every room, posted on each door.
+	do GameState.record_vote(2, "A")
+	=> wrong
+- How a supervisor reports a problem, and who fixes it.
+	do GameState.record_vote(2, "B")
+	do GameState.integrity += 5
+	Mme Salma: Right. Supervisor to deputy, deputy to you, you to the region. Added. And the papers come from outside\: supplier quality. Added too.
+- The full exam timetable, paper by paper and room by room.
+	do GameState.record_vote(2, "C")
+	=> wrong
 => END
 
 ~ wrong
-# No cost: story.md's vote rules say a wrong optional warm-up vote costs nothing.
-Mme Salma: Wait, what happens when a supervisor finds a problem? We need problem reporting and corrective action. And supplier quality, for the papers.
+# No cost: story.md's vote rules say a wrong warm-up vote costs nothing.
+Mme Salma: Useful, but that's logistics, not the quality plan. What happens when a supervisor finds a problem? We need problem reporting and corrective action. And supplier quality, for the papers.
 do Story.show_card(3)
 => END

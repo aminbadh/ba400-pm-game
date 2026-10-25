@@ -1,28 +1,27 @@
 # Scene 0: The charter. Admin office; M. Jlassi, phone in hand.
-# Core; the vote is optional and skipped in short mode.
+# The charter, card 1, the binder as a read-only overview, then a warm-up check vote.
 
 ~ start
 M. Jlassi: Congratulations, and condolences. Lycée Ennakhla is an exam centre this year. You run it.
 M. Jlassi: Here's your charter. Sponsor, dates, success criteria, signed. The WBS is attached. Your colleagues in the last presentation covered scope, schedule and cost. You do the rest.
 do Story.show_exhibit("charter")
-do Story.open_quest_log()
 do Story.show_card(1)
-if not GameState.short_mode
-	Is this centre's Bac 2026 a project?
-	- No, the Bac happens every year, so it's operations.
-		do GameState.record_vote(0, "A")
-		=> wrong
-	- Yes\: it's temporary and produces a unique result.
-		do GameState.record_vote(0, "B")
-		do GameState.team += 5
-		M. Jlassi: A first session, a fixed end, a unique result. A project. The national Bac is the program around it.
-	- Only if it goes over budget.
-		do GameState.record_vote(0, "C")
-		=> wrong
+do Story.open_overview()
+Is this centre's Bac 2026 a project?
+- No\: the Bac comes back every June, so it's routine operations.
+	do GameState.record_vote(0, "A")
+	=> wrong
+- No\: the ministry runs it nationally, so it's a program.
+	do GameState.record_vote(0, "B")
+	=> wrong
+- Yes\: it's temporary, with a fixed end and a unique result.
+	do GameState.record_vote(0, "C")
+	do GameState.team += 5
+	M. Jlassi: A first session, a fixed end, a unique result. A project. The national Bac is the program around it.
 => END
 
 ~ wrong
-# No cost: story.md's vote rules say a wrong optional warm-up vote costs nothing.
+# No cost: story.md's vote rules say a wrong warm-up vote costs nothing.
 M. Jlassi: It recurs nationally, but this centre's first session is temporary and unique. That's a project; the national Bac is the program around it.
 do Story.show_card(1)
 => END
