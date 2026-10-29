@@ -5,8 +5,11 @@ extends SceneTree
 ## needs; the D-pad, Talk, Binder and Menu press their actions while held, a
 ## finger slides across the D-pad, and two fingers work at once; a tap turns a
 ## card, picks a binder row, a pause menu item and the gate's Admit or Stop,
-## but a tap on a button is the button's alone; and a window taller than wide
-## is a phone held upright. Exits non-zero on failure.
+## but a tap on a button is the button's alone; every button is 22 base
+## pixels across or more; the touch that brings the buttons back after a key
+## or a controller presses nothing and reaches nothing under it; and a window
+## taller than wide is a phone held upright, under whose screen no tap counts.
+## Exits non-zero on failure.
 ##
 ##   Godot --headless --path . -s tests/touch_test.gd
 
@@ -14,11 +17,14 @@ extends SceneTree
 const TITLE_SCENE: String = "res://ui/title/title.tscn"
 ## Scripts that need the autoloads, loaded once they exist.
 const STAGE_SCRIPT: String = "res://ui/stage/stage.gd"
+const DASHBOARD_SCRIPT: String = "res://ui/dashboard/dashboard.gd"
 const KEYBOARD_HINTS: Dictionary[String, String] = { "start": "E  Start", "keys": "Move WASD   Talk E   Binder B   Menu Esc" }
 const TOUCH_HINTS: Dictionary[String, String] = { "start": "Tap  Start", "keys": "Walk with the D-pad   Tap Talk, Binder or Menu", "gate": "Tap Admit    Tap Stop" }
 const WALKING: Array[String] = ["up", "down", "left", "right", "talk", "binder", "menu"]
 ## Somewhere on the map no button covers.
 const OPEN_GROUND: Vector2 = Vector2(160, 80)
+## The smallest a button may be across, in base pixels.
+const TARGET: float = 22.0
 ## The binder and the stage ignore presses this long after they open.
 const GUARD_SECONDS: float = 0.4
 const SETTLE_FRAMES: int = 5
@@ -53,6 +59,8 @@ func _main() -> void:
 	if await _check_taps() != true:
 		_problems.append("the taps check stopped on a script error")
 	_check_upright()
+	if await _check_sideways() != true:
+		_problems.append("the sideways check stopped on a script error")
 	_story.call(&"restart")
 	root.get_node("Music").call(&"silence")
 	await create_timer(0.2, true).timeout
@@ -83,6 +91,13 @@ func _check_first_touch() -> bool:
 	Input.parse_input_event(_key(KEY_Q))
 	await _settle()
 	_expect(start.text == KEYBOARD_HINTS.start and keys.text == KEYBOARD_HINTS.keys, "after a key the title reads \"%s\" and \"%s\"" % [start.text, keys.text])
+	# The touch that brings the touch hints back reaches nothing: not even Start under it.
+	await _tap(start.get_global_rect().get_center())
+	var on_title: bool = current_scene.scene_file_path == TITLE_SCENE
+	print("  after a key, a tap on Start: still on the title %s" % on_title)
+	_expect(on_title, "the first touch after a key pressed Start under it")
+	if on_title:
+		_expect(start.text == TOUCH_HINTS.start, "the first touch after a key did not bring the touch hints back")
 	return true
 
 
@@ -94,6 +109,13 @@ func _check_buttons() -> bool:
 	await _tap(OPEN_GROUND)
 	print("  on the map: %s" % [_touch.call(&"shown")])
 	_expect(_touch.call(&"shown") == WALKING, "walking shows %s, not %s" % [_touch.call(&"shown"), WALKING])
+	# Every button big enough for a finger: 22 base pixels, 44 CSS pixels at 2x.
+	var strip: int = (load(DASHBOARD_SCRIPT) as Script).get_script_constant_map().STRIP_HEIGHT
+	for button: String in WALKING:
+		var area: Rect2 = _touch.call(&"rect", button)
+		print("  %s: %s" % [button, area])
+		_expect(minf(area.size.x, area.size.y) >= TARGET, "%s is %s, under %d across" % [button, area.size, TARGET])
+		_expect(area.position.y >= strip, "%s at %s covers the meters strip" % [button, area])
 	for button: String in ["up", "down", "left", "right", "talk"]:
 		var action: StringName = (_touch.get(&"BUTTONS") as Dictionary)[button].action
 		_touch_at(0, _centre(button), true)
@@ -137,14 +159,32 @@ func _check_buttons() -> bool:
 	await _tap(_centre("menu"))
 	_expect(not pause.get(&"visible") and not paused, "Menu did not resume the game")
 
-	# A key or a controller button hides every button; a touch brings them back.
+	# A key or a controller button hides every button; a touch brings them
+	# back, and presses none, even where Menu shows up under it.
+	var menu: Vector2 = _centre("menu")
 	for event: InputEvent in [_key(KEY_Q), _joypad_button(JOY_BUTTON_X)]:
 		Input.parse_input_event(event)
 		await _settle()
 		print("  after %s: shown %s" % [event.as_text(), _touch.call(&"shown")])
 		_expect((_touch.call(&"shown") as Array).is_empty(), "after %s the buttons %s still show" % [event.as_text(), _touch.call(&"shown")])
-		await _tap(OPEN_GROUND)
+		await _tap(menu)
+		print("  then a tap on Menu: shown %s, pause menu open %s" % [_touch.call(&"shown"), pause.get(&"visible")])
 		_expect(_touch.call(&"shown") == WALKING, "a touch after %s did not bring the buttons back" % event.as_text())
+		_expect(not pause.get(&"visible") and not paused, "the touch that brought the buttons back after %s also pressed Menu" % event.as_text())
+		if pause.get(&"visible"):
+			pause.call(&"_resume")
+			await _settle()
+
+	# Nor does it reach the screen under it: after Escape, a tap on Resume
+	# only brings the buttons back; the next one resumes.
+	Input.parse_input_event(_key(KEY_ESCAPE))
+	await _settle()
+	var resume: Vector2 = ((pause.get(&"_labels") as Array)[0] as Control).get_global_rect().get_center()
+	await _tap(resume)
+	print("  after Escape, a tap on Resume: pause menu open %s" % pause.get(&"visible"))
+	_expect(pause.get(&"visible") and paused, "the first touch after a key took Resume under it")
+	await _tap(resume)
+	_expect(not pause.get(&"visible") and not paused, "a second tap on Resume did not resume")
 
 	# In a scene the player stands still: no D-pad or Talk over the balloon.
 	# What the buttons read of a scene running, without its dialogue.
@@ -229,6 +269,42 @@ func _check_upright() -> void:
 		var upright: bool = sideways.call(&"is_upright", case[0])
 		print("  %s: upright %s" % [case[0], upright])
 		_expect(upright == case[1], "a %s window is %s" % [case[0], "upright" if upright else "sideways"])
+
+
+# Under the portrait screen nothing takes a tap, the pause menu's items
+# included; turned back, the game is as it was.
+func _check_sideways() -> bool:
+	print("== Held upright")
+	var sideways: Node = root.get_node("Sideways")
+	_story.call(&"new_game")
+	await _settle()
+	await _tap(OPEN_GROUND)
+	var pause: Node = current_scene.get_node("PauseMenu")
+	pause.call(&"_open")
+	await _settle()
+	var resume: Vector2 = ((pause.get(&"_labels") as Array)[0] as Control).get_global_rect().get_center()
+	var landscape: Vector2i = root.size
+	root.size = Vector2i(390, 844)
+	await _settle()
+	var showing: bool = sideways.call(&"is_showing")
+	var buttons: Array = _touch.call(&"shown")
+	var tap: InputEventMouseButton = _click(resume, InputEvent.DEVICE_ID_EMULATION)
+	var is_tap: bool = _touch.call(&"is_tap", tap)
+	await _tap(resume)
+	print("  at 390x844: cover %s, buttons %s, a tap is a tap %s, after a tap on Resume paused %s" % [showing, buttons, is_tap, paused])
+	_expect(showing, "a 390x844 window does not show the portrait screen")
+	_expect(buttons.is_empty(), "the portrait screen shows the buttons %s" % [buttons])
+	_expect(not is_tap, "a tap under the portrait screen counts as a tap")
+	_expect(pause.get(&"visible") and paused, "a tap on Resume under the portrait screen resumed the game")
+	root.size = landscape
+	await _settle()
+	print("  back at %s: cover %s, pause menu open %s" % [landscape, sideways.call(&"is_showing"), pause.get(&"visible")])
+	_expect(not sideways.call(&"is_showing"), "turned back, the portrait screen still shows")
+	_expect(pause.get(&"visible") and paused, "turned back, the pause menu is gone")
+	pause.call(&"_resume")
+	_story.call(&"restart")
+	await _settle()
+	return true
 
 
 func _centre(button: String) -> Vector2:

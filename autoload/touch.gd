@@ -32,35 +32,40 @@ const DPAD: Array[String] = ["up", "down", "left", "right"]
 ## Over the pause menu, the binder and the balloon, under the portrait screen.
 const LAYER: int = 130
 const SCREEN: Vector2 = Vector2(320, 180)
-## One arm of the D-pad; the pad is three across and three down.
-const DPAD_CELL: float = 16.0
+## One arm of the D-pad; the pad is three across and three down. Every button
+## is at least [constant TARGET] across, 44 CSS pixels at the 2x a phone held
+## sideways gets, the usual smallest target for a finger.
+const TARGET: float = 22.0
+const DPAD_CELL: float = TARGET
 ## The Talk button's side.
 const TALK_SIZE: float = 28.0
-## The small buttons' height: a line of text on a plate.
-const SMALL_HEIGHT: float = 16.0
+## The small buttons' height, and their narrowest width.
+const SMALL_HEIGHT: float = TARGET
 ## A touch this close to the D-pad's centre presses no direction.
 const DPAD_DEAD: float = 3.0
 ## The bottom of the D-pad and Talk: clear of the dashboard's line at the bottom.
 const LOW_BOTTOM: float = SCREEN.y - Dashboard.HINT_HEIGHT - UiStyle.EDGE
-## The top of Binder and Menu: clear of the dashboard's strip on the map and
-## in the pause menu. In the binder, which covers the strip, Binder sits on its
-## heading's line, as tall as the line, so it stays clear of the rule under it.
+## The top of Binder and Menu: clear of the dashboard's strip, and in the
+## same place in the pause menu and the binder, over the right end of its
+## first rows, whose titles are short.
 const SMALL_TOP: float = Dashboard.STRIP_HEIGHT + UiStyle.EDGE
-const SMALL_TOP_IN_BINDER: float = Binder.HEADING_TOP
-const SMALL_HEIGHT_IN_BINDER: float = Binder.RULE_TOP - Binder.HEADING_TOP
 
 ## Each button's plate, made on the first touch.
 var _plates: Dictionary[String, Panel] = {}
 var _layer: CanvasLayer = null
 # The button each finger is on, by touch index.
 var _held: Dictionary[int, String] = {}
+# True once a touch has brought the buttons up, until a key or a controller
+# hides them; and the frame of the touch that brought them up.
+var _touching: bool = false
+var _first_touch_frame: int = -1
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	# Every event reaches the window before any screen can mark it handled.
 	get_tree().root.window_input.connect(notice)
-	Hints.device_changed.connect(_refresh)
+	Hints.device_changed.connect(_on_device_changed)
 
 
 ## True once the screen has been touched and the controls exist.
@@ -89,25 +94,39 @@ func is_tap(event: InputEvent) -> bool:
 	var click: InputEventMouseButton = event as InputEventMouseButton
 	if click == null or not click.pressed or click.button_index != MOUSE_BUTTON_LEFT:
 		return false
-	return click.device == InputEvent.DEVICE_ID_EMULATION and _button_at(click.position).is_empty()
+	return click.device == InputEvent.DEVICE_ID_EMULATION and not Sideways.is_showing() and _button_at(click.position).is_empty()
 
 
 ## Take note of a touch: a finger down on a button presses its action, lifted
-## lets it go; sliding across the D-pad changes direction.
+## lets it go; sliding across the D-pad changes direction. The touch that
+## brings the buttons up, after a key or a controller or on the first touch,
+## presses nothing and reaches nothing under it; nor does a touch under the
+## portrait screen.
 func notice(event: InputEvent) -> void:
-	if event is InputEventScreenTouch:
+	if event is InputEventMouseButton:
+		# Godot makes the click from a touch before it sends the touch, so the
+		# click, like the touch, is turned into a release here, before any
+		# screen sees it.
+		var click: InputEventMouseButton = event as InputEventMouseButton
+		if click.pressed and click.device == InputEvent.DEVICE_ID_EMULATION and (_bringing_up() or Sideways.is_showing()):
+			click.pressed = false
+	elif event is InputEventScreenTouch:
 		var touch: InputEventScreenTouch = event as InputEventScreenTouch
 		if not touch.pressed:
 			_let_go(touch.index)
 			return
-		# The touch that brings the buttons up does not also press one.
-		var before: Array[String] = shown()
+		var first: bool = _bringing_up()
+		if not _touching:
+			_touching = true
+			_first_touch_frame = Engine.get_process_frames()
 		if _layer == null:
 			_make()
 		_refresh()
-		var button: String = _button_at(_to_base(touch.position))
-		if button in before:
-			_hold(touch.index, button)
+		if first or Sideways.is_showing():
+			# A button such as the title's Start takes the touch itself as well.
+			touch.pressed = false
+			return
+		_hold(touch.index, _button_at(_to_base(touch.position)))
 	elif event is InputEventScreenDrag:
 		var drag: InputEventScreenDrag = event as InputEventScreenDrag
 		if _held.has(drag.index) and _held[drag.index] in DPAD:
@@ -118,6 +137,19 @@ func _process(_delta: float) -> void:
 	_refresh()
 
 
+# True while a touch would bring the buttons up: none has since the last key
+# or controller press, or this frame's did, whichever of the click and the
+# touch comes first.
+func _bringing_up() -> bool:
+	return not _touching or Engine.get_process_frames() == _first_touch_frame
+
+
+func _on_device_changed() -> void:
+	if not Hints.is_touch():
+		_touching = false
+	_refresh()
+
+
 # Show the buttons this screen needs, and let go of any that went.
 func _refresh() -> void:
 	if _layer == null:
@@ -125,9 +157,6 @@ func _refresh() -> void:
 	var needed: Array[String] = _needed()
 	for button: String in _plates:
 		_plates[button].visible = button in needed
-	var in_binder: bool = _binder_open()
-	_plates.binder.position.y = SMALL_TOP_IN_BINDER if in_binder else SMALL_TOP
-	_plates.binder.size.y = SMALL_HEIGHT_IN_BINDER if in_binder else SMALL_HEIGHT
 	for index: int in _held.keys():
 		if not _held[index] in needed:
 			_let_go(index)
@@ -154,10 +183,6 @@ func _needed() -> Array[String]:
 		needed.append_array(DPAD)
 		needed.append("talk")
 	return needed
-
-
-func _binder_open() -> bool:
-	return Story.binder != null and Story.binder.is_open()
 
 
 # The button under [param point], in base pixels; the D-pad's whole square
@@ -268,7 +293,8 @@ func _add(button: String, area: Rect2) -> Panel:
 	return plate
 
 
-# A small button's width: its word with PLATE_X and the outline either side.
+# A small button's width: its word with PLATE_X and the outline either side,
+# and never under TARGET.
 func _width(plate: Panel) -> float:
 	var word: Label = plate.get_child(0) as Label
-	return word.get_minimum_size().x + 2.0 * (UiStyle.PLATE_X + UiStyle.PLATE_BORDER)
+	return maxf(TARGET, word.get_minimum_size().x + 2.0 * (UiStyle.PLATE_X + UiStyle.PLATE_BORDER))
