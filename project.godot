@@ -23,6 +23,8 @@ DialogueManager="*res://addons/dialogue_manager/dialogue_manager.gd"
 Story="*res://autoload/story.gd"
 Stick="*res://autoload/stick.gd"
 Screen="*res://autoload/screen.gd"
+Sideways="*res://autoload/sideways.gd"
+Touch="*res://autoload/touch.gd"
 
 [debug]
 

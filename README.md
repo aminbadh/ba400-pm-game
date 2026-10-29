@@ -13,9 +13,11 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `project.godot` | Display (320x180, integer scaling, nearest filtering), input map, autoloads |
 | `autoload/game_state.gd` | `GameState`: the four meters, the story flags, the room's votes, the cards collected, the current scene |
 | `autoload/music.gd` | `Music`: the background music, one constant per track, crossfaded, quiet under speech on its own bus, faded out while a card shows; mutes music and voices for the Sound switch |
-| `autoload/hints.gd` | `Hints`: whether the last input came from the keyboard or a controller, and the on-screen hints for it |
+| `autoload/hints.gd` | `Hints`: whether the last input came from the keyboard, a controller or a touchscreen, and the on-screen hints for it |
 | `autoload/stick.gd` | `Stick`: turns each push of the left stick into one D-pad press for menus, the binder, the votes and the gate, repeating while held |
 | `autoload/screen.gd` | `Screen`: full screen on or off, on F11, Alt+Enter or the pause menu's item |
+| `autoload/sideways.gd` | `Sideways`: the "Turn your phone sideways" screen, over the game while the window is taller than wide |
+| `autoload/touch.gd` | `Touch`: the on-screen D-pad, Talk, Binder and Menu buttons for a phone, made on the first touch and shown only while the last input was a touch; which taps a screen takes itself |
 | `autoload/story.gd` | `Story`: sets the pixel font, loads the content files, starts each scene and its music, and gives the dialogue its calls (`show_card`, `show_exhibit`, `open_overview`, `flash_dashboard`, `run_inspection`, `show_report`, `backdrop`, `open_debrief`, `show_last_screen`); builds the debrief's lines and the region's report |
 | `dialogue/` | The story, one Dialogue Manager `.dialogue` file per scene (`s00_charter` to `s10_ending`) |
 | `content/cards.json` | The nine concept cards, each vote's debrief line per option and its best choice |
@@ -42,25 +44,27 @@ The player runs exam centre 26 for the Tunisian baccalauréat 2026 as its projec
 | `tools/` | The art generators (Python, run with `uv`), the screenshot capture and its washed-out filter, the licence check |
 | `fonts/` | Ark Pixel 10 px and its licence |
 | `addons/dialogue_manager/` | [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager) v4.1.0, vendored |
-| `tests/` | `story_test.gd` plays the story to each ending, into the news through each meter alone, to a smooth session after a wrong answer in scene 1, and with scene 8 skipped; `flow_test.gd` drives restart, skip and the ending; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files, and compares the votes and debrief with the story script when it can read it; `contrast_test.gd` checks every text colour reaches 7:1; `spacing_test.gd` checks every margin, separation and offset under `ui/` comes from `UiStyle`'s constants; `sound_test.gd` checks the music and the Sound switch; `controls_test.gd` checks every action has a key and a controller button, that the hints follow the device, and the full screen keys; `layout_test.gd` checks the pause menu fits between the strip and its hint, and the organisational chart's boxes and lines |
+| `tests/` | `story_test.gd` plays the story to each ending, into the news through each meter alone, to a smooth session after a wrong answer in scene 1, and with scene 8 skipped; `flow_test.gd` drives restart, skip and the ending; `route_test.gd` walks the player to each scene's character; `content_test.gd` checks the content files, and compares the votes and debrief with the story script when it can read it; `contrast_test.gd` checks every text colour reaches 7:1; `spacing_test.gd` checks every margin, separation and offset under `ui/` comes from `UiStyle`'s constants; `sound_test.gd` checks the music and the Sound switch; `controls_test.gd` checks every action has a key and a controller button, that the hints follow the device, and the full screen keys; `layout_test.gd` checks the pause menu fits between the strip and its hint, and the organisational chart's boxes and lines; `touch_test.gd` checks the touch controls: none before a touch, shown by one and hidden by a key or a controller, the buttons each screen keeps, their actions, and the taps on cards, the gate, the binder and the pause menu |
 | `export_presets.cfg` | The `Windows` preset (64-bit, one executable with the game inside) and the `Web` preset (single-threaded) |
 
 ## Controls
 
-The keyboard and a PlayStation-style controller work side by side, with no setting to change. The hints on screen show the keys or the controller's buttons, whichever was used last.
+The keyboard, a PlayStation-style controller and a phone's touchscreen work side by side, with no setting to change. The hints on screen show the keys, the controller's buttons or the taps, whichever was used last.
 
-| Action | Keys | Controller |
-| --- | --- | --- |
-| Move | WASD or arrow keys | Left stick or D-pad |
-| Talk, show the whole line while it types, advance, turn a card's page, confirm | E, Space or Enter | ✕ |
-| Vote | 1, 2, 3, or Up/Down then E (or click the option) | Up/Down to point at an option, then ✕ |
-| Gate inspection: admit or stop | 1 admit, 2 stop, or Left/Right then E | D-pad left for Admit, right for Stop, then ✕ |
-| Open or close the binder | B | △ to open, ○ to close |
-| Pause menu | Escape | Start; ○ backs out |
-| Full screen on or off | F11 or Alt+Enter, anywhere | The pause menu's Full screen item |
-| Choose in the binder and menus | Up and Down, then E | D-pad, then ✕ |
+| Action | Keys | Controller | Touch |
+| --- | --- | --- | --- |
+| Move | WASD or arrow keys | Left stick or D-pad | The on-screen D-pad, lower left |
+| Talk, show the whole line while it types, advance, turn a card's page, confirm | E, Space or Enter | ✕ | Talk, lower right, to talk; tap the line or the card to go on |
+| Vote | 1, 2, 3, or Up/Down then E (or click the option) | Up/Down to point at an option, then ✕ | Tap the option |
+| Gate inspection: admit or stop | 1 admit, 2 stop, or Left/Right then E | D-pad left for Admit, right for Stop, then ✕ | Tap Admit or Stop, lower right |
+| Open or close the binder | B | △ to open, ○ to close | Binder, top right |
+| Pause menu | Escape | Start; ○ backs out | Menu, top right |
+| Full screen on or off | F11 or Alt+Enter, anywhere | The pause menu's Full screen item | The pause menu's Full screen item |
+| Choose in the binder and menus | Up and Down, then E | D-pad, then ✕ | Tap the row or the item |
 
 In menus, the binder, the votes and the gate, one push of the left stick moves one step, like the D-pad; held, it repeats after 0.4 s and then every 0.15 s. A controller never picks a vote with one button per letter: the presenter points at the room's option and confirms it. Votes are never picked for the presenter: the bar fills over 20 seconds and turns red, and waits. Cards and charts stay until the presenter presses E or ✕.
+
+**Touch.** On a phone held sideways, the first touch brings up the touch controls: a D-pad on the lower left and Talk on the lower right while the player can walk, and small Binder and Menu buttons at the top right. Each screen keeps only what it needs: none over a vote, a card, a chart or the gate, only Menu in the pause menu and on the last screen, only Binder in the binder's list. Everything else is tapped directly. A key or a controller button hides them again, so a laptop or a touchscreen laptop driven with a controller looks as before; a mouse's click never counts as a tap. Held upright, the phone shows "Turn your phone sideways" over the game, which goes on under it, so turning it back returns to where it was.
 
 **Controller check**, in the pause menu, shows the name Godot reports for each connected controller and, live, the last button or direction pressed. Run it on the PC the game is played on. If the buttons come out wrong, Steam's "Add a non-Steam game" with Steam Input presents the pad as an Xbox controller; a genuine DualShock 3 on Windows needs the DsHidMini driver either way.
 
@@ -136,6 +140,7 @@ godot --headless --path . -s tests/spacing_test.gd   # no number literal for a m
 godot --headless --path . -s tests/sound_test.gd     # the Sound switch, each scene's track, the fade during a card; exits 1 on failure
 godot --headless --path . -s tests/controls_test.gd  # a key and a controller button for every action, hints that follow the device, full screen's keys; exits 1 on failure
 godot --headless --path . -s tests/layout_test.gd    # the pause menu and the controller check fit the screen, the org chart is a clean tree; exits 1 on failure
+godot --headless --path . -s tests/touch_test.gd     # no touch control before a touch, the buttons each screen shows, their actions, taps on each screen; exits 1 on failure
 ```
 
 Godot exits 0 when a test script fails to compile, so read the output for `SCRIPT ERROR` too; `tools/web_build.sh` does.

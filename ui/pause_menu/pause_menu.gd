@@ -21,6 +21,7 @@ const TEXT: Color = Palette.TEXT
 const FOCUS: Color = Palette.FOCUS
 ## The hints, filled in by [Hints] for the device used last.
 const HINT: String = "{choose}  choose    {interact}  select    {resume}  resume"
+const TOUCH_HINT: String = "{choose} an item    {resume}  resume"
 const CHECK_HINT: String = "Press any button or direction    {back}  back"
 const CHECK_HEADING: String = "Controller check"
 const NO_CONTROLLER: String = "No controller connected"
@@ -104,6 +105,19 @@ func _input(event: InputEvent) -> void:
 		_select(_selected + 1)
 	elif event.is_action_pressed(&"interact"):
 		_choose(_selected)
+	elif Touch.is_tap(event):
+		var item: int = tapped_item((event as InputEventMouseButton).position)
+		if item >= 0:
+			_select(item)
+			_choose(item)
+
+
+## The item under [param point], or -1 if none is.
+func tapped_item(point: Vector2) -> int:
+	for i: int in _labels.size():
+		if _labels[i].get_global_rect().has_point(point):
+			return i
+	return -1
 
 
 ## True while the controller check is on screen.
@@ -177,7 +191,8 @@ func _check_input(event: InputEvent) -> void:
 	if not pressed.is_empty():
 		_pressed_label.text = PRESSED % pressed
 		_place()
-	if event.is_action_pressed(&"back") or (event is InputEventKey and event.is_action_pressed(&"pause")):
+	# Start on the controller is a press to check; Escape, the touch Menu button or a tap goes back.
+	if event.is_action_pressed(&"back") or ((event is InputEventKey or event is InputEventAction) and event.is_action_pressed(&"pause")) or Touch.is_tap(event):
 		_show_menu()
 
 
@@ -242,7 +257,7 @@ func _select(index: int) -> void:
 
 
 func _refresh_hint() -> void:
-	_hint.text = Hints.text(CHECK_HINT if _checking else HINT)
+	_hint.text = Hints.text(CHECK_HINT) if _checking else Hints.text(HINT, TOUCH_HINT)
 
 
 # The menu's panel, centred across the screen and in the room between the

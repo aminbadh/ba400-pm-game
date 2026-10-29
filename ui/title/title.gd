@@ -7,6 +7,7 @@ extends Control
 ## The prompt and the keys, filled in by [Hints] for the device used last.
 const START_HINT: String = "{interact}  Start"
 const KEYS_HINT: String = "Move {move}   Talk {interact}   Binder {open_binder}   Menu {menu}"
+const TOUCH_KEYS_HINT: String = "Walk with the {move}   Tap Talk, {open_binder} or {menu}"
 
 @onready var _start: Button = %Start
 
@@ -27,7 +28,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _refresh_hints() -> void:
 	_start.text = Hints.text(START_HINT)
-	(%Keys as Label).text = Hints.text(KEYS_HINT)
+	(%Keys as Label).text = Hints.text(KEYS_HINT, TOUCH_KEYS_HINT)
 	_place()
 
 

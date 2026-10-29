@@ -24,6 +24,9 @@ const TITLE_SCENE: String = "res://ui/title/title.tscn"
 ## Scripts that need the autoloads, loaded once they exist.
 const STAGE_SCRIPT: String = "res://ui/stage/stage.gd"
 const PAUSE_SCRIPT: String = "res://ui/pause_menu/pause_menu.gd"
+## Hints' devices, by their number in its Device enum.
+const DEVICE_KEYBOARD: int = 0
+const DEVICE_JOYPAD: int = 1
 const SETTLE_FRAMES: int = 5
 const TIMEOUT_SECONDS: float = 20.0
 
@@ -109,15 +112,16 @@ func _check_hints() -> bool:
 		Input.parse_input_event(step.event)
 		await _settle()
 		var prompt: String = (load(STAGE_SCRIPT) as Script).call(&"inspection_prompt", -1)
-		print("  after %s: joypad %s, title \"%s\", keys \"%s\", gate \"%s\"" % [step.event.as_text(), _hints.get(&"joypad"), start.text, keys.text, prompt])
-		_expect(_hints.get(&"joypad") == step.joypad, "after %s the last device is %s" % [step.event.as_text(), "the controller" if _hints.get(&"joypad") else "the keyboard"])
+		var joypad: bool = _hints.get(&"device") == DEVICE_JOYPAD
+		print("  after %s: joypad %s, title \"%s\", keys \"%s\", gate \"%s\"" % [step.event.as_text(), joypad, start.text, keys.text, prompt])
+		_expect(joypad == step.joypad, "after %s the last device is %s" % [step.event.as_text(), "the controller" if joypad else "the keyboard"])
 		_expect(start.text == step.start, "after %s the title's prompt reads \"%s\", not \"%s\"" % [step.event.as_text(), start.text, step.start])
 		_expect(prompt == step.prompt, "after %s the gate's prompt reads \"%s\", not \"%s\"" % [step.event.as_text(), prompt, step.prompt])
 	# A stick resting near the middle is drift, not a press.
 	Input.parse_input_event(_key(KEY_Q))
 	Input.parse_input_event(_joypad_motion(JOY_AXIS_LEFT_X, 0.1))
 	await _settle()
-	_expect(not _hints.get(&"joypad"), "a stick drifting at 0.1 switched the hints to the controller")
+	_expect(_hints.get(&"device") == DEVICE_KEYBOARD, "a stick drifting at 0.1 switched the hints to the controller")
 	return true
 
 

@@ -39,6 +39,7 @@ const DEBRIEF_HEADING: String = "Debrief"
 const COLLECTED_MARK: String = Glyphs.TICK
 ## The hints, filled in by [Hints] for the device used last.
 const LIST_HINT: String = "{choose}  choose    {interact}  open    {close_binder}  close"
+const LIST_TOUCH_HINT: String = "{choose} a card to open it    {close_binder}  close"
 const CARD_HINT: String = "{interact}  back"
 const OVERVIEW_HINT: String = "{interact}  continue"
 const DEBRIEF_HINT: String = "{interact}  next"
@@ -83,6 +84,11 @@ func _exit_tree() -> void:
 ## True while the binder is on screen.
 func is_open() -> bool:
 	return visible
+
+
+## True while the binder shows its list of cards to browse, with no card open.
+func is_browsing() -> bool:
+	return visible and _mode == "browse" and _card.is_empty()
 
 
 ## Open the list of cards for browsing.
@@ -155,14 +161,14 @@ func _input(event: InputEvent) -> void:
 	if not _card.is_empty():
 		_handle_card_input(event)
 	elif _mode == "debrief":
-		if event.is_action_pressed(&"interact"):
+		if event.is_action_pressed(&"interact") or Touch.is_tap(event):
 			_debrief_page += 1
 			if _debrief_page >= _debrief_pages.size():
 				_close()
 			else:
 				_render()
 	elif _mode == "overview":
-		if event.is_action_pressed(&"interact"):
+		if event.is_action_pressed(&"interact") or Touch.is_tap(event):
 			_close()
 	else:
 		_handle_list_input(event)
@@ -178,15 +184,38 @@ func _handle_list_input(event: InputEvent) -> void:
 		_selected = wrapi(_selected + 1, 0, Story.cards.size())
 		_render()
 	elif event.is_action_pressed(&"interact"):
-		var card: Dictionary = Story.cards[_selected]
-		if int(card.number) in GameState.cards:
-			_card = card
-			_card_page = 0
-			_show_card()
+		_open_selected()
+	elif Touch.is_tap(event):
+		# A tap on a row points at it and opens its card.
+		var row: int = tapped_row((event as InputEventMouseButton).position)
+		if row >= 0:
+			_selected = row
+			_render()
+			_open_selected()
+
+
+## The list's row under [param point], or -1 if none is.
+func tapped_row(point: Vector2) -> int:
+	for i: int in _rows.get_child_count():
+		var row: Control = _rows.get_child(i) as Control
+		var area: Rect2 = row.get_global_rect()
+		if row.is_queued_for_deletion() or point.y < area.position.y or point.y >= area.end.y:
+			continue
+		if point.x >= area.position.x and point.x < _rows.get_global_rect().end.x:
+			return i
+	return -1
+
+
+func _open_selected() -> void:
+	var card: Dictionary = Story.cards[_selected]
+	if int(card.number) in GameState.cards:
+		_card = card
+		_card_page = 0
+		_show_card()
 
 
 func _handle_card_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"interact"):
+	if event.is_action_pressed(&"interact") or Touch.is_tap(event):
 		if _card_page < (_card.pages as Array).size() - 1:
 			_card_page += 1
 			_show_card()
@@ -241,7 +270,7 @@ func _render_overview() -> void:
 
 func _render_list() -> void:
 	_heading.text = HEADING
-	_hint.text = Hints.text(LIST_HINT)
+	_hint.text = Hints.text(LIST_HINT, LIST_TOUCH_HINT)
 	for i: int in Story.cards.size():
 		var card: Dictionary = Story.cards[i]
 		var collected: bool = int(card.number) in GameState.cards

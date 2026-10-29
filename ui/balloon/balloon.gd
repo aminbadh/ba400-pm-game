@@ -193,6 +193,11 @@ func _exit_tree() -> void:
 	_voice.stream = null
 
 
+## True while the room's vote is on screen.
+func is_voting() -> bool:
+	return responses_menu.visible
+
+
 ## Start some dialogue.
 func start(with_dialogue_resource: DialogueResource = null, cue: String = "", extra_game_states: Array = []) -> void:
 	temporary_game_states = [self] + extra_game_states

@@ -109,12 +109,12 @@ func _input(event: InputEvent) -> void:
 	if _waiter == null or get_tree().paused:
 		return
 	if Time.get_ticks_msec() - _opened_at < INPUT_GUARD_MSEC:
-		if event.is_action_pressed(&"interact") or event.is_action_pressed(&"choice_1") or event.is_action_pressed(&"choice_2"):
+		if event.is_action_pressed(&"interact") or event.is_action_pressed(&"choice_1") or event.is_action_pressed(&"choice_2") or Touch.is_tap(event):
 			get_viewport().set_input_as_handled()
 		return
 	match _wait_kind:
 		"next":
-			if event.is_action_pressed(&"interact"):
+			if event.is_action_pressed(&"interact") or Touch.is_tap(event):
 				get_viewport().set_input_as_handled()
 				_next_page()
 		"admit_or_stop":
@@ -134,6 +134,25 @@ func _handle_inspection_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"interact") and _pointed >= 0:
 		get_viewport().set_input_as_handled()
 		_resolve(_pointed == 0)
+	elif Touch.is_tap(event):
+		get_viewport().set_input_as_handled()
+		var call: int = tapped_call((event as InputEventMouseButton).position)
+		if call >= 0:
+			_resolve(call == 0)
+
+
+## The call a tap at [param point] makes at the gate: 0 admit, 1 stop, -1
+## none. The prompt's corner below the candidate is split where its Stop
+## begins: Admit on the left, Stop on the right.
+func tapped_call(point: Vector2) -> int:
+	var corner: Rect2 = Rect2(DIVIDER_RECT.end.x, CANDIDATE_RECT.end.y, CardView.SCREEN.x - DIVIDER_RECT.end.x, CardView.SCREEN.y - CANDIDATE_RECT.end.y)
+	if not corner.has_point(point):
+		return -1
+	var font: Font = _prompt_label.get_theme_font(&"font")
+	var font_size: int = _prompt_label.get_theme_font_size(&"font_size")
+	var stop: String = inspection_prompt(-1).get_slice("    ", 1)
+	var stop_left: float = _prompt_label.get_global_rect().end.x - font.get_string_size(stop, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	return 0 if point.x < stop_left - UiStyle.GAP else 1
 
 
 #region Calls from Story
@@ -294,6 +313,16 @@ func backdrop_title_fits() -> bool:
 ## The screen area the backdrop's title takes, grown to its text. For the content check.
 func backdrop_title_rect() -> Rect2:
 	return _backdrop_title.get_global_rect()
+
+
+## True while a card, a chart, the report or the gate fills the screen.
+func covers_screen() -> bool:
+	return _card_view.visible or _exhibit_view.visible or _inspection_view.visible
+
+
+## True while the last screen is up, at the end of the story.
+func shows_last_screen() -> bool:
+	return _last_screen.visible
 
 
 ## Close whatever is showing and drop its wait, for a skipped scene.

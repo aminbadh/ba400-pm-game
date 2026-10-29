@@ -116,6 +116,11 @@ func current_scene() -> Dictionary:
 	return {}
 
 
+## True while the dialogue shows the room's vote.
+func is_voting() -> bool:
+	return is_instance_valid(_balloon) and _balloon.has_method(&"is_voting") and _balloon.call(&"is_voting")
+
+
 ## True if talking to [param character] starts the current scene.
 func is_next_character(character: String) -> bool:
 	return not in_scene and current_scene().get("character", "") == character
