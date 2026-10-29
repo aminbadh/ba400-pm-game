@@ -6,7 +6,7 @@
 
 A class learns project quality and staffing plans by running one together. You are the project manager of exam centre 26 for the Tunisian baccalauréat 2026. Each conversation teaches a part of the chapter on a concept card, then the room votes on what to do with A, B and C cards. Every vote moves four meters (Integrity, Fairness, Team, Budget) and pays off on exam day, where the region's report checks your plan against the charter and a debrief names the best answer to each vote.
 
-Made for Team 1's presentation of chapter 5, *Planning Projects, Part II* (quality and human resources), in BA 400 Project Management at TBS, 29 October 2026. It played on the classroom projector from a Windows build, driven with a controller, and takes about 30 minutes.
+Made for a class presentation in a project management course. A full play takes about 30 minutes.
 
 ## Controls
 
