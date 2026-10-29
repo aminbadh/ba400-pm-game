@@ -27,5 +27,5 @@ do Story.open_debrief()
 
 ~ last_screen
 do Story.backdrop("")
-do Story.show_last_screen("Thank you!", "Ya3tikom essa7a", "Your centre's quality plan and staffing plan are done. But who tells the parents? What could still go wrong? Who prints the papers?", "Over to Team 2.")
+do Story.show_last_screen("Thank you!", "Ya3tikom essa7a", "Your centre's quality plan and staffing plan are done. But who tells the parents? What could still go wrong? Who prints the papers?", "")
 => END
