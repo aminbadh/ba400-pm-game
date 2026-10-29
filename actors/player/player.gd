@@ -59,17 +59,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-# Collapse the input to one axis so the player only walks in four directions.
-# When both axes are held, keep walking along the axis already faced.
+# Collapse the input to one axis so the player only walks in four directions:
+# the axis pushed further wins, so a stick that is never exactly on an axis
+# still turns. When both are pushed equally (two keys held), keep walking along
+# the axis already faced.
 func _read_direction() -> Vector2:
 	var input: Vector2 = Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
 	var horizontal: Vector2 = Vector2(signf(input.x), 0.0)
 	var vertical: Vector2 = Vector2(0.0, signf(input.y))
-	if input.x == 0.0:
-		return vertical
-	if input.y == 0.0:
-		return horizontal
-	return horizontal if facing.x != 0.0 else vertical
+	if is_equal_approx(absf(input.x), absf(input.y)):
+		return horizontal if facing.x != 0.0 else vertical
+	return horizontal if absf(input.x) > absf(input.y) else vertical
 
 
 func _npc_in_reach() -> Npc:
